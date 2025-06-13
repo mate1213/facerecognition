@@ -12,7 +12,10 @@ use OCP\Migration\SimpleMigrationStep;
 use OCP\IDBConnection;
 
 /**
- * Auto-generated migration step: Please modify to your needs!
+ * MIIGRATE TO V 0.9.8
+ * Step1: Create new tables and duplicate data into those
+ * - Step2: Remove original columns
+ * Step3: Deduplicate the images, and faces
  */
 class Version0980Date20250611141101 extends SimpleMigrationStep {
 
