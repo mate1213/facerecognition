@@ -179,7 +179,7 @@ class SettingsService {
 	public function getUserEnabled (?string $userId = null): bool {
 		$enabled = $this->config->getUserValue($userId ?? $this->userId, Application::APP_NAME, self::USER_ENABLED_KEY,
 		                                       $this->getDefaultUserEnabled());
-		return ($enabled === 'true');
+		return ($enabled == 'true');
 	}
 
 	public function setUserEnabled (bool $enabled, $userId = null): void {
