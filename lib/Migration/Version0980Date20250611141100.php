@@ -14,8 +14,7 @@ use OCP\IDBConnection;
 /**
  * MIIGRATE TO V0.9.8
  * - Step1: Create new tables and duplicate data into those
- * Step2: Remove original columns
- * Step3: Deduplicate the images, and faces
+ * Step2: Deduplicate the images, and faces -> Remove original columns
  */
 class Version0980Date20250611141100 extends SimpleMigrationStep {
 
@@ -113,8 +112,10 @@ class Version0980Date20250611141100 extends SimpleMigrationStep {
 
 		$resultFaces = $queryFaces->executeQuery();
 		while ($row = $resultFaces->fetch()) {
-			$insertPersonFace->setParameter('face', $row['id']);
-			$insertPersonFace->setParameter('person', $row['person']);
+			$insertPersonFace->setParameters([
+				$row['id'],
+				$row['person']
+			]);
 			$insertPersonFace->executeStatement();
 		}
 		$resultFaces->closeCursor();

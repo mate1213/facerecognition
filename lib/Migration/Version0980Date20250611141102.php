@@ -6,6 +6,7 @@ namespace OCA\FaceRecognition\Migration;
 
 use Closure;
 use OCP\DB\ISchemaWrapper;
+use OCP\DB\IResult;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\Migration\IOutput;
 use OCP\Migration\SimpleMigrationStep;
@@ -15,8 +16,7 @@ use OCP\IDBConnection;
 /**
  * MIIGRATE TO V0.9.8
  * Step1: Create new tables and duplicate data into those
- * Step2: Remove original columns
- * - Step3: Deduplicate the images, and faces
+ * - Step2: Deduplicate the images, and faces -> Remove original columns
  */
 class Version0980Date20250611141102 extends SimpleMigrationStep {
 
@@ -32,23 +32,14 @@ class Version0980Date20250611141102 extends SimpleMigrationStep {
 	 * @param array $options
 	 */
 	public function preSchemaChange(IOutput $output, Closure $schemaClosure, array $options): void {
-	}
-
-	/**
-	 * @param IOutput $output
-	 * @param Closure $schemaClosure The `\Closure` returns a `ISchemaWrapper`
-	 * @param array $options
-	 * @return null|ISchemaWrapper
-	 */
-	public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper {
 		//Get images which are duplicated
-		$resultDuplicatedImages = getDuplicatedFiles($this->connection->getQueryBuilder());
+		$resultDuplicatedImages = $this->getDuplicatedFiles();
 		while ($row = $resultDuplicatedImages->fetch()) {
 			$ncFileId = $row['file'];
 			$modelNumber = $row['model'];
 			$flaggedForKEEP = -1;
 			//Get Images by nextcloud FileID and model <- these are shared files
-			$resultImageEntries = getImagesByModelAndNcFileId($this->connection->getQueryBuilder(), $ncFileId, $modelNumber);
+			$resultImageEntries = $this->getImagesByModelAndNcFileId($ncFileId, $modelNumber);
 			while ($duplicatedRow = $resultImageEntries->fetch()) {
 				if	($flaggedForKEEP < 0)
 				{
@@ -59,14 +50,37 @@ class Version0980Date20250611141102 extends SimpleMigrationStep {
 				{
 					//Handle other duplicates
 					$currentImage = $duplicatedRow['id'];
-					updateUsersImages($this->connection->getQueryBuilder(), $currentImage, $flaggedForKEEP);
-					handleFaces($this->connection->getQueryBuilder(), $currentImage, $flaggedForKEEP);
-					removeImage($this->connection->getQueryBuilder(), $currentImage);
+					$this->updateUsersImages($currentImage, $flaggedForKEEP);
+					$this->handleFaces($currentImage, $flaggedForKEEP);
+					$this->removeImage($currentImage);
 				}
 			}
 			$resultImageEntries->closeCursor();
 		}
 		$resultDuplicatedImages->closeCursor();
+	}
+
+	/**
+	 * @param IOutput $output
+	 * @param Closure $schemaClosure The `\Closure` returns a `ISchemaWrapper`
+	 * @param array $options
+	 * @return null|ISchemaWrapper
+	 */
+	public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper {
+		$schema = $schemaClosure();
+
+		if ($schema->hasTable('facerecog_images')) {
+			$table = $schema->getTable('facerecog_images');
+			if ($table->hasColumn('user'))
+				$table->dropColumn('user');
+        }
+		if ($schema->hasTable('facerecog_faces')) {
+			$table = $schema->getTable('facerecog_faces');
+			if ($table->hasColumn('person'))
+				$table->dropColumn('person');
+        }
+		
+		return $schema;
 	}
 
 	/**
@@ -79,39 +93,38 @@ class Version0980Date20250611141102 extends SimpleMigrationStep {
 
 	/**
 	 * Update old image ID to the one we keep
-	 * @param IQueryBuilder $builder
 	 * @param $imageId image ID what is removed
 	 * @param $flaggedForKEEP image ID what is replaced to
 	 */
-	protected function updateUsersImages(IQueryBuilder $builder, $imageId,  $flaggedForKEEP): void {
+	protected function updateUsersImages($imageId, $flaggedForKEEP): void {
+		$builder =$this->connection->getQueryBuilder();
 		$builder
 			->update('facerecog_user_images')
-			->set('image', $flaggedForKEEP)
-			->Where($query->expr()->eq('file',$imageId))
+			->set('image', $builder->createNamedParameter($flaggedForKEEP))
+			->Where($builder->expr()->eq('image', $builder->createNamedParameter($imageId)))
 			->executeStatement();
 	}
 
 	/**
 	 * Update faces of the image to be connected to the image what we keep after the deduplication
 	 * Or if faces are duplicate remove the one which is connected to the deletable picture
-	 * @param IQueryBuilder $builder
 	 * @param $imageId the old image ID
 	 * @param $flaggedForKEEP new image ID what is replaced to
 	 */
-	protected function handleFaces(IQueryBuilder $builder, $imageId, $flaggedForKEEP): void {
-		$resultOldFaceEntries=getFacesFromImage($builder, $imageId);
-		$resultNewFaceEntries=getFacesFromImage($builder, $flaggedForKEEP);
+	protected function handleFaces($imageId, $flaggedForKEEP): void {
+		$resultOldFaceEntries=$this->getFacesFromImage($imageId);
+		$resultNewFaceEntries=$this->getFacesFromImage($flaggedForKEEP);
 		while ($oldFace = $resultOldFaceEntries->fetch()) {
 			$isDeleted = false;
 			while ($newFace = $resultNewFaceEntries->fetch()){
-				if (isSameFace($oldFace, $newFace)){
-					updatePersonAndDeleteFace( $builder, $oldFace['id'], $newFace['id']);
+				if ($this->isSameFace($oldFace, $newFace)){
+					$this->updatePersonAndDeleteFace($oldFace['id'], $newFace['id']);
 					$isDeleted = true;
 					break;
 				}
 			}
 			if(!$isDeleted){
-				updateFaceToNewImage($builder, $oldFace['id'], $flaggedForKEEP);
+				$this->updateFaceToNewImage($oldFace['id'], $flaggedForKEEP);
 			}
 		}
 	}
@@ -120,8 +133,8 @@ class Version0980Date20250611141102 extends SimpleMigrationStep {
 	 * Get Nextcloud internal file ids which are duplicated by the same model
 	 * @return IResult Columns: file, model
 	 */
-	protected function getDuplicatedFiles(IQueryBuilder $builder): IResult {
-		return $builder
+	protected function getDuplicatedFiles(): IResult {
+		return $this->connection->getQueryBuilder()
 			->select('file', 'model')
 			->from('facerecog_images')
 			->groupBy('file','model')
@@ -131,61 +144,67 @@ class Version0980Date20250611141102 extends SimpleMigrationStep {
 
 	/**
 	 * Get Image based on NC file ID and the model ID
+	 * @param int $ncFileId nextcloud file ID
+	 * @param int $modelNumber model ID
 	 * @return IResult
 	 */
-	protected function getImagesByModelAndNcFileId(IQueryBuilder $builder, $ncFileId, $modelNumber): IResult {
-		$and = $builder->expr()->andx(
-    		$builder->expr()->eq('file', $ncFileId),
-    		$builder->expr()->eq('model', $modelNumber),
-		);
-		return $builder
+	protected function getImagesByModelAndNcFileId($ncFileId, $modelNumber): IResult {
+		return $this->connection->getQueryBuilder()
 			->select('*')
 			->from('facerecog_images')
-			->Where($and)
+			->Where('file = ? AND model = ?')
+			->setParameters([
+				$ncFileId,
+				$modelNumber
+			])
 			->executeQuery();
 	}
 	
 	/**
 	 * Get Face based on image ID
+	 * @param int $imageId
 	 * @return IResult
 	 */
-	protected function getFacesFromImage(IQueryBuilder $builder, $imageId): IResult {
-		$builder
+	protected function getFacesFromImage($imageId): ?IResult {
+		$builder = $this->connection->getQueryBuilder();
+		return $builder
 			->select('*')
 			->from('facerecog_faces')
-			->Where($builder->expr()->eq('image',$imageId))
+			->Where($builder->expr()->eq('image', $builder->createNamedParameter($imageId)))
 			->executeQuery();
 	}
 
 	/**
 	 * Update faces of the image to be connected to the image what we keep after the deduplication
-	 * @param IQueryBuilder $builder
 	 * @param $imageId the old image ID
 	 * @param $flaggedForKEEP new image ID what is replaced to
 	 */
-	protected function updateFaceToNewImage(IQueryBuilder $builder, $faceId, $newImageId): void {
+	protected function updateFaceToNewImage($faceId, $newImageId): void {
+		$builder = $this->connection->getQueryBuilder();
 		$builder
 			->update('facerecog_faces')
-			->set('image', $newImageId)
-			->Where($query->expr()->eq('id',$faceId))
+			->set('image', $builder->createNamedParameter($newImageId))
+			->Where($builder->expr()->eq('id', $builder->createNamedParameter($faceId)))
 			->executeStatement();
 	}
 
 	/**
 	 * If the face is duplicate, update the person to be connected to the face we keep and delete the old face
-	 * @param IQueryBuilder $builder
 	 * @param $oldFaceId the old face ID
 	 * @param $newFaceId new face ID what is replaced to
 	 */
-	protected function updatePersonAndDeleteFace(IQueryBuilder $builder, $oldFaceId, $newFaceId): void {
+	protected function updatePersonAndDeleteFace($oldFaceId, $newFaceId): void {
+		$builder = $this->connection->getQueryBuilder();
 		$builder
 			->update('facerecog_person_faces')
-			->set('face', $newFaceId)
-			->Where($query->expr()->eq('face',$oldFaceId))
+			->set('face', $builder->createNamedParameter($newFaceId))
+			->Where($builder->expr()->eq('face', $builder->createNamedParameter($oldFaceId)))
 			->executeStatement();
-		$builder
+		
+		$delete = $this->connection->getQueryBuilder();
+		$delete
 			->delete('facerecog_faces')
-			->where($query->expr()->eq('id',$oldFaceId))
+			->where($delete->expr()->eq('id', $delete->createNamedParameter($oldFaceId)))
 			->executeStatement();
 	}
 	
@@ -199,7 +218,6 @@ class Version0980Date20250611141102 extends SimpleMigrationStep {
 	 * - confidence
 	 * - landmarks
 	 * - descriptor
-	 * @param IQueryBuilder $builder
 	 * @param $oldFace the old face complete database row
 	 * @param $newFace new face complete database row
 	 * @return bool True if the are equal otherwise false
@@ -217,13 +235,13 @@ class Version0980Date20250611141102 extends SimpleMigrationStep {
 
 	/**
 	 * Remove image by image ID
-	 * @param IQueryBuilder $builder
 	 * @param $imageId image ID what is removed
 	 */
-	protected function removeImage(IQueryBuilder $builder, $imageId): void {
-		$builder
+	protected function removeImage($imageId): void {
+		$delete = $this->connection->getQueryBuilder();
+		$delete
 			->delete('facerecog_images')
-			->where($query->expr()->eq('id',$imageId))
+			->where($delete->expr()->eq('id', $delete->createNamedParameter($imageId)))
 			->executeStatement();
 	}
 }
