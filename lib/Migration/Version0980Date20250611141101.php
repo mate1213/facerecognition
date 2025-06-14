@@ -12,7 +12,7 @@ use OCP\Migration\SimpleMigrationStep;
 use OCP\IDBConnection;
 
 /**
- * MIIGRATE TO V 0.9.8
+ * MIIGRATE TO V0.9.8
  * Step1: Create new tables and duplicate data into those
  * - Step2: Remove original columns
  * Step3: Deduplicate the images, and faces
