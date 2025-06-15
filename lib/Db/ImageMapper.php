@@ -194,7 +194,7 @@ class ImageMapper extends QBMapper {
 			->innerJoin('i', 'facerecog_user_images', 'ui', $qb->expr()->eq('ui.image', 'i.id'))
 			->where($qb->expr()->eq('i.is_processed',  $qb->createParameter('is_processed')))
 			->andWhere($qb->expr()->eq('i.model', $qb->createNamedParameter($modelId)))
-			->setParameter('i.is_processed', false, IQueryBuilder::PARAM_BOOL);
+			->setParameter('is_processed', false, IQueryBuilder::PARAM_BOOL);
 		if (!is_null($user)) {
 			$qb->andWhere($qb->expr()->eq('ui.user', $qb->createNamedParameter($user->getUID())));
 		}

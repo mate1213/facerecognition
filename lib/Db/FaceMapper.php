@@ -115,10 +115,12 @@ class FaceMapper extends QBMapper {
 			->select($qb->createFunction('COUNT(' . $qb->getColumnName('f.id') . ')'))
 			->from($this->getTableName(), 'f')
 			->innerJoin('f', 'facerecog_images' ,'i', $qb->expr()->eq('f.image', 'i.id'))
-			->where($qb->expr()->eq('user', $qb->createParameter('user')))
+			->innerJoin('f', 'facerecog_user_images', 'ui', $qb->expr()->eq('ui.image', 'i.id'))
+			->join('f', 'facerecog_person_faces', 'pf', $qb->expr()->eq('pf.face', 'f.id'))
+			->where($qb->expr()->eq('ui.user', $qb->createParameter('user')))
 			->andWhere($qb->expr()->eq('model', $qb->createParameter('model')));
 		if ($onlyWithoutPersons) {
-			$qb = $qb->andWhere($qb->expr()->isNull('person'));
+			$qb = $qb->andWhere($qb->expr()->isNull('pf.person'));
 		}
 		$query = $qb
 			->setParameter('user', $userId)
@@ -227,12 +229,14 @@ class FaceMapper extends QBMapper {
 	 */
 	public function findFromCluster(string $userId, int $clusterId, int $model, ?int $limit = null, $offset = null): array {
 		$qb = $this->db->getQueryBuilder();
-		$qb->select('f.id', 'f.image', 'f.person')
+		$qb->select('f.id', 'f.image', 'pf.person')
 			->from($this->getTableName(), 'f')
 			->innerJoin('f', 'facerecog_images' ,'i', $qb->expr()->eq('f.image', 'i.id'))
-			->where($qb->expr()->eq('user', $qb->createNamedParameter($userId)))
-			->andWhere($qb->expr()->eq('person', $qb->createNamedParameter($clusterId)))
-			->andWhere($qb->expr()->eq('model', $qb->createNamedParameter($model)));
+			->innerJoin('f', 'facerecog_person_faces' ,'pf', $qb->expr()->eq('f.id', 'pf.face'))
+			->innerJoin('f', 'facerecog_user_images', 'ui', $qb->expr()->eq('ui.image', 'i.id'))
+			->where($qb->expr()->eq('ui.user', $qb->createNamedParameter($userId)))
+			->andWhere($qb->expr()->eq('pf.person', $qb->createNamedParameter($clusterId)))
+			->andWhere($qb->expr()->eq('i.model', $qb->createNamedParameter($model)));
 
 		$qb->setMaxResults($limit);
 		$qb->setFirstResult($offset);

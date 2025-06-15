@@ -64,8 +64,10 @@ class PersonMapper extends QBMapper {
 		$sub->select(new Literal('1'))
 			->from('facerecog_faces', 'f')
 			->innerJoin('f', 'facerecog_images' ,'i', $sub->expr()->eq('f.image', 'i.id'))
-			->where($sub->expr()->eq('p.id', 'f.person'))
-			->andWhere($sub->expr()->eq('i.user', $sub->createParameter('user_id')))
+			->innerJoin('f', 'facerecog_user_images' ,'ui', $sub->expr()->eq('ui.image', 'i.id'))
+			->innerJoin('f', 'facerecog_person_faces' ,'pf', $sub->expr()->eq('pf.face', 'f.id'))
+			->where($sub->expr()->eq('p.id', 'pf.person'))
+			->andWhere($sub->expr()->eq('ui.user', $sub->createParameter('user_id')))
 			->andWhere($sub->expr()->eq('i.model', $sub->createParameter('model_id')))
 			->andWhere($sub->expr()->eq('p.name', $sub->createParameter('person_name')));
 
@@ -102,6 +104,7 @@ class PersonMapper extends QBMapper {
 			->where('EXISTS (' . $sub->getSQL() . ')')
 			->andWhere($qb->expr()->eq('p.is_valid', $qb->createParameter('is_valid')))
 			->andWhere($qb->expr()->eq('p.is_visible', $qb->createParameter('is_visible')))
+			->andWhere($qb->expr()->eq('p.user', $qb->createParameter('user_id')))
 			->andWhere($qb->expr()->isNull('p.name'))
 			->setParameter('user_id', $userId)
 			->setParameter('model_id', $modelId)
@@ -133,6 +136,7 @@ class PersonMapper extends QBMapper {
 			->where('EXISTS (' . $sub->getSQL() . ')')
 			->andWhere($qb->expr()->eq('p.is_valid', $qb->createParameter('is_valid')))
 			->andWhere($qb->expr()->eq('p.is_visible', $qb->createParameter('is_visible')))
+			->andWhere($qb->expr()->eq('p.user', $qb->createParameter('user_id')))
 			->andWhere($qb->expr()->isNull('name'))
 			->setParameter('user_id', $userId)
 			->setParameter('model_id', $modelId)
@@ -218,11 +222,12 @@ class PersonMapper extends QBMapper {
 		$qb = $this->db->getQueryBuilder();
 		$qb->selectDistinct('p.name')
 			->from($this->getTableName(), 'p')
-			->innerJoin('p', 'facerecog_faces', 'f', $qb->expr()->eq('f.person', 'p.id'))
+			->innerJoin('p', 'facerecog_person_faces' ,'pf', $qb->expr()->eq('pf.person', 'p.id'))
+			->innerJoin('p', 'facerecog_faces', 'f', $qb->expr()->eq('pf.face', 'f.id'))
 			->innerJoin('p', 'facerecog_images', 'i', $qb->expr()->eq('f.image', 'i.id'))
 			->where($qb->expr()->eq('p.user', $qb->createNamedParameter($userId)))
-			->andWhere($qb->expr()->eq('model', $qb->createNamedParameter($modelId)))
-			->andWhere($qb->expr()->eq('is_processed', $qb->createNamedParameter(True)))
+			->andWhere($qb->expr()->eq('i.model', $qb->createNamedParameter($modelId)))
+			->andWhere($qb->expr()->eq('i.is_processed', $qb->createNamedParameter(True)))
 			->andWhere($qb->expr()->like($qb->func()->lower('p.name'), $qb->createParameter('query')));
 
 		$query = '%' . $this->db->escapeLikeParameter(strtolower($name)) . '%';
@@ -259,8 +264,10 @@ class PersonMapper extends QBMapper {
 		$sub->select(new Literal('1'))
 			->from('facerecog_faces', 'f')
 			->innerJoin('f', 'facerecog_images' ,'i', $sub->expr()->eq('f.image', 'i.id'))
-			->where($sub->expr()->eq('p.id', 'f.person'))
-			->andWhere($sub->expr()->eq('i.user', $sub->createParameter('user_id')))
+			->innerJoin('f', 'facerecog_person_faces', 'pf', $sub->expr()->eq('pf.face', 'f.id'))
+			->innerJoin('f', 'facerecog_user_images', 'ui', $sub->expr()->eq('ui.image', 'i.id'))
+			->where($sub->expr()->eq('p.id', 'pf.person'))
+			->andWhere($sub->expr()->eq('ui.user', $sub->createParameter('user_id')))
 			->andWhere($sub->expr()->eq('i.model', $sub->createParameter('model_id')));
 
 		$qb = $this->db->getQueryBuilder();
@@ -557,7 +564,7 @@ class PersonMapper extends QBMapper {
 			->set('is_groupable', $qb->createParameter('is_groupable'))
 			->where($qb->expr()->eq('id', $qb->createNamedParameter($faceId)))
 			->setParameter('is_groupable', false, IQueryBuilder::PARAM_BOOL)
-			->execute();
+			->executeStatement();
 
 		if ($this->countClusterFaces($personId) === 1) {
 			// If cluster is an single face just rename it.
@@ -566,7 +573,7 @@ class PersonMapper extends QBMapper {
 				->set('name', $qb->createNamedParameter($name))
 				->set('is_visible', $qb->createNamedParameter(true))
 				->where($qb->expr()->eq('id', $qb->createNamedParameter($personId)))
-				->execute();
+				->executeStatement();
 		} else {
 			// If there are other faces, must create a new person for that face.
 			$qb = $this->db->getQueryBuilder();
@@ -583,16 +590,16 @@ class PersonMapper extends QBMapper {
 				'last_generation_time' => $qb->createNamedParameter(new \DateTime(), IQueryBuilder::PARAM_DATE),
 				'linked_user' => $qb->createNamedParameter(null),
 				'is_visible' => $qb->createNamedParameter(true)
-			])->execute();
+			])->executeStatement();
 
-			$personId = $qb->getLastInsertId();
+			$newPersonId = $qb->getLastInsertId();
 
 			$qb = $this->db->getQueryBuilder();
-			$qb->update('facerecog_faces')
-				->set('person', $qb->createParameter('person'))
-				->where($qb->expr()->eq('id', $qb->createNamedParameter($faceId)))
-				->setParameter('person', $personId)
-				->execute();
+			$qb->update('facerecog_person_faces')
+				->set('person', $qb->createNamedParameter($newPersonId))
+				->where($qb->expr()->eq('face', $qb->createNamedParameter($faceId)))
+				->andWhere($qb->expr()->eq('person', $qb->createNamedParameter($personId)))
+				->executeStatement();
 		}
 
 		$qb = $this->db->getQueryBuilder();
@@ -604,13 +611,12 @@ class PersonMapper extends QBMapper {
 
 	public function countClusterFaces(int $personId): int {
 		$qb = $this->db->getQueryBuilder();
-		$query = $qb
-			->select($qb->createFunction('COUNT(' . $qb->getColumnName('id') . ')'))
-			->from('facerecog_faces', 'f')
-			->innerJoin('f', 'facerecog_person_faces' ,'pf', $qb->expr()->eq('pf.face', 'f.id'))
-			->where($qb->expr()->eq('pf.person', $qb->createParameter('person')))
-			->setParameter('person', $personId);
-		$resultStatement = $query->execute();
+		$resultStatement = $qb
+			->select($qb->func()->count('*'))
+			->from('facerecog_person_faces')
+			->where($qb->expr()->eq('person', $qb->createNamedParameter($personId)))
+			->executeQuery();
+
 		$data = $resultStatement->fetch(\PDO::FETCH_NUM);
 		$resultStatement->closeCursor();
 
@@ -627,12 +633,11 @@ class PersonMapper extends QBMapper {
 	 */
 	private function updateFace(int $faceId, $personId, $oldPerson): void {
 		$qb = $this->db->getQueryBuilder();
-		$qb->update('facerecog_person_faces', 'pf')
-			->innerJoin('pf', 'facerecog_faces' ,'f', $sub->expr()->eq('pf.face', 'f.id'))
-			->set("pf.person", $qb->createNamedParameter($personId))
-			->where($qb->expr()->eq('pf.face', $qb->createNamedParameter($faceId)))
-			->andWhere($qb->expr()->eq('pf.person', $qb->createNamedParameter($oldPerson)))
-			->execute();
+		$qb->update('facerecog_person_faces')
+			->set("person", $qb->createNamedParameter($personId))
+			->where($qb->expr()->eq('face', $qb->createNamedParameter($faceId)))
+			->andWhere($qb->expr()->eq('person', $qb->createNamedParameter($oldPerson)))
+			->executeStatement();
 	}
 
 	/**
