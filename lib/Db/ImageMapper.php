@@ -213,7 +213,6 @@ class ImageMapper extends QBMapper {
 		return $images;
 	}
 
-	//TODO: CHECK THIS OUT
 	public function findFromPersonLike(string $userId, int $model, string $name, $offset = null, $limit = null): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('i.id', 'i.file')
@@ -222,7 +221,7 @@ class ImageMapper extends QBMapper {
 			->innerJoin('i', 'facerecog_faces', 'f', $qb->expr()->eq('f.image', 'i.id'))
 			->innerJoin('i', 'facerecog_persons', 'p', $qb->expr()->eq('f.person', 'p.id'))
 			->innerJoin('i', 'facerecog_person_faces', 'pf', $qb->expr()->eq('pf.person', 'p.id'))
-			->where($qb->expr()->eq('p.user', $qb->createNamedParameter($userId)))
+			->where($qb->expr()->eq('ui.user', $qb->createNamedParameter($userId)))
 			->andWhere($qb->expr()->eq('i.model', $qb->createNamedParameter($model)))
 			->andWhere($qb->expr()->eq('i.is_processed', $qb->createNamedParameter(True)))
 			->andWhere($qb->expr()->like($qb->func()->lower('p.name'), $qb->createParameter('query')));
@@ -236,14 +235,15 @@ class ImageMapper extends QBMapper {
 		return $this->findEntities($qb);
 	}
 
-	//TODO: CHECK THIS OUT
 	public function findFromPerson(string $userId, int $modelId, string $name, $offset = null, $limit = null): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('i.file')
 			->from($this->getTableName(), 'i')
+			->innerJoin('i', 'facerecog_user_images', 'ui', $qb->expr()->eq('ui.image', 'i.id'))
 			->innerJoin('i', 'facerecog_faces', 'f', $qb->expr()->eq('f.image', 'i.id'))
-			->innerJoin('f', 'facerecog_persons', 'p', $qb->expr()->eq('f.person', 'p.id'))
-			->where($qb->expr()->eq('p.user', $qb->createNamedParameter($userId)))
+			->innerJoin('f', 'facerecog_person_faces' ,'pf', $qb->expr()->eq('pf.face', 'f.id'))
+			->innerJoin('pf', 'facerecog_persons', 'p', $qb->expr()->eq('p.id', 'pf.person'))
+			->where($qb->expr()->eq('ui.user', $qb->createNamedParameter($userId)))
 			->andWhere($qb->expr()->eq('model', $qb->createNamedParameter($modelId)))
 			->andWhere($qb->expr()->eq('is_processed', $qb->createNamedParameter(True)))
 			->andWhere($qb->expr()->eq('p.name', $qb->createNamedParameter($name)))
@@ -255,16 +255,18 @@ class ImageMapper extends QBMapper {
 		return $this->findEntities($qb);
 	}
 
-	//TODO: CHECK THIS OUT
 	public function countFromPerson(string $userId, int $modelId, string $name): int {
 		$qb = $this->db->getQueryBuilder();
+
 		$qb->select($qb->func()->count('*'))
 			->from($this->getTableName(), 'i')
+			->innerJoin('i', 'facerecog_user_images', 'ui', $qb->expr()->eq('ui.image', 'i.id'))
 			->innerJoin('i', 'facerecog_faces', 'f', $qb->expr()->eq('f.image', 'i.id'))
-			->innerJoin('f', 'facerecog_persons', 'p', $qb->expr()->eq('f.person', 'p.id'))
-			->where($qb->expr()->eq('p.user', $qb->createNamedParameter($userId)))
-			->andWhere($qb->expr()->eq('model', $qb->createNamedParameter($modelId)))
-			->andWhere($qb->expr()->eq('is_processed', $qb->createNamedParameter(True)))
+			->innerJoin('f', 'facerecog_person_faces' ,'pf', $qb->expr()->eq('pf.face', 'f.id'))
+			->innerJoin('pf', 'facerecog_persons', 'p', $qb->expr()->eq('p.id', 'pf.person'))
+			->where($qb->expr()->eq('ui.user', $qb->createNamedParameter($userId)))
+			->andWhere($qb->expr()->eq('i.model', $qb->createNamedParameter($modelId)))
+			->andWhere($qb->expr()->eq('i.is_processed', $qb->createNamedParameter(True)))
 			->andWhere($qb->expr()->eq('p.name', $qb->createNamedParameter($name)));
 
 		$result = $qb->executeQuery();

@@ -39,7 +39,7 @@ class FaceMapper extends QBMapper {
 
 	public function find (int $faceId): ?Face {
 		$qb = $this->db->getQueryBuilder();
-		$qb->select('id', 'image', 'person', 'x', 'y', 'width', 'height', 'landmarks', 'descriptor', 'confidence')
+		$qb->select('id', 'image', 'x', 'y', 'width', 'height', 'landmarks', 'descriptor', 'confidence')
 			->from($this->getTableName(), 'f')
 			->where($qb->expr()->eq('id', $qb->createNamedParameter($faceId)));
 		try {
@@ -82,17 +82,23 @@ class FaceMapper extends QBMapper {
 	 */
 	public function findFromFile(string $userId, int $modelId, int $fileId): array {
 		$qb = $this->db->getQueryBuilder();
-		$qb->select('f.id', 'x', 'y', 'width', 'height', 'person', 'confidence', 'creation_time')
+		$qb->select('f.*', 'p.id as person')
 			->from($this->getTableName(), 'f')
 			->innerJoin('f', 'facerecog_images' ,'i', $qb->expr()->eq('f.image', 'i.id'))
-			->where($qb->expr()->eq('i.user', $qb->createParameter('user_id')))
-			->andWhere($qb->expr()->eq('model', $qb->createParameter('model_id')))
-			->andWhere($qb->expr()->eq('file', $qb->createParameter('file_id')))
+			->innerJoin('f', 'facerecog_user_images', 'ui', $qb->expr()->eq('ui.image', 'i.id'))
+			->innerJoin('f', 'facerecog_person_faces', 'pf', $qb->expr()->eq('pf.face', 'f.id'))
+			->innerJoin('f', 'facerecog_persons', 'p', $qb->expr()->eq('p.id', 'pf.person'))
+			->where($qb->expr()->eq('ui.user', $qb->createParameter('user_id')))
+			->andWhere($qb->expr()->eq('p.user', $qb->createParameter('user_id')))
+			->andWhere($qb->expr()->eq('i.model', $qb->createParameter('model_id')))
+			->andWhere($qb->expr()->eq('i.file', $qb->createParameter('file_id')))
 			->setParameter('user_id', $userId)
 			->setParameter('model_id', $modelId)
 			->setParameter('file_id', $fileId)
-			->orderBy('confidence', 'DESC');
-		return $this->findEntities($qb);
+			->orderBy('f.confidence', 'DESC');
+
+		$faces = $this->findEntities($qb);
+		return $faces;
 	}
 
 	/**
@@ -242,11 +248,12 @@ class FaceMapper extends QBMapper {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('f.id')
 			->from($this->getTableName(), 'f')
+			->innerJoin('f', 'facerecog_person_faces' ,'pf', $qb->expr()->eq('f.id', 'pf.face'))
+			->innerJoin('f', 'facerecog_persons' ,'p', $qb->expr()->eq('p.id', 'pf.person'))
 			->innerJoin('f', 'facerecog_images' ,'i', $qb->expr()->eq('f.image', 'i.id'))
-			->innerJoin('f', 'facerecog_persons' ,'p', $qb->expr()->eq('f.person', 'p.id'))
 			->where($qb->expr()->eq('p.user', $qb->createNamedParameter($userId)))
-			->andWhere($qb->expr()->eq('name', $qb->createNamedParameter($personId)))
-			->andWhere($qb->expr()->eq('model', $qb->createNamedParameter($model)))
+			->andWhere($qb->expr()->eq('p.name', $qb->createNamedParameter($personId)))
+			->andWhere($qb->expr()->eq('i.model', $qb->createNamedParameter($model)))
 			->orderBy('i.file', 'DESC');
 
 		$qb->setMaxResults($limit);
