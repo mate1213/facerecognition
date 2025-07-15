@@ -305,7 +305,7 @@ class PersonMapper extends QBMapper {
 						->set("is_valid", $qb->createParameter('is_valid'))
 						->where($qb->expr()->eq('id', $qb->createNamedParameter($newPerson)))
 						->setParameter('is_valid', true, IQueryBuilder::PARAM_BOOL)
-						->execute();
+						->executeStatement();
 					continue;
 				}
 
@@ -337,7 +337,7 @@ class PersonMapper extends QBMapper {
 					->set("is_valid", $qb->createParameter('is_valid'))
 					->where($qb->expr()->eq('id', $qb->createNamedParameter($newPerson)))
 					->setParameter('is_valid', true, IQueryBuilder::PARAM_BOOL)
-					->execute();
+					->executeStatement();
 			}
 
 			// Add new clusters
@@ -357,7 +357,7 @@ class PersonMapper extends QBMapper {
 						'is_valid' => $qb->createNamedParameter(true),
 						'last_generation_time' => $qb->createNamedParameter($currentDateTime, IQueryBuilder::PARAM_DATE),
 						'linked_user' => $qb->createNamedParameter(null)])
-					->execute();
+					->executeStatement();
 				$insertedPersonId = $qb->getLastInsertId();
 				foreach ($newFaces as $newFace) {
 					$this->updateFace($newFace, $oldPerson, $insertedPersonId);
@@ -467,13 +467,13 @@ class PersonMapper extends QBMapper {
 			$qb->update($this->getTableName())
 				->set('is_visible', $qb->createNamedParameter(1))
 				->where($qb->expr()->eq('id', $qb->createNamedParameter($personId)))
-				->execute();
+				->executeStatement();
 		} else {
 			$qb->update($this->getTableName())
 				->set('is_visible', $qb->createNamedParameter(0))
 				->set('name', $qb->createNamedParameter(null))
 				->where($qb->expr()->eq('id', $qb->createNamedParameter($personId)))
-				->execute();
+				->executeStatement();
 		}
 	}
 
