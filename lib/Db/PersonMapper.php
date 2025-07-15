@@ -210,13 +210,13 @@ class PersonMapper extends QBMapper {
 		if ($onlyInvalid) {
 			$qb = $qb
 				->andWhere($qb->expr()->eq('p.is_valid', $qb->createParameter('is_valid')))
-				->setParameter('p.is_valid', false, IQueryBuilder::PARAM_BOOL);
+				->setParameter('is_valid', false, IQueryBuilder::PARAM_BOOL);
 		}
 
 		$qb = $qb
 			->setParameter('user_id', $userId)
 			->setParameter('model_id', $modelId);
-
+			
 		$resultStatement = $qb->executeQuery();
 		$data = $resultStatement->fetch(\PDO::FETCH_NUM);
 		$resultStatement->closeCursor();
@@ -263,7 +263,6 @@ class PersonMapper extends QBMapper {
 	 *
 	 * @return void
 	 */
-	//TODO
 	public function mergeClusterToDatabase(string $userId, $currentClusters, $newClusters): void {
 		$this->db->beginTransaction();
 		$currentDateTime = new \DateTime();
@@ -285,8 +284,8 @@ class PersonMapper extends QBMapper {
 				$qb = $this->db->getQueryBuilder();
 				// todo: for extra safety, we should probably add here additional condition, where (user=$userId)
 				$qb
-					->delete($this->getTableName())
-					->where($qb->expr()->eq('id', $qb->createNamedParameter($oldPerson)))
+					->delete('facerecog_person_faces', 'f')
+					->where($qb->expr()->eq('person', $qb->createNamedParameter($oldPerson)))
 					->execute();
 			}
 
@@ -380,12 +379,11 @@ class PersonMapper extends QBMapper {
 	 *
 	 * @return void
 	 */
-	//TODO
 	public function deleteUserPersons(string $userId): void {
 		$qb = $this->db->getQueryBuilder();
 		$qb->delete($this->getTableName())
 			->where($qb->expr()->eq('user', $qb->createNamedParameter($userId)))
-			->execute();
+			->executeStatement();
 	}
 
 	/**
@@ -404,7 +402,8 @@ class PersonMapper extends QBMapper {
 
 		$persons = $this->findAll($userId, $modelId);
 		foreach ($persons as $person) {
-			$qb->setParameter('person', $person->getId())->execute();
+			$qb->setParameter('person', $person->getId())
+				->executeStatement();
 		}
 	}
 
@@ -415,7 +414,6 @@ class PersonMapper extends QBMapper {
 	 *
 	 * @return void
 	 */
-	//TODO
 	public function removeIfEmpty(int $personId): void {
 		$sub = $this->db->getQueryBuilder();
 		$sub->select(new Literal('1'));
@@ -428,7 +426,7 @@ class PersonMapper extends QBMapper {
 			->where($qb->expr()->eq('id', $qb->createParameter('person')))
 			->andWhere('NOT EXISTS (' . $sub->getSQL() . ')')
 			->setParameter('person', $personId)
-			->execute();
+			->executeStatement();
 	}
 
 	/**
@@ -436,20 +434,14 @@ class PersonMapper extends QBMapper {
 	 *
 	 * @param string $userId ID of user for which we are deleting orphaned persons
 	 */
-	//TODO
 	public function deleteOrphaned(string $userId): int {
-		$sub = $this->db->getQueryBuilder();
-		$sub->select(new Literal('1'));
-		$sub->from('facerecog_faces', 'f')
-			->innerJoin('f', 'facerecog_person_faces' ,'pf', $sub->expr()->eq('pf.face', 'f.id'))
-			->where($sub->expr()->eq('pf.person', 'p.id'));
 
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('p.id')
 			->from($this->getTableName(), 'p')
-			->where($qb->expr()->eq('p.user', $qb->createParameter('user')))
-			->andWhere('NOT EXISTS (' . $sub->getSQL() . ')')
-			->setParameter('user', $userId);
+			->innerJoin('p', 'facerecog_person_faces' ,'pf', $qb->expr()->eq('pf.person', 'p.id'))
+			->where($qb->expr()->eq('p.user', $qb->createNamedParameter($userId)))
+			->andWhere($qb->expr()->eq('pf.person', $qb->createNamedParameter(null)));
 		$orphanedPersons = $this->findEntities($qb);
 
 		$orphaned = 0;
@@ -457,7 +449,7 @@ class PersonMapper extends QBMapper {
 			$qb = $this->db->getQueryBuilder();
 			$orphaned += $qb->delete($this->getTableName())
 				->where($qb->expr()->eq('id', $qb->createNamedParameter($person->id)))
-				->execute();
+				->executeStatement();
 		}
 		return $orphaned;
 	}
@@ -495,7 +487,6 @@ class PersonMapper extends QBMapper {
 	 *
 	 * @return Person
 	 */
-	//TODO
 	public function detachFace(int $personId, int $faceId, $name = null): Person {
 		// Mark the face as non groupable.
 		$qb = $this->db->getQueryBuilder();
@@ -522,14 +513,16 @@ class PersonMapper extends QBMapper {
 			$oldPerson = $this->findEntity($qb);
 
 			$qb = $this->db->getQueryBuilder();
-			$qb->insert($this->getTableName())->values([
-				'user' => $qb->createNamedParameter($oldPerson->getUser()),
-				'name' => $qb->createNamedParameter($name),
-				'is_valid' => $qb->createNamedParameter(true),
-				'last_generation_time' => $qb->createNamedParameter(new \DateTime(), IQueryBuilder::PARAM_DATE),
-				'linked_user' => $qb->createNamedParameter(null),
-				'is_visible' => $qb->createNamedParameter(true)
-			])->executeStatement();
+			$qb->insert($this->getTableName())
+				->values([
+					'user' => $qb->createNamedParameter($oldPerson->getUser()),
+					'name' => $qb->createNamedParameter($name),
+					'is_valid' => $qb->createNamedParameter(true),
+					'last_generation_time' => $qb->createNamedParameter(new \DateTime(), IQueryBuilder::PARAM_DATE),
+					'linked_user' => $qb->createNamedParameter(null),
+					'is_visible' => $qb->createNamedParameter(true)
+				])
+				->executeStatement();
 
 			$newPersonId = $qb->getLastInsertId();
 			$this->updateFace($faceId, $qb->getLastInsertId(), $personId);

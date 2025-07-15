@@ -27,6 +27,7 @@ use OCP\IDBConnection;
 use OCP\IUser;
 
 use OCP\AppFramework\Db\QBMapper;
+use OCP\AppFramework\Db\Entity;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 
@@ -93,6 +94,71 @@ class ImageMapper extends QBMapper {
 		} catch (DoesNotExistException $e) {
 			return null;
 		}
+	}
+
+    #[\Override]
+	public function insert(Entity $image): Entity{
+		$qb = $this->db->getQueryBuilder();
+		$queryExec = $qb
+			->select(['id'])
+			->from($this->getTableName(), 'i')
+			->andWhere($qb->expr()->eq('i.file', $qb->createParameter('file')))
+			->setParameter('file', $image->getFile())
+			->executeQuery();
+		$row = $queryExec->fetch();
+		$queryExec->closeCursor();
+
+		$imageID = $row ? (int)$row['id'] : null;
+		if ($imageID === null)
+		{
+			$insertImage = $this->db->getQueryBuilder();
+			
+			$insertImage
+				->insert($this->getTableName())
+				->values( [
+					'file' => $insertImage->createNamedParameter($image->getFile()),
+					'model' => $insertImage->createNamedParameter($image->getModel()),
+				] )->executeStatement(); 
+			$imageID = $insertImage->getLastInsertId();
+		}
+		$insertUserImages = $this->db->getQueryBuilder();
+		$insertUserImages->insert('facerecog_user_images')
+				->values( [
+				'user' => $insertUserImages->createNamedParameter($image->getUser()),
+				'image' => $insertUserImages->createNamedParameter($imageID)
+			] )->executeStatement(); 
+		
+		$image->setId((int) $imageID);
+		return $image;
+	}
+
+    #[\Override]
+	public function update(Entity $entity): Entity {
+		// if entity wasn't changed it makes no sense to run a db query
+		$properties = $entity->getUpdatedFields();
+		// do not update the user field
+		unset($properties['user']);
+
+		return parent::update($entity);
+	}
+
+    #[\Override]
+	public function delete(Entity $entity): Entity {
+		$qb = $this->db->getQueryBuilder();
+
+		$idType = $this->getParameterTypeForProperty($entity, 'id');
+		$userType = $this->getParameterTypeForProperty($entity, 'user');
+
+		$qb->delete('facerecog_user_images')
+			->where(
+				$qb->expr()->eq('image', $qb->createNamedParameter($entity->getId(), $idType))
+			)
+			->andWhere(
+				$qb->expr()->eq('user', $qb->createNamedParameter($entity->getUser(), $userType))
+			);
+		$qb->executeStatement();
+
+		return parent::delete($entity);
 	}
 
 	public function imageExists(Image $image): ?int {
