@@ -277,16 +277,15 @@ class PersonMapper extends QBMapper {
 				// OK, we bumped into cluster that existed and now it does not exist.
 				// We need to remove all references to it and to delete it.
 				foreach ($oldFaces as $oldFace) {
-					$this->updateFace($oldFace, null);
+					$this->removeFaceFromPerson($oldFace, $oldPerson);
 				}
 
 				// todo: this is not very cool. What if user had associated linked user to this. And all lost?
 				$qb = $this->db->getQueryBuilder();
 				// todo: for extra safety, we should probably add here additional condition, where (user=$userId)
-				$qb
-					->delete('facerecog_person_faces', 'f')
+				$qb->delete('facerecog_person_faces')
 					->where($qb->expr()->eq('person', $qb->createNamedParameter($oldPerson)))
-					->execute();
+					->executeStatement();
 			}
 
 			// Modify existing clusters
@@ -322,13 +321,13 @@ class PersonMapper extends QBMapper {
 					// (if face is just moved to other cluster, do not reset to null, as some other
 					// pass for some other cluster will eventually update it to proper cluster)
 					if ($this->isFaceInClusters($oldFace, $newClusters) === false) {
-						$this->updateFace($oldFace, null);
+						$this->removeFaceFromPerson($oldFace, $oldPerson);
 					}
 				}
 
 				// Then set all new faces to belong to this cluster
 				foreach ($newFaces as $newFace) {
-					$this->updateFace($newFace, $newPerson);
+					$this->attachFaceToPerson($newFace, $newPerson);
 				}
 
 				// Set cluster as valid now
@@ -361,7 +360,7 @@ class PersonMapper extends QBMapper {
 					->execute();
 				$insertedPersonId = $qb->getLastInsertId();
 				foreach ($newFaces as $newFace) {
-					$this->updateFace($newFace, $insertedPersonId);
+					$this->updateFace($newFace, $oldPerson, $insertedPersonId);
 				}
 			}
 
@@ -525,7 +524,7 @@ class PersonMapper extends QBMapper {
 				->executeStatement();
 
 			$newPersonId = $qb->getLastInsertId();
-			$this->updateFace($faceId, $qb->getLastInsertId(), $personId);
+			$this->updateFace($faceId, $personId, $newPersonId);
 		}
 
 		$qb = $this->db->getQueryBuilder();
@@ -596,16 +595,59 @@ class PersonMapper extends QBMapper {
 	 * Updates one face with $faceId to database to person ID $personId.
 	 *
 	 * @param int $faceId ID of the face
-	 * @param int|null $personId ID of the person
+	 * @param int|null $oldPerson ID of the Old person if NULL new connection will be create
+	 * @param int|null $personId ID of the NEW person if NULL connection will be deleted 
 	 *
 	 * @return void
 	 */
-	private function updateFace(int $faceId, $personId, $oldPerson): void {
+	private function updateFace(int $faceId, $oldPerson, $personId): void {
+		
 		$qb = $this->db->getQueryBuilder();
 		$qb->update('facerecog_person_faces')
 			->set("person", $qb->createNamedParameter($personId))
 			->where($qb->expr()->eq('face', $qb->createNamedParameter($faceId)))
 			->andWhere($qb->expr()->eq('person', $qb->createNamedParameter($oldPerson)))
+			->executeStatement();
+	}
+
+	
+	/**
+	 * Remove one face with $faceId to database frpm person ID $personId.
+	 *
+	 * @param int $faceId ID of the face
+	 * @param int $personId ID of the Old person if NULL new connection will be create
+	 *
+	 * @return void
+	 */
+	private function removeFaceFromPerson(int $faceId, $personId): void {
+		
+		$qb = $this->db->getQueryBuilder();
+		$qb->delete('facerecog_person_faces')
+			->where($qb->expr()->eq('face', $qb->createNamedParameter($faceId)))
+			->andWhere($qb->expr()->eq('person', $qb->createNamedParameter($personId)))
+			->executeStatement();
+	}
+
+	/**
+	 * Attach one face with $faceId to person ID $personId.
+	 *
+	 * @param int $faceId ID of the face
+	 * @param int $personId ID of the Old person if NULL new connection will be create
+	 *
+	 * @return void
+	 */
+	private function attachFaceToPerson(int $faceId, int $personId): void {
+		
+		$qb = $this->db->getQueryBuilder();
+		$qb->insert('facerecog_person_faces')
+			->values([
+				'face' => '?',
+				'person'=>'?'
+			])
+			->setParameters([
+				$faceId,
+				$personId
+			])
 			->executeStatement();
 	}
 
