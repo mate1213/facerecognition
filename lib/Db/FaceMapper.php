@@ -394,7 +394,6 @@ class FaceMapper extends QBMapper {
 		$qb->insert($this->getTableName())
 			->values([
 				'image' => $qb->createNamedParameter($face->image),
-				'person' => $qb->createNamedParameter($face->person),
 				'x' => $qb->createNamedParameter($face->x),
 				'y' => $qb->createNamedParameter($face->y),
 				'width' => $qb->createNamedParameter($face->width),
@@ -408,6 +407,16 @@ class FaceMapper extends QBMapper {
 
 		$face->setId($qb->getLastInsertId());
 
+		if 	($face->person !== null)
+		{
+			$insertPaersonFaceConnection = $this->db->getQueryBuilder();
+			$insertPaersonFaceConnection->insert('facerecog_person_faces')
+				->values([
+					'face' => $insertPaersonFaceConnection->createNamedParameter($face->id),
+					'person' => $insertPaersonFaceConnection->createNamedParameter($face->person)
+				])
+				->executeStatement();
+		}
 		return $face;
 	}
 }

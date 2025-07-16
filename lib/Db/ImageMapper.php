@@ -218,7 +218,7 @@ class ImageMapper extends QBMapper {
 			->andWhere($qb->expr()->eq('is_processed', $qb->createParameter('is_processed')))
 			->setParameter('model', $model)
 			->setParameter('is_processed', True);
-		$resultStatement = $query->exexecuteQueryecute();
+		$resultStatement = $query->executeQuery();
 		$data = $resultStatement->fetch(\PDO::FETCH_NUM);
 		$resultStatement->closeCursor();
 

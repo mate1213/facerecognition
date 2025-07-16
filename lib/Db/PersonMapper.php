@@ -80,7 +80,7 @@ class PersonMapper extends QBMapper {
 	 * @return Person[]
 	 */
 	public function findUnassigned(string $userId, int $modelId): array {
-		return $this->GetPerson($userId, $modelId, true, true);
+		return $this->GetPersons($userId, $modelId, true, true);
 	}
 
 	/**
@@ -89,7 +89,7 @@ class PersonMapper extends QBMapper {
 	 * @return Person[]
 	 */
 	public function findIgnored(string $userId, int $modelId): array {
-		return $this->GetPerson($userId, $modelId, true, false);
+		return $this->GetPersons($userId, $modelId, true, false);
 	}
 
 	/**
@@ -129,6 +129,7 @@ class PersonMapper extends QBMapper {
 			->from($this->getTableName(), 'p')
 			->where('EXISTS (' . $sub->getSQL() . ')')
 			->andwhere($qb->expr()->isNotNull('p.name'))
+			->andwhere($sub->expr()->eq('p.user', $sub->createParameter('user_id')))
 			->setParameter('user_id', $userId)
 			->setParameter('model_id', $modelId);
 		return $this->findEntities($qb);
