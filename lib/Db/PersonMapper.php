@@ -264,6 +264,7 @@ class PersonMapper extends QBMapper {
 	 *
 	 * @return void
 	 */
+	// TODO make it more stable!!! LOGIC ISSUE!!!
 	public function mergeClusterToDatabase(string $userId, $currentClusters, $newClusters): void {
 		$this->db->beginTransaction();
 		$currentDateTime = new \DateTime();
