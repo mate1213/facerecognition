@@ -116,7 +116,7 @@ class FaceMapper extends QBMapper {
 			->from($this->getTableName(), 'f')
 			->innerJoin('f', 'facerecog_images' ,'i', $qb->expr()->eq('f.image', 'i.id'))
 			->innerJoin('f', 'facerecog_user_images', 'ui', $qb->expr()->eq('ui.image', 'i.id'))
-			->join('f', 'facerecog_person_faces', 'pf', $qb->expr()->eq('pf.face', 'f.id'))
+			->leftjoin('f', 'facerecog_person_faces', 'pf', $qb->expr()->eq('pf.face', 'f.id'))
 			->where($qb->expr()->eq('ui.user', $qb->createParameter('user')))
 			->andWhere($qb->expr()->eq('model', $qb->createParameter('model')));
 		if ($onlyWithoutPersons) {
@@ -176,14 +176,15 @@ class FaceMapper extends QBMapper {
 		return $this->findEntities($qb);
 	}
 
+	// MTODO: What Do I get if uprocessed faces are in the database (person -> null)
 	public function getGroupableFaces(string $userId, int $model, int $minSize, float $minConfidence): array {
 		$qb = $this->db->getQueryBuilder();
-		$qb->select('f.id', 'pf.person')
+		$qb->select('f.id', 'ui.person')
 			->from($this->getTableName(), 'f')
 			->innerJoin('f', 'facerecog_images' ,'i', $qb->expr()->eq('f.image', 'i.id'))
 			->innerJoin('f', 'facerecog_person_faces' ,'pf', $qb->expr()->eq('f.id', 'pf.face'))
 			->innerJoin('f', 'facerecog_persons' ,'p', $qb->expr()->eq('p.id', 'pf.person'))
-			->where($qb->expr()->eq('p.user', $qb->createParameter('user')))
+			->where($qb->expr()->eq('ui.user', $qb->createParameter('user')))
 			->andWhere($qb->expr()->eq('i.model', $qb->createParameter('model')))
 			->andWhere($qb->expr()->gte('f.width', $qb->createParameter('min_size')))
 			->andWhere($qb->expr()->gte('f.height', $qb->createParameter('min_size')))
@@ -203,6 +204,7 @@ class FaceMapper extends QBMapper {
 		return $rows;
 	}
 
+	// MTODO: What Do I get if uprocessed faces are in the database (person -> null)
 	public function getNonGroupableFaces(string $userId, int $model, int $minSize, float $minConfidence): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('f.id', 'pf.person')
@@ -360,7 +362,7 @@ class FaceMapper extends QBMapper {
 	 *
 	 * @return void
 	 */
-	// TODO: REWORK NEEDED
+	// MTODO: REWORK NEEDED
 	public function unsetPersonsRelationForUser(string $userId, int $model): void {
 		$sub = $this->db->getQueryBuilder();
 		$sub->select(new Literal('1'));
@@ -410,7 +412,7 @@ class FaceMapper extends QBMapper {
 			->executeStatement();
 
 		$face->setId($qb->getLastInsertId());
-		// TODO: Original implementation null was essential to cluster unassigned faces 
+		// MTODO: Original implementation null was essential to cluster unassigned faces 
 		if 	($face->person !== null)
 		{
 			$insertPaersonFaceConnection = $this->db->getQueryBuilder();
