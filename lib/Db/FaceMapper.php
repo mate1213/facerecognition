@@ -181,14 +181,15 @@ class FaceMapper extends QBMapper {
 		$qb->select('f.id', 'pf.person')
 			->from($this->getTableName(), 'f')
 			->innerJoin('f', 'facerecog_images' ,'i', $qb->expr()->eq('f.image', 'i.id'))
-			->innerJoin('f', 'facerecog_user_images' ,'ui', $qb->expr()->eq('i.id', 'ui.image'))
 			->innerJoin('f', 'facerecog_person_faces' ,'pf', $qb->expr()->eq('f.id', 'pf.face'))
-			->where($qb->expr()->eq('user', $qb->createParameter('user')))
-			->andWhere($qb->expr()->eq('model', $qb->createParameter('model')))
-			->andWhere($qb->expr()->gte('width', $qb->createParameter('min_size')))
-			->andWhere($qb->expr()->gte('height', $qb->createParameter('min_size')))
-			->andWhere($qb->expr()->gte('confidence', $qb->createParameter('min_confidence')))
-			->andWhere($qb->expr()->eq('is_groupable', $qb->createParameter('is_groupable')))
+			->innerJoin('f', 'facerecog_persons' ,'p', $qb->expr()->eq('p.id', 'pf.person'))
+			->where($qb->expr()->eq('p.user', $qb->createParameter('user')))
+			->andWhere($qb->expr()->eq('i.model', $qb->createParameter('model')))
+			->andWhere($qb->expr()->gte('f.width', $qb->createParameter('min_size')))
+			->andWhere($qb->expr()->gte('f.height', $qb->createParameter('min_size')))
+			->andWhere($qb->expr()->gte('f.confidence', $qb->createParameter('min_confidence')))
+			->andWhere($qb->expr()->eq('f.is_groupable', $qb->createParameter('is_groupable')))
+			->orderBy('f.id', 'ASC')
 			->setParameter('user', $userId)
 			->setParameter('model', $model)
 			->setParameter('min_size', $minSize)
@@ -207,16 +208,17 @@ class FaceMapper extends QBMapper {
 		$qb->select('f.id', 'pf.person')
 			->from($this->getTableName(), 'f')
 			->innerJoin('f', 'facerecog_images' ,'i', $qb->expr()->eq('f.image', 'i.id'))
-			->innerJoin('f', 'facerecog_user_images' ,'ui', $qb->expr()->eq('i.id', 'ui.image'))
 			->innerJoin('f', 'facerecog_person_faces' ,'pf', $qb->expr()->eq('f.id', 'pf.face'))
-			->where($qb->expr()->eq('user', $qb->createParameter('user')))
-			->andWhere($qb->expr()->eq('model', $qb->createParameter('model')))
+			->innerJoin('f', 'facerecog_persons' ,'p', $qb->expr()->eq('p.id', 'pf.person'))
+			->where($qb->expr()->eq('p.user', $qb->createParameter('user')))
+			->andWhere($qb->expr()->eq('i.model', $qb->createParameter('model')))
 			->andWhere($qb->expr()->orX(
-				$qb->expr()->lt('width', $qb->createParameter('min_size')),
-				$qb->expr()->lt('height', $qb->createParameter('min_size')),
-				$qb->expr()->lt('confidence', $qb->createParameter('min_confidence')),
-				$qb->expr()->eq('is_groupable', $qb->createParameter('is_groupable'))
+				$qb->expr()->lt('f.width', $qb->createParameter('min_size')),
+				$qb->expr()->lt('f.height', $qb->createParameter('min_size')),
+				$qb->expr()->lt('f.confidence', $qb->createParameter('min_confidence')),
+				$qb->expr()->eq('f.is_groupable', $qb->createParameter('is_groupable'))
 			))
+			->orderBy('f.id', 'ASC')
 			->setParameter('user', $userId)
 			->setParameter('model', $model)
 			->setParameter('min_size', $minSize)
@@ -239,10 +241,11 @@ class FaceMapper extends QBMapper {
 			->from($this->getTableName(), 'f')
 			->innerJoin('f', 'facerecog_images' ,'i', $qb->expr()->eq('f.image', 'i.id'))
 			->innerJoin('f', 'facerecog_person_faces' ,'pf', $qb->expr()->eq('f.id', 'pf.face'))
-			->innerJoin('f', 'facerecog_user_images', 'ui', $qb->expr()->eq('ui.image', 'i.id'))
-			->where($qb->expr()->eq('ui.user', $qb->createNamedParameter($userId)))
+			->innerJoin('f', 'facerecog_persons' ,'p', $qb->expr()->eq('p.id', 'pf.person'))
+			->where($qb->expr()->eq('p.user', $qb->createNamedParameter($userId)))
 			->andWhere($qb->expr()->eq('pf.person', $qb->createNamedParameter($clusterId)))
-			->andWhere($qb->expr()->eq('i.model', $qb->createNamedParameter($model)));
+			->andWhere($qb->expr()->eq('i.model', $qb->createNamedParameter($model)))
+			->orderBy('f.id', 'ASC');
 
 		$qb->setMaxResults($limit);
 		$qb->setFirstResult($offset);
@@ -357,6 +360,7 @@ class FaceMapper extends QBMapper {
 	 *
 	 * @return void
 	 */
+	// TODO: REWORK NEEDED
 	public function unsetPersonsRelationForUser(string $userId, int $model): void {
 		$sub = $this->db->getQueryBuilder();
 		$sub->select(new Literal('1'));
@@ -406,7 +410,7 @@ class FaceMapper extends QBMapper {
 			->executeStatement();
 
 		$face->setId($qb->getLastInsertId());
-
+		// TODO: Original implementation null was essential to cluster unassigned faces 
 		if 	($face->person !== null)
 		{
 			$insertPaersonFaceConnection = $this->db->getQueryBuilder();

@@ -210,15 +210,12 @@ class ImageMapper extends QBMapper {
 	}
 
 	public function avgProcessingDuration(int $model): int {
-		$qb = $this->db->getQueryBuilder();
-		$query = $qb
-			->select($qb->createFunction('AVG(' . $qb->getColumnName('processing_duration') . ')'))
-			->from($this->getTableName())
-			->where($qb->expr()->eq('model', $qb->createParameter('model')))
-			->andWhere($qb->expr()->eq('is_processed', $qb->createParameter('is_processed')))
-			->setParameter('model', $model)
-			->setParameter('is_processed', True);
-		$resultStatement = $query->executeQuery();
+		$sql = "SELECT AVG(`processing_duration`) FROM (select `processing_duration` FROM `oc_facerecog_images` WHERE (`model` = :model) AND (`is_processed` = :is_processed) ORDER BY `last_processed_time` DESC LIMIT 50) as t";
+		$params = [
+			'model' => $model,
+			'is_processed' => true
+		];
+		$resultStatement = $this->db->executeQuery($sql, $params);
 		$data = $resultStatement->fetch(\PDO::FETCH_NUM);
 		$resultStatement->closeCursor();
 
