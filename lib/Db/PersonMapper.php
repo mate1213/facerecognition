@@ -264,6 +264,7 @@ class PersonMapper extends QBMapper {
 	 *
 	 * @return void
 	 */
+	// MTODO Cleanup this mess
 	public function mergeClusterToDatabase(string $userId, $currentClusters, $newClusters): void {
 		$this->db->beginTransaction();
 		$currentDateTime = new \DateTime();
@@ -587,6 +588,7 @@ class PersonMapper extends QBMapper {
 			->innerJoin('f', 'facerecog_user_images' ,'ui', $sub->expr()->eq('ui.image', 'i.id'))
 			->innerJoin('f', 'facerecog_person_faces' ,'pf', $sub->expr()->eq('pf.face', 'f.id'))
 			->where($sub->expr()->eq('p.id', 'pf.person'))
+			->andWhere($sub->expr()->eq('p.user', $sub->createParameter('user_id')))
 			->andWhere($sub->expr()->eq('ui.user', $sub->createParameter('user_id')))
 			->andWhere($sub->expr()->eq('i.model', $sub->createParameter('model_id')));
 		return $sub;

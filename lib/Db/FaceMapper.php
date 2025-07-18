@@ -112,7 +112,7 @@ class FaceMapper extends QBMapper {
 	public function countFaces(string $userId, int $model, bool $onlyWithoutPersons=false): int {
 		$qb = $this->db->getQueryBuilder();
 		$qb = $qb
-			->select($qb->createFunction('COUNT(' . $qb->getColumnName('f.id') . ')'))
+			->select($qb->createFunction('COUNT(f.id)'))
 			->from($this->getTableName(), 'f')
 			->innerJoin('f', 'facerecog_images' ,'i', $qb->expr()->eq('f.image', 'i.id'))
 			->innerJoin('f', 'facerecog_user_images', 'ui', $qb->expr()->eq('ui.image', 'i.id'))
@@ -176,15 +176,18 @@ class FaceMapper extends QBMapper {
 		return $this->findEntities($qb);
 	}
 
-	// MTODO: What Do I get if uprocessed faces are in the database (person -> null)
 	public function getGroupableFaces(string $userId, int $model, int $minSize, float $minConfidence): array {
 		$qb = $this->db->getQueryBuilder();
-		$qb->select('f.id', 'ui.person')
+		$qb->select('f.id', 'pf.person')
 			->from($this->getTableName(), 'f')
 			->innerJoin('f', 'facerecog_images' ,'i', $qb->expr()->eq('f.image', 'i.id'))
-			->innerJoin('f', 'facerecog_person_faces' ,'pf', $qb->expr()->eq('f.id', 'pf.face'))
-			->innerJoin('f', 'facerecog_persons' ,'p', $qb->expr()->eq('p.id', 'pf.person'))
+			->innerJoin('f', 'facerecog_user_images' ,'ui', $qb->expr()->eq('ui.image', 'i.id'))
+			->leftJoin('f', 'facerecog_person_faces' ,'pf', $qb->expr()->eq('f.id', 'pf.face'))
+			->leftJoin('f', 'facerecog_persons' ,'p', $qb->expr()->eq('p.id', 'pf.person'))
 			->where($qb->expr()->eq('ui.user', $qb->createParameter('user')))
+			->andWhere($qb->expr()->orX(
+				$qb->expr()->eq('p.user', $qb->createParameter('user')),
+				$qb->expr()->isNull('p.user')))
 			->andWhere($qb->expr()->eq('i.model', $qb->createParameter('model')))
 			->andWhere($qb->expr()->gte('f.width', $qb->createParameter('min_size')))
 			->andWhere($qb->expr()->gte('f.height', $qb->createParameter('min_size')))
@@ -204,15 +207,18 @@ class FaceMapper extends QBMapper {
 		return $rows;
 	}
 
-	// MTODO: What Do I get if uprocessed faces are in the database (person -> null)
 	public function getNonGroupableFaces(string $userId, int $model, int $minSize, float $minConfidence): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('f.id', 'pf.person')
 			->from($this->getTableName(), 'f')
 			->innerJoin('f', 'facerecog_images' ,'i', $qb->expr()->eq('f.image', 'i.id'))
-			->innerJoin('f', 'facerecog_person_faces' ,'pf', $qb->expr()->eq('f.id', 'pf.face'))
-			->innerJoin('f', 'facerecog_persons' ,'p', $qb->expr()->eq('p.id', 'pf.person'))
-			->where($qb->expr()->eq('p.user', $qb->createParameter('user')))
+			->innerJoin('f', 'facerecog_user_images' ,'ui', $qb->expr()->eq('ui.image', 'i.id'))
+			->leftJoin('f', 'facerecog_person_faces' ,'pf', $qb->expr()->eq('f.id', 'pf.face'))
+			->leftJoin('f', 'facerecog_persons' ,'p', $qb->expr()->eq('p.id', 'pf.person'))
+			->where($qb->expr()->eq('ui.user', $qb->createParameter('user')))
+			->andWhere($qb->expr()->orX(
+				$qb->expr()->eq('p.user', $qb->createParameter('user')),
+				$qb->expr()->isNull('p.user')))
 			->andWhere($qb->expr()->eq('i.model', $qb->createParameter('model')))
 			->andWhere($qb->expr()->orX(
 				$qb->expr()->lt('f.width', $qb->createParameter('min_size')),
