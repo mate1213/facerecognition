@@ -323,12 +323,14 @@ class FaceMapper extends QBMapper {
 	 *
 	 * @return void
 	 */
+
 	public function deleteUserFaces(string $userId): void {
 		$sub = $this->db->getQueryBuilder();
 		$sub->select(new Literal('1'));
 		$sub->from('facerecog_images', 'i')
+			->innerJoin('i', 'facerecog_user_images' ,'ui', $sub->expr()->eq('ui.image', 'i.id'))
 			->where($sub->expr()->eq('i.id', '*PREFIX*' . $this->getTableName() .'.image'))
-			->andWhere($sub->expr()->eq('i.user', $sub->createParameter('user')));
+			->andWhere($sub->expr()->eq('ui.user', $sub->createParameter('user')));
 
 		$qb = $this->db->getQueryBuilder();
 		$qb->delete($this->getTableName())

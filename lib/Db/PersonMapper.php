@@ -270,26 +270,13 @@ class PersonMapper extends QBMapper {
 		$currentDateTime = new \DateTime();
 
 		try {
-			// Delete clusters that do not exist anymore
-			foreach($currentClusters as $oldPerson => $oldFaces) {
-				if (array_key_exists($oldPerson, $newClusters)) {
-					continue;
-				}
-
-				// OK, we bumped into cluster that existed and now it does not exist.
-				// We need to remove all references to it and to delete it.
+			// First remove all old faces from any user cluster (remove them from connection table)
+			foreach($currentClusters as $oldPerson=>$oldFaces) {
+				// First remove all old faces from any user cluster (remove them from connection table)
 				foreach ($oldFaces as $oldFace) {
 					$this->removeFaceFromPerson($oldFace, $oldPerson);
 				}
-
-				// todo: this is not very cool. What if user had associated linked user to this. And all lost?
-				$qb = $this->db->getQueryBuilder();
-				// todo: for extra safety, we should probably add here additional condition, where (user=$userId)
-				$qb->delete('facerecog_person_faces')
-					->where($qb->expr()->eq('person', $qb->createNamedParameter($oldPerson)))
-					->executeStatement();
 			}
-
 			// Modify existing clusters
 			foreach($newClusters as $newPerson=>$newFaces) {
 				if (!array_key_exists($newPerson, $currentClusters)) {
@@ -310,62 +297,50 @@ class PersonMapper extends QBMapper {
 						->executeStatement();
 					continue;
 				}
-
-				// OK, set of faces do differ. Now, we could potentially go into finer grain details
-				// and add/remove each individual face, but this seems too detailed. Enough is to
-				// reset all existing faces to null and to add new faces to new person. That should
-				// take care of both faces that are removed from cluster, as well as for newly added
-				// faces to this cluster.
-
-				// First remove all old faces from any cluster (reset them to null)
-				foreach ($oldFaces as $oldFace) {
-					// Reset face to null only if it wasn't moved to other cluster!
-					// (if face is just moved to other cluster, do not reset to null, as some other
-					// pass for some other cluster will eventually update it to proper cluster)
-					if ($this->isFaceInClusters($oldFace, $newClusters) === false) {
-						$this->removeFaceFromPerson($oldFace, $oldPerson);
-					}
-				}
-
-				// Then set all new faces to belong to this cluster
+				
 				foreach ($newFaces as $newFace) {
 					$this->attachFaceToPerson($newFace, $newPerson);
 				}
-
-				// Set cluster as valid now
-				$qb = $this->db->getQueryBuilder();
-				$qb
-					->update($this->getTableName())
-					->set("is_valid", $qb->createParameter('is_valid'))
-					->where($qb->expr()->eq('id', $qb->createNamedParameter($newPerson)))
-					->setParameter('is_valid', true, IQueryBuilder::PARAM_BOOL)
-					->executeStatement();
 			}
 
 			// Add new clusters
 			foreach($newClusters as $newPerson=>$newFaces) {
+				$insertedPersonId;
 				if (array_key_exists($newPerson, $currentClusters)) {
-					// This cluster already existed, nothing to add
-					// It was already processed during modify cluster operation
-					continue;
+					// This cluster already existed, update cluster
+
+					$oldFaces = $currentClusters[$newPerson];
+					if ($newFaces === $oldFaces) {
+						// Set cluster as valid now
+						$qb = $this->db->getQueryBuilder();
+						$qb
+							->update($this->getTableName())
+							->set("is_valid", $qb->createParameter('is_valid'))
+							->where($qb->expr()->eq('id', $qb->createNamedParameter($newPerson)))
+							->setParameter('is_valid', true, IQueryBuilder::PARAM_BOOL)
+							->executeStatement();
+					}
+					$insertedPersonId = $newPerson;
+				}
+				else{
+					// Create new cluster and add all faces to it
+					$qb = $this->db->getQueryBuilder();
+					$qb
+						->insert($this->getTableName())
+						->values([
+							'user' => $qb->createNamedParameter($userId),
+							'is_valid' => $qb->createNamedParameter(true),
+							'last_generation_time' => $qb->createNamedParameter($currentDateTime, IQueryBuilder::PARAM_DATE),
+							'linked_user' => $qb->createNamedParameter(null)])
+						->executeStatement();
+					$insertedPersonId = $qb->getLastInsertId();
 				}
 
-				// Create new cluster and add all faces to it
-				$qb = $this->db->getQueryBuilder();
-				$qb
-					->insert($this->getTableName())
-					->values([
-						'user' => $qb->createNamedParameter($userId),
-						'is_valid' => $qb->createNamedParameter(true),
-						'last_generation_time' => $qb->createNamedParameter($currentDateTime, IQueryBuilder::PARAM_DATE),
-						'linked_user' => $qb->createNamedParameter(null)])
-					->executeStatement();
-				$insertedPersonId = $qb->getLastInsertId();
+
 				foreach ($newFaces as $newFace) {
-					$this->updateFace($newFace, $oldPerson, $insertedPersonId);
+					$this->attachFaceToPerson($newFace, $insertedPersonId);
 				}
 			}
-
 			$this->db->commit();
 		} catch (\Exception $e) {
 			$this->db->rollBack();
@@ -382,9 +357,24 @@ class PersonMapper extends QBMapper {
 	 */
 	public function deleteUserPersons(string $userId): void {
 		$qb = $this->db->getQueryBuilder();
-		$qb->delete($this->getTableName())
+		$result = $qb->select('id')
+			->from($this->getTableName(), 'p')
 			->where($qb->expr()->eq('user', $qb->createNamedParameter($userId)))
-			->executeStatement();
+			->executeQuery();
+	
+		
+		while ($row = $result->fetch()) {
+			$delete = $this->db->getQueryBuilder();
+			$delete->delete('facerecog_person_faces')
+				->where($delete->expr()->eq('person', $delete->createNamedParameter($row['id'])))
+				->executeStatement();
+			$delPerson = $this->db->getQueryBuilder();
+			$delPerson->delete($this->getTableName())
+				->where($delPerson->expr()->eq('id', $delPerson->createNamedParameter($row['id'])))
+				->executeStatement();
+		}
+
+		$result->closeCursor();
 	}
 
 	/**
@@ -440,9 +430,9 @@ class PersonMapper extends QBMapper {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('p.id')
 			->from($this->getTableName(), 'p')
-			->innerJoin('p', 'facerecog_person_faces' ,'pf', $qb->expr()->eq('pf.person', 'p.id'))
+			->leftJoin('p', 'facerecog_person_faces' ,'pf', $qb->expr()->eq('pf.person', 'p.id'))
 			->where($qb->expr()->eq('p.user', $qb->createNamedParameter($userId)))
-			->andWhere($qb->expr()->eq('pf.person', $qb->createNamedParameter(null)));
+			->andWhere($qb->expr()->isNull('pf.person'));
 		$orphanedPersons = $this->findEntities($qb);
 
 		$orphaned = 0;
@@ -450,8 +440,34 @@ class PersonMapper extends QBMapper {
 			$qb = $this->db->getQueryBuilder();
 			$orphaned += $qb->delete($this->getTableName())
 				->where($qb->expr()->eq('id', $qb->createNamedParameter($person->id)))
+				->executeStatement()->closeCursor();;
+		}
+		return $orphaned;
+	}
+
+		/**
+	 * Deletes all persons that have no faces associated to them
+	 *
+	 * @param string $userId ID of user for which we are deleting orphaned persons
+	 */
+	public function deleteOrphanedConnections(string $userId): int {
+
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('pf.*')
+			->from('facerecog_person_faces','pf')
+			->leftJoin('pf', 'facerecog_persons', 'p', $qb->expr()->eq('pf.person', 'p.id'))
+			->where($qb->expr()->isNull('p.id'));
+		$result = $qb->executeQuery();
+
+		$orphaned = 0;
+		while ($row = $result->fetch()) {	
+			$qb = $this->db->getQueryBuilder();
+			$orphaned += $qb->delete('facerecog_person_faces')
+				->where($qb->expr()->eq('person', $qb->createNamedParameter($row['person'])))
+				->andWhere($qb->expr()->eq('face', $qb->createNamedParameter($row['face'])))
 				->executeStatement();
 		}
+		$result->closeCursor();
 		return $orphaned;
 	}
 
@@ -469,13 +485,13 @@ class PersonMapper extends QBMapper {
 			$qb->update($this->getTableName())
 				->set('is_visible', $qb->createNamedParameter(1))
 				->where($qb->expr()->eq('id', $qb->createNamedParameter($personId)))
-				->executeStatement();
+				->executeStatement()->closeCursor();;
 		} else {
 			$qb->update($this->getTableName())
 				->set('is_visible', $qb->createNamedParameter(0))
 				->set('name', $qb->createNamedParameter(null))
 				->where($qb->expr()->eq('id', $qb->createNamedParameter($personId)))
-				->executeStatement();
+				->executeStatement()->closeCursor();;
 		}
 	}
 
@@ -652,22 +668,5 @@ class PersonMapper extends QBMapper {
 				$personId
 			])
 			->executeStatement();
-	}
-
-	/**
-	 * Checks if face with a given ID is in any cluster.
-	 *
-	 * @param int $faceId ID of the face to check
-	 * @param array $cluster All clusters to check into
-	 *
-	 * @return bool True if face is found in any cluster, false otherwise.
-	 */
-	private function isFaceInClusters(int $faceId, array $clusters): bool {
-		foreach ($clusters as $_=>$faces) {
-			if (in_array($faceId, $faces)) {
-				return true;
-			}
-		}
-		return false;
 	}
 }
