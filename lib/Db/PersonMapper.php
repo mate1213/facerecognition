@@ -440,7 +440,7 @@ class PersonMapper extends QBMapper {
 			$qb = $this->db->getQueryBuilder();
 			$orphaned += $qb->delete($this->getTableName())
 				->where($qb->expr()->eq('id', $qb->createNamedParameter($person->id)))
-				->executeStatement()->closeCursor();;
+				->executeStatement();
 		}
 		return $orphaned;
 	}
@@ -485,13 +485,13 @@ class PersonMapper extends QBMapper {
 			$qb->update($this->getTableName())
 				->set('is_visible', $qb->createNamedParameter(1))
 				->where($qb->expr()->eq('id', $qb->createNamedParameter($personId)))
-				->executeStatement()->closeCursor();;
+				->executeStatement();
 		} else {
 			$qb->update($this->getTableName())
 				->set('is_visible', $qb->createNamedParameter(0))
 				->set('name', $qb->createNamedParameter(null))
 				->where($qb->expr()->eq('id', $qb->createNamedParameter($personId)))
-				->executeStatement()->closeCursor();;
+				->executeStatement();
 		}
 	}
 

@@ -436,6 +436,13 @@ class ImageMapper extends QBMapper {
 		$qb->delete('facerecog_user_images')
 			->where($qb->expr()->eq('user', $qb->createNamedParameter($userId)))
 			->executeStatement();
+
+		$qb = $this->db->getQueryBuilder();
+		$qb->delete('i')
+			->from($this->getTableName(), 'i')
+			->leftJoin('i', 'facerecog_user_images', 'ui', $qb->expr()->eq('ui.image', 'i.id'))
+			->where($qb->expr()->isNull('ui.user'));
+		$qb->executeStatement();
 	}
 
 	/**
