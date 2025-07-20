@@ -326,16 +326,14 @@ class FaceMapper extends QBMapper {
 
 	public function deleteUserFaces(string $userId): void {
 		$sub = $this->db->getQueryBuilder();
-		$sub->select(new Literal('1'));
-		$sub->from('facerecog_images', 'i')
-			->innerJoin('i', 'facerecog_user_images' ,'ui', $sub->expr()->eq('ui.image', 'i.id'))
-			->where($sub->expr()->eq('i.id', '*PREFIX*' . $this->getTableName() .'.image'))
-			->andWhere($sub->expr()->eq('ui.user', $sub->createParameter('user')));
-
+		$sub->select('f.id')
+			->from($this->getTableName(), 'f')
+			->leftJoin('f', 'facerecog_person_faces' ,'pf', $sub->expr()->eq('pf.face', 'f.id'))
+			->where($sub->expr()->isNull('pf.face'));
+			
 		$qb = $this->db->getQueryBuilder();
 		$qb->delete($this->getTableName())
-			->where('EXISTS (' . $sub->getSQL() . ')')
-			->setParameter('user', $userId)
+			->Where('id in (' . $sub->getSQL() . ')')
 			->executeStatement();
 	}
 
@@ -420,7 +418,6 @@ class FaceMapper extends QBMapper {
 			->executeStatement();
 
 		$face->setId($qb->getLastInsertId());
-		// MTODO: Original implementation null was essential to cluster unassigned faces 
 		if 	($face->person !== null)
 		{
 			$insertPaersonFaceConnection = $this->db->getQueryBuilder();

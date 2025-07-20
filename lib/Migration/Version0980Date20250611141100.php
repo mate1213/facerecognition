@@ -51,6 +51,7 @@ class Version0980Date20250611141100 extends SimpleMigrationStep {
 				'notnull' => true,
 				'length' => 64,
 			]);
+			$table->setPrimaryKey(['image', 'user']);
         }
 
         if (!$schema->hasTable('facerecog_person_faces')) {
@@ -63,6 +64,7 @@ class Version0980Date20250611141100 extends SimpleMigrationStep {
 				'notnull' => false,
 				'length' => 4,
 			]);
+			$table->setPrimaryKey(['person', 'face']);
         }
 		return $schema;
 	}

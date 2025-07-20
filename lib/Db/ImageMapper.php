@@ -210,7 +210,7 @@ class ImageMapper extends QBMapper {
 	}
 
 	public function avgProcessingDuration(int $model): int {
-		$sql = "SELECT AVG(`processing_duration`) FROM (select `processing_duration` FROM `oc_facerecog_images` WHERE (`model` = :model) AND (`is_processed` = :is_processed) ORDER BY `last_processed_time` DESC LIMIT 50) as t";
+		$sql = "SELECT AVG(`processing_duration`) FROM (select `processing_duration` FROM `*PREFIX*facerecog_images` WHERE (`model` = :model) AND (`is_processed` = :is_processed) ORDER BY `last_processed_time` DESC LIMIT 50) as t";
 		$params = [
 			'model' => $model,
 			'is_processed' => true
@@ -437,12 +437,17 @@ class ImageMapper extends QBMapper {
 			->where($qb->expr()->eq('user', $qb->createNamedParameter($userId)))
 			->executeStatement();
 
-		$qb = $this->db->getQueryBuilder();
-		$qb->delete('i')
+		$sub = $this->db->getQueryBuilder();
+		$sub->select('ui.image')
 			->from($this->getTableName(), 'i')
-			->leftJoin('i', 'facerecog_user_images', 'ui', $qb->expr()->eq('ui.image', 'i.id'))
-			->where($qb->expr()->isNull('ui.user'));
-		$qb->executeStatement();
+			->rightJoin('i', 'facerecog_user_images' ,'ui', $sub->expr()->eq('ui.image', 'i.id'))
+			->where($sub->expr()->isNull('i.id'))
+			->groupBy('ui.image');
+			
+		$qb = $this->db->getQueryBuilder();
+		$qb->delete('facerecog_user_images')
+			->Where('image in (' . $sub->getSQL() . ')')
+			->executeStatement();
 	}
 
 	/**

@@ -162,12 +162,15 @@ class PersonMapper extends QBMapper {
 	 * @param int|null $limit
 	 */
 	public function findPersonsLike(string $userId, int $modelId, string $name, ?int $offset = null, ?int $limit = null): array {
-		$sub = $this->subquery();
 
 		$qb = $this->db->getQueryBuilder();
 		$qb->selectDistinct('p.name')
 			->from($this->getTableName(), 'p')
-			->where('EXISTS (' . $sub->getSQL() . ')')
+			->innerJoin('p', 'facerecog_person_faces' ,'pf', $qb->expr()->eq('pf.face', 'p.id'))
+			->innerJoin('p', 'facerecog_faces' ,'f', $qb->expr()->eq('pf.face', 'f.id'))
+			->innerJoin('p', 'facerecog_images' ,'i', $qb->expr()->eq('f.image', 'i.id'))
+			->where($qb->expr()->eq('p.user', $qb->createParameter('user_id')))
+			->andWhere($qb->expr()->eq('i.model', $qb->createParameter('model_id')))
 			->andWhere($qb->expr()->eq('i.is_processed', $qb->createNamedParameter(True)))
 			->andWhere($qb->expr()->like($qb->func()->lower('p.name'), $qb->createParameter('query')));
 
@@ -177,6 +180,8 @@ class PersonMapper extends QBMapper {
 		$qb->setFirstResult($offset);
 		$qb->setMaxResults($limit);
 
+		$qb->setParameter('user_id', $userId)
+			->setParameter('model_id', $modelId);
 		return $this->findEntities($qb);
 	}
 
@@ -264,7 +269,6 @@ class PersonMapper extends QBMapper {
 	 *
 	 * @return void
 	 */
-	// MTODO Cleanup this mess
 	public function mergeClusterToDatabase(string $userId, $currentClusters, $newClusters): void {
 		$this->db->beginTransaction();
 		$currentDateTime = new \DateTime();
@@ -272,38 +276,15 @@ class PersonMapper extends QBMapper {
 		try {
 			// First remove all old faces from any user cluster (remove them from connection table)
 			foreach($currentClusters as $oldPerson=>$oldFaces) {
+				$this->removeAllFacesFromPerson($oldPerson);
 				// First remove all old faces from any user cluster (remove them from connection table)
 				foreach ($oldFaces as $oldFace) {
+
 					$this->removeFaceFromPerson($oldFace, $oldPerson);
 				}
 			}
-			// Modify existing clusters
-			foreach($newClusters as $newPerson=>$newFaces) {
-				if (!array_key_exists($newPerson, $currentClusters)) {
-					// This cluster didn't exist, there is nothing to modify
-					// It will be processed during cluster adding operation
-					continue;
-				}
 
-				$oldFaces = $currentClusters[$newPerson];
-				if ($newFaces === $oldFaces) {
-					// Set cluster as valid now
-					$qb = $this->db->getQueryBuilder();
-					$qb
-						->update($this->getTableName())
-						->set("is_valid", $qb->createParameter('is_valid'))
-						->where($qb->expr()->eq('id', $qb->createNamedParameter($newPerson)))
-						->setParameter('is_valid', true, IQueryBuilder::PARAM_BOOL)
-						->executeStatement();
-					continue;
-				}
-				
-				foreach ($newFaces as $newFace) {
-					$this->attachFaceToPerson($newFace, $newPerson);
-				}
-			}
-
-			// Add new clusters
+			// Add new clusters and update person if already existting
 			foreach($newClusters as $newPerson=>$newFaces) {
 				$insertedPersonId;
 				if (array_key_exists($newPerson, $currentClusters)) {
@@ -357,24 +338,21 @@ class PersonMapper extends QBMapper {
 	 */
 	public function deleteUserPersons(string $userId): void {
 		$qb = $this->db->getQueryBuilder();
-		$result = $qb->select('id')
-			->from($this->getTableName(), 'p')
+		$qb->delete($this->getTableName())
 			->where($qb->expr()->eq('user', $qb->createNamedParameter($userId)))
-			->executeQuery();
-	
-		
-		while ($row = $result->fetch()) {
-			$delete = $this->db->getQueryBuilder();
-			$delete->delete('facerecog_person_faces')
-				->where($delete->expr()->eq('person', $delete->createNamedParameter($row['id'])))
-				->executeStatement();
-			$delPerson = $this->db->getQueryBuilder();
-			$delPerson->delete($this->getTableName())
-				->where($delPerson->expr()->eq('id', $delPerson->createNamedParameter($row['id'])))
-				->executeStatement();
-		}
+			->executeStatement();
 
-		$result->closeCursor();
+		$sub = $this->db->getQueryBuilder();
+		$sub->select('pf.person')
+			->from($this->getTableName(), 'p')
+			->rightJoin('p', 'facerecog_person_faces' ,'pf', $sub->expr()->eq('pf.person', 'p.id'))
+			->where($sub->expr()->isNull('p.id'))
+			->groupBy('pf.person');
+			
+		$qb = $this->db->getQueryBuilder();
+		$qb->delete('facerecog_person_faces')
+			->Where('person in (' . $sub->getSQL() . ')')
+			->executeStatement();
 	}
 
 	/**
@@ -647,6 +625,20 @@ class PersonMapper extends QBMapper {
 			->executeStatement();
 	}
 
+	/**
+	 * Remove ALL faces from person ID $personId.
+	 *
+	 * @param int $personId ID of the Old person if NULL new connection will be create
+	 *
+	 * @return void
+	 */
+	private function removeAllFacesFromPerson(int $personId): void {
+		
+		$qb = $this->db->getQueryBuilder();
+		$qb->delete('facerecog_person_faces')
+			->where($qb->expr()->eq('person', $qb->createNamedParameter($personId)))
+			->executeStatement();
+	}
 	/**
 	 * Attach one face with $faceId to person ID $personId.
 	 *
