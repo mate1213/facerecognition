@@ -16,7 +16,7 @@ use OCP\IDBConnection;
 /**
  * MIIGRATE TO V0.9.8
  * Step1: Create new tables and duplicate data into those
- * - Step2: Deduplicate the images, and faces -> Remove original columns
+ * - Step2: Remove duplications from images, and faces -> Remove original columns
  */
 class Version0980Date20250611141102 extends SimpleMigrationStep {
 
