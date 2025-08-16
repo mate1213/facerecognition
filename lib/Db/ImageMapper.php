@@ -96,6 +96,22 @@ class ImageMapper extends QBMapper {
 		}
 	}
 
+	/**
+	 * @param int $imageId Id of Image Entry
+	 */
+	public function otherUserStilHasConnection(int $imageId): bool {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('COUNT(*)')
+			->from('facerecog_user_images')
+			->where($qb->expr()->eq('ui.image', $qb->createNamedParameter($userId)));
+
+		$resultStatement = $qb->executeQuery();
+		$data = $resultStatement->fetch(\PDO::FETCH_NUM);
+		$resultStatement->closeCursor();
+
+		return (int)$data[0] > 0;
+	}
+
     #[\Override]
 	public function insert(Entity $image): Entity{
 		$qb = $this->db->getQueryBuilder();
@@ -144,23 +160,27 @@ class ImageMapper extends QBMapper {
 
     #[\Override]
 	public function delete(Entity $entity): Entity {
-		$qb = $this->db->getQueryBuilder();
-
-		$idType = $this->getParameterTypeForProperty($entity, 'id');
-		$userType = $this->getParameterTypeForProperty($entity, 'user');
-
-		$qb->delete('facerecog_user_images')
-			->where(
-				$qb->expr()->eq('image', $qb->createNamedParameter($entity->getId(), $idType))
-			)
-			->andWhere(
-				$qb->expr()->eq('user', $qb->createNamedParameter($entity->getUser(), $userType))
-			);
-		$qb->executeStatement();
-
+		$this->removeUserImageConnection($entity);
 		return parent::delete($entity);
 	}
 
+	/**
+	 * @param Entity $entity image entity
+	 * @param string $userName name of user
+	 */
+	public function removeUserImageConnection(Entity $entity)
+	{
+		$qb = $this->db->getQueryBuilder();
+
+		$qb->delete('facerecog_user_images')
+			->where(
+				$qb->expr()->eq('image', $qb->createNamedParameter($entity->getId()))
+			)
+			->andWhere(
+				$qb->expr()->eq('user', $qb->createNamedParameter($entity->getUser()))
+			);
+		$qb->executeStatement();
+	}
 	public function imageExists(Image $image): ?int {
 		$qb = $this->db->getQueryBuilder();
 		$query = $qb

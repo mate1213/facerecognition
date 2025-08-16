@@ -171,11 +171,18 @@ class StaleImagesRemovalTask extends FaceRecognitionBackgroundTask {
 		$imagesRemoved = 0;
 		foreach ($allImages as $image) {
 			$file = $this->fileService->getFileById($image->getFile(), $userId);
+			$becameUnallowed = (!$this->fileService->isAllowedNode($file)) ||
+			    ($this->fileService->isUnderNoDetection($file));
 
 			// Delete image doesn't exist anymore in filesystem or it is under .nomedia
-			if (($file === null) || (!$this->fileService->isAllowedNode($file)) ||
-			    ($this->fileService->isUnderNoDetection($file))) {
-				$this->deleteImage($image, $userId);
+			if (($file === null) || $becameUnallowed) {
+				$isSharedFile = $this->imageMapper->otherUserStilHasConnection($image->id);
+				if ($isSharedFile){
+					$this->imageMapper->removeUserImageConnection($image);
+				}
+				else{
+					$this->deleteImage($image, $userId);
+				}
 				$imagesRemoved++;
 			}
 
@@ -195,7 +202,8 @@ class StaleImagesRemovalTask extends FaceRecognitionBackgroundTask {
 
 		return $imagesRemoved;
 	}
-
+	
+	//MTODO: make foreign keys in database therefore this can be simplified
 	private function deleteImage(Image $image, string $userId): void {
 		$this->logInfo(sprintf('Removing stale image %d for user %s', $image->id, $userId));
 		// note that invalidatePersons depends on existence of faces for a given image,
