@@ -35,7 +35,7 @@ use OCP\DB\QueryBuilder\IQueryBuilder;
 class PersonMapper extends QBMapper {
 
 	public function __construct(IDBConnection $db) {
-		parent::__construct($db, 'facerecog_persons', '\OCA\FaceRecognition\Db\Person');
+		parent::__construct($db, 'facerecog_clusters', '\OCA\FaceRecognition\Db\Person');
 	}
 
 	/**
@@ -101,7 +101,7 @@ class PersonMapper extends QBMapper {
 		$sub = $this->db->getQueryBuilder();
 		$sub->select(new Literal('1'))
 			->from('facerecog_faces', 'f')
-			->innerJoin('f', 'facerecog_images' ,'i', $sub->expr()->eq('f.image', 'i.id'))
+			->innerJoin('f', 'facerecog_images' ,'i', $sub->expr()->eq('f.image_id', 'i.id'))
 			->where($sub->expr()->eq('p.id', 'f.person'))
 			->andWhere($sub->expr()->eq('i.user', $sub->createParameter('user_id')))
 			->andWhere($sub->expr()->eq('i.model', $sub->createParameter('model_id')));
@@ -166,9 +166,9 @@ class PersonMapper extends QBMapper {
 		$qb = $this->db->getQueryBuilder();
 		$qb->selectDistinct('p.name')
 			->from($this->getTableName(), 'p')
-			->innerJoin('p', 'facerecog_person_faces' ,'pf', $qb->expr()->eq('pf.face', 'p.id'))
-			->innerJoin('p', 'facerecog_faces' ,'f', $qb->expr()->eq('pf.face', 'f.id'))
-			->innerJoin('p', 'facerecog_images' ,'i', $qb->expr()->eq('f.image', 'i.id'))
+			->innerJoin('p', 'facerecog_cluster_faces' ,'cf', $qb->expr()->eq('cf.face_id', 'p.id'))
+			->innerJoin('p', 'facerecog_faces' ,'f', $qb->expr()->eq('cf.face_id', 'f.id'))
+			->innerJoin('p', 'facerecog_images' ,'i', $qb->expr()->eq('f.image_id', 'i.id'))
 			->where($qb->expr()->eq('p.user', $qb->createParameter('user_id')))
 			->andWhere($qb->expr()->eq('i.model', $qb->createParameter('model_id')))
 			->andWhere($qb->expr()->eq('i.is_processed', $qb->createNamedParameter(True)))
@@ -242,9 +242,9 @@ class PersonMapper extends QBMapper {
 		$sub = $this->db->getQueryBuilder();
 		$sub->select(new Literal('1'))
 			->from('facerecog_images', 'i')
-			->innerJoin('i', 'facerecog_faces' ,'f', $sub->expr()->eq('i.id', 'f.image'))
-			->innerJoin('f', 'facerecog_person_faces' ,'pf', $sub->expr()->eq('pf.face', 'f.id'))
-			->where($sub->expr()->eq('p.id', 'pf.person'))
+			->innerJoin('i', 'facerecog_faces' ,'f', $sub->expr()->eq('i.id', 'f.image_id'))
+			->innerJoin('f', 'facerecog_cluster_faces' ,'cf', $sub->expr()->eq('cf.face_id', 'f.id'))
+			->where($sub->expr()->eq('p.id', 'cf.cluster_id'))
 			->andWhere($sub->expr()->eq('i.id', $sub->createParameter('image_id')));
 
 		$qb = $this->db->getQueryBuilder();
@@ -337,22 +337,13 @@ class PersonMapper extends QBMapper {
 	 * @return void
 	 */
 	public function deleteUserPersons(string $userId): void {
+		//Delete Users Person
 		$qb = $this->db->getQueryBuilder();
 		$qb->delete($this->getTableName())
 			->where($qb->expr()->eq('user', $qb->createNamedParameter($userId)))
 			->executeStatement();
 
-		$sub = $this->db->getQueryBuilder();
-		$sub->select('pf.person')
-			->from($this->getTableName(), 'p')
-			->rightJoin('p', 'facerecog_person_faces' ,'pf', $sub->expr()->eq('pf.person', 'p.id'))
-			->where($sub->expr()->isNull('p.id'))
-			->groupBy('pf.person');
-			
-		$qb = $this->db->getQueryBuilder();
-		$qb->delete('facerecog_person_faces')
-			->Where('person in (' . $sub->getSQL() . ')')
-			->executeStatement();
+		//All PersonFace connection should be deleted by foreign key
 	}
 
 	/**
@@ -383,18 +374,18 @@ class PersonMapper extends QBMapper {
 	 *
 	 * @return void
 	 */
-	public function removeIfEmpty(int $personId): void {
+	public function removeIfEmpty(int $clusterId): void {
 		$sub = $this->db->getQueryBuilder();
 		$sub->select(new Literal('1'));
 		$sub->from('facerecog_faces', 'f')
-			->innerJoin('f', 'facerecog_person_faces' ,'pf', $sub->expr()->eq('pf.face', 'f.id'))
-			->where($sub->expr()->eq('pf.person', $sub->createParameter('person')));
+			->innerJoin('f', 'facerecog_cluster_faces' ,'cf', $sub->expr()->eq('cf.face_id', 'f.id'))
+			->where($sub->expr()->eq('cf.cluster_id', $sub->createParameter('cluster_id')));
 
 		$qb = $this->db->getQueryBuilder();
 		$qb->delete($this->getTableName())
-			->where($qb->expr()->eq('id', $qb->createParameter('person')))
+			->where($qb->expr()->eq('id', $qb->createParameter('cluster_id')))
 			->andWhere('NOT EXISTS (' . $sub->getSQL() . ')')
-			->setParameter('person', $personId)
+			->setParameter('cluster_id', $clusterId)
 			->executeStatement();
 	}
 
@@ -408,9 +399,9 @@ class PersonMapper extends QBMapper {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('p.id')
 			->from($this->getTableName(), 'p')
-			->leftJoin('p', 'facerecog_person_faces' ,'pf', $qb->expr()->eq('pf.person', 'p.id'))
+			->leftJoin('p', 'facerecog_cluster_faces' ,'cf', $qb->expr()->eq('cf.cluster_id', 'p.id'))
 			->where($qb->expr()->eq('p.user', $qb->createNamedParameter($userId)))
-			->andWhere($qb->expr()->isNull('pf.person'));
+			->andWhere($qb->expr()->isNull('cf.cluster_id'));
 		$orphanedPersons = $this->findEntities($qb);
 
 		$orphaned = 0;
@@ -432,17 +423,17 @@ class PersonMapper extends QBMapper {
 
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('pf.*')
-			->from('facerecog_person_faces','pf')
-			->leftJoin('pf', 'facerecog_persons', 'p', $qb->expr()->eq('pf.person', 'p.id'))
-			->where($qb->expr()->isNull('p.id'));
+			->from('facerecog_cluster_faces','cf')
+			->leftJoin('pf', 'facerecog_clusters', 'c', $qb->expr()->eq('cf.cluster_id', 'c.id'))
+			->where($qb->expr()->isNull('c.id'));
 		$result = $qb->executeQuery();
 
 		$orphaned = 0;
 		while ($row = $result->fetch()) {	
 			$qb = $this->db->getQueryBuilder();
-			$orphaned += $qb->delete('facerecog_person_faces')
-				->where($qb->expr()->eq('person', $qb->createNamedParameter($row['person'])))
-				->andWhere($qb->expr()->eq('face', $qb->createNamedParameter($row['face'])))
+			$orphaned += $qb->delete('facerecog_cluster_faces')
+				->where($qb->expr()->eq('cluster_id', $qb->createNamedParameter($row['cluster_id'])))
+				->andWhere($qb->expr()->eq('face_id', $qb->createNamedParameter($row['face_id'])))
 				->executeStatement();
 		}
 		$result->closeCursor();
@@ -530,12 +521,12 @@ class PersonMapper extends QBMapper {
 		return $this->findEntity($qb);
 	}
 
-	public function countClusterFaces(int $personId): int {
+	public function countClusterFaces(int $clusterId): int {
 		$qb = $this->db->getQueryBuilder();
 		$resultStatement = $qb
 			->select($qb->func()->count('*'))
-			->from('facerecog_person_faces')
-			->where($qb->expr()->eq('person', $qb->createNamedParameter($personId)))
+			->from('facerecog_cluster_faces')
+			->where($qb->expr()->eq('cluster_id', $qb->createNamedParameter($clusterId)))
 			->executeQuery();
 
 		$data = $resultStatement->fetch(\PDO::FETCH_NUM);
@@ -574,15 +565,15 @@ class PersonMapper extends QBMapper {
 	 * return subquery with literal 1 
 	 * @return IQueryBuilder
 	 */
-	protected function subquery(): IQueryBuilder {
+	protected function subquery(string $origTable): IQueryBuilder {
 		$sub = $this->db->getQueryBuilder();
 		$sub->select(new Literal('1'))
 			->from('facerecog_faces', 'f')
-			->innerJoin('f', 'facerecog_images' ,'i', $sub->expr()->eq('f.image', 'i.id'))
-			->innerJoin('f', 'facerecog_user_images' ,'ui', $sub->expr()->eq('ui.image', 'i.id'))
-			->innerJoin('f', 'facerecog_person_faces' ,'pf', $sub->expr()->eq('pf.face', 'f.id'))
-			->where($sub->expr()->eq('p.id', 'pf.person'))
-			->andWhere($sub->expr()->eq('p.user', $sub->createParameter('user_id')))
+			->innerJoin('f', 'facerecog_images' ,'i', $sub->expr()->eq('f.image_id', 'i.id'))
+			->innerJoin('f', 'facerecog_user_images' ,'ui', $sub->expr()->eq('ui.image_id', 'i.id'))
+			->innerJoin('f', 'facerecog_cluster_faces' ,'cf', $sub->expr()->eq('cf.face_id', 'f.id'))
+			->where($sub->expr()->eq($origTable.'.id', 'cf.cluster_id'))
+			->andWhere($sub->expr()->eq($origTable.'.user', $sub->createParameter('user_id')))
 			->andWhere($sub->expr()->eq('ui.user', $sub->createParameter('user_id')))
 			->andWhere($sub->expr()->eq('i.model', $sub->createParameter('model_id')));
 		return $sub;
@@ -597,13 +588,13 @@ class PersonMapper extends QBMapper {
 	 *
 	 * @return void
 	 */
-	private function updateFace(int $faceId, $oldPerson, $personId): void {
+	private function updateFace(int $faceId, $oldCluster, $clusterId): void {
 		
 		$qb = $this->db->getQueryBuilder();
-		$qb->update('facerecog_person_faces')
-			->set("person", $qb->createNamedParameter($personId))
-			->where($qb->expr()->eq('face', $qb->createNamedParameter($faceId)))
-			->andWhere($qb->expr()->eq('person', $qb->createNamedParameter($oldPerson)))
+		$qb->update('facerecog_cluster_faces')
+			->set("cluster_id", $qb->createNamedParameter($clusterId))
+			->where($qb->expr()->eq('face_id', $qb->createNamedParameter($faceId)))
+			->andWhere($qb->expr()->eq('cluster_id', $qb->createNamedParameter($oldCluster)))
 			->executeStatement();
 	}
 
@@ -616,48 +607,49 @@ class PersonMapper extends QBMapper {
 	 *
 	 * @return void
 	 */
-	private function removeFaceFromPerson(int $faceId, $personId): void {
+	private function removeFaceFromPerson(int $faceId, $clusterId): void {
 		
 		$qb = $this->db->getQueryBuilder();
-		$qb->delete('facerecog_person_faces')
-			->where($qb->expr()->eq('face', $qb->createNamedParameter($faceId)))
-			->andWhere($qb->expr()->eq('person', $qb->createNamedParameter($personId)))
+		$qb->delete('facerecog_cluster_faces')
+			->where($qb->expr()->eq('face_id', $qb->createNamedParameter($faceId)))
+			->andWhere($qb->expr()->eq('cluster_id', $qb->createNamedParameter($clusterId)))
 			->executeStatement();
 	}
 
 	/**
-	 * Remove ALL faces from person ID $personId.
+	 * Remove ALL faces from person ID $clusterId.
 	 *
-	 * @param int $personId ID of the Old person if NULL new connection will be create
+	 * @param int $clusterId ID of the Old person if NULL new connection will be create
 	 *
 	 * @return void
 	 */
-	private function removeAllFacesFromPerson(int $personId): void {
+	private function removeAllFacesFromPerson(int $clusterId): void {
 		
 		$qb = $this->db->getQueryBuilder();
-		$qb->delete('facerecog_person_faces')
-			->where($qb->expr()->eq('person', $qb->createNamedParameter($personId)))
+		$qb->delete('facerecog_cluster_faces')
+			->where($qb->expr()->eq('cluster_id', $qb->createNamedParameter($clusterId)))
 			->executeStatement();
 	}
+
 	/**
-	 * Attach one face with $faceId to person ID $personId.
+	 * Attach one face with $faceId to person ID $clusterId.
 	 *
 	 * @param int $faceId ID of the face
-	 * @param int $personId ID of the Old person if NULL new connection will be create
+	 * @param int $clusterId ID of the Old cluster if NULL new connection will be create
 	 *
 	 * @return void
 	 */
-	private function attachFaceToPerson(int $faceId, int $personId): void {
+	private function attachFaceToPerson(int $faceId, int $clusterId): void {
 		
 		$qb = $this->db->getQueryBuilder();
-		$qb->insert('facerecog_person_faces')
+		$qb->insert('facerecog_cluster_faces')
 			->values([
-				'face' => '?',
-				'person'=>'?'
+				'face_id' => '?',
+				'cluster_id'=>'?'
 			])
 			->setParameters([
 				$faceId,
-				$personId
+				$clusterId
 			])
 			->executeStatement();
 	}

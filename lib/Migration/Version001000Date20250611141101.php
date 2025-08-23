@@ -18,7 +18,7 @@ use OCP\IDBConnection;
  * Step1: Create new tables and duplicate data into those
  * - Step2: Remove duplications from images, and faces -> Remove original columns
  */
-class Version0980Date20250611141102 extends SimpleMigrationStep {
+class Version001000Date20250611141101 extends SimpleMigrationStep {
 
 	private $connection;
 
@@ -32,6 +32,10 @@ class Version0980Date20250611141102 extends SimpleMigrationStep {
 	 * @param array $options
 	 */
 	public function preSchemaChange(IOutput $output, Closure $schemaClosure, array $options): void {
+		$output->warning("Starting deduplication of images and faces");
+		$output->warning("This might take a while depending on how many images you have");
+		$output->warning("Please be patient and do not stop the process");
+		$deduplicatedFiles = 0;
 		//Get images which are duplicated
 		$resultDuplicatedImages = $this->getDuplicatedFiles();
 		while ($row = $resultDuplicatedImages->fetch()) {
@@ -56,8 +60,11 @@ class Version0980Date20250611141102 extends SimpleMigrationStep {
 				}
 			}
 			$resultImageEntries->closeCursor();
+			$deduplicatedFiles++;
+			$output->debug("Deduplicated file ID: ".$ncFileId." and model: ".$modelNumber);
 		}
 		$resultDuplicatedImages->closeCursor();
+		$output->warning("Deduplication done. Total deduplicated files: ".$deduplicatedFiles);
 	}
 
 	/**
@@ -67,6 +74,7 @@ class Version0980Date20250611141102 extends SimpleMigrationStep {
 	 * @return null|ISchemaWrapper
 	 */
 	public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper {
+		$output->warning("Removing old columns from images, faces and persons tables");
 		$schema = $schemaClosure();
 
 		if ($schema->hasTable('facerecog_images')) {
@@ -80,6 +88,12 @@ class Version0980Date20250611141102 extends SimpleMigrationStep {
 				$table->dropColumn('person');
         }
 		
+		if ($schema->hasTable('facerecog_clusters')) {
+			$table = $schema->getTable('facerecog_clusters');
+			if ($table->hasColumn('name'))
+				$table->dropColumn('name');
+        }
+
 		return $schema;
 	}
 
@@ -100,8 +114,8 @@ class Version0980Date20250611141102 extends SimpleMigrationStep {
 		$builder =$this->connection->getQueryBuilder();
 		$builder
 			->update('facerecog_user_images')
-			->set('image', $builder->createNamedParameter($flaggedForKEEP))
-			->Where($builder->expr()->eq('image', $builder->createNamedParameter($imageId)))
+			->set('image_id', $builder->createNamedParameter($flaggedForKEEP))
+			->Where($builder->expr()->eq('image_id', $builder->createNamedParameter($imageId)))
 			->executeStatement();
 	}
 
@@ -170,7 +184,7 @@ class Version0980Date20250611141102 extends SimpleMigrationStep {
 		return $builder
 			->select('*')
 			->from('facerecog_faces')
-			->Where($builder->expr()->eq('image', $builder->createNamedParameter($imageId)))
+			->Where($builder->expr()->eq('image_id', $builder->createNamedParameter($imageId)))
 			->executeQuery();
 	}
 
@@ -183,7 +197,7 @@ class Version0980Date20250611141102 extends SimpleMigrationStep {
 		$builder = $this->connection->getQueryBuilder();
 		$builder
 			->update('facerecog_faces')
-			->set('image', $builder->createNamedParameter($newImageId))
+			->set('image_id', $builder->createNamedParameter($newImageId))
 			->Where($builder->expr()->eq('id', $builder->createNamedParameter($faceId)))
 			->executeStatement();
 	}
@@ -196,9 +210,9 @@ class Version0980Date20250611141102 extends SimpleMigrationStep {
 	protected function updatePersonAndDeleteFace($oldFaceId, $newFaceId): void {
 		$builder = $this->connection->getQueryBuilder();
 		$builder
-			->update('facerecog_person_faces')
-			->set('face', $builder->createNamedParameter($newFaceId))
-			->Where($builder->expr()->eq('face', $builder->createNamedParameter($oldFaceId)))
+			->update('facerecog_cluster_faces')
+			->set('face_id', $builder->createNamedParameter($newFaceId))
+			->Where($builder->expr()->eq('face_id', $builder->createNamedParameter($oldFaceId)))
 			->executeStatement();
 		
 		$delete = $this->connection->getQueryBuilder();
