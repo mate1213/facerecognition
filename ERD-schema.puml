@@ -2,7 +2,6 @@
 
 entity facerecog_clusters {
   *id : int <<PK>>
-  user : string
   is_valid : bool
   last_generation_time : datetime
   linked_user : string
@@ -19,10 +18,20 @@ entity facerecog_images {
 
   entity facerecog_clusters {
     *id : int <<PK>>
-    user : string
     is_valid : bool
     last_generation_time : datetime
     linked_user : string
+  }
+
+  entity facerecog_persons {
+    *id : int <<PK>>
+    name : string <<UQ>>
+    is_shared : bool
+  }
+
+  entity facerecog_person_clusters {
+    *cluster_id : int <<PK,FK>>
+    *person_id : int <<PK,FK>>
   }
 
   entity facerecog_images {
@@ -33,6 +42,11 @@ entity facerecog_images {
     error : string
     last_processed_time : datetime
     processing_duration : int
+  }
+
+  entity facerecog_user_images {
+    *image_id : int <<PK,FK>>
+    *user : string <<PK>>
   }
 
   entity facerecog_faces {
@@ -48,37 +62,22 @@ entity facerecog_images {
     height : int
   }
 
+  entity facerecog_cluster_faces {
+    *cluster_id : int <<PK,FK>>
+    *face_id : int <<PK,FK>>
+  }
+
   entity facerecog_models {
     *id : int <<PK>>
     name : string
     description : string
   }
 
-  entity facerecog_user_images {
-    *image_id : int <<PK,FK>>
-    *user : string <<PK>>
-  }
-
-  entity facerecog_cluster_faces {
-    *cluster_id : int <<PK,FK>>
-    *face_id : int <<PK,FK>>
-  }
-
-  entity facerecog_personNames {
-    *id : int <<PK>>
-    personName : string <<UQ>>
-  }
-
-  entity facerecog_name_persons {
-    *cluster_id : int <<PK,FK>>
-    *personName_id : int <<PK,FK>>
-  }
-
-  facerecog_faces::image_id -- facerecog_images::id
+  facerecog_person_clusters::cluster_id -- facerecog_clusters::id
+  facerecog_person_clusters::person_id -- facerecog_persons::id
   facerecog_user_images::image_id -- facerecog_images::id
+  facerecog_faces::image_id -- facerecog_images::id
   facerecog_cluster_faces::cluster_id -- facerecog_clusters::id
   facerecog_cluster_faces::face_id -- facerecog_faces::id
-  facerecog_name_persons::cluster_id -- facerecog_clusters::id
-  facerecog_name_persons::personName_id -- facerecog_personNames::id
 
   @enduml

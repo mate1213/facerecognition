@@ -39,14 +39,15 @@ class Version001000Date20250611141100 extends SimpleMigrationStep {
 	 * @param array $options
 	 */
 	public function preSchemaChange(IOutput $output, Closure $schemaClosure, array $options): void {
+		$schema = $schemaClosure();
+
 		//Start with table and column renaming
 		if ($schema->hasTable('facerecog_faces')) {
-			$table = $schema->getTable('facerecog_faces');
-		    $table->renameColumn('image', 'image_id');
+			$this->connection->executeStatement('ALTER TABLE `*PREFIX*facerecog_faces` RENAME COLUMN `image` TO `image_id`;');
         }
 		
 		if ($schema->hasTable('facerecog_persons')) {
-			$schema->renameTable('facerecog_persons', 'facerecog_clusters');
+			$this->connection->executeStatement('ALTER TABLE `*PREFIX*facerecog_persons` RENAME TO `*PREFIX*facerecog_clusters`;');
 		}
 	}
 
@@ -56,23 +57,20 @@ class Version001000Date20250611141100 extends SimpleMigrationStep {
 	 * @param array $options
 	 * @return null|ISchemaWrapper
 	 */
-	//MTODO: Start with table and column renaming
 	public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper {
 		$output->warning("DO NOT STOP the migration process!");
 		$output->warning("This might take a while depending on how many images you have");
 		$schema = $schemaClosure();
-
-
 
 		$faceTable = $schema->getTable('facerecog_faces');
 		$faceIdOptions = $faceTable->getColumn('id')->toArray();
 		unset($faceIdOptions['name']);
 		unset($faceIdOptions['autoincrement']);
 
-		$personsTable = $schema->getTable('facerecog_clusters');
-		$personsIdOptions = $personsTable->getColumn('id')->toArray();
-		unset($personsIdOptions['name']);
-		unset($personsIdOptions['autoincrement']);
+		$clusterTable = $schema->getTable('facerecog_clusters');
+		$clustersIdOptions = $clusterTable->getColumn('id')->toArray();
+		unset($clustersIdOptions['name']);
+		unset($clustersIdOptions['autoincrement']);
 
 		$imageTable = $schema->getTable('facerecog_images');
 		$imageIdOptions = $imageTable->getColumn('id')->toArray();
@@ -102,7 +100,7 @@ class Version001000Date20250611141100 extends SimpleMigrationStep {
 
         if (!$schema->hasTable('facerecog_cluster_faces')) {
 			$table = $schema->createTable('facerecog_cluster_faces');
-			$table->addColumn('cluster_id', $personsIdOptions['type']->getName(), $personsIdOptions);
+			$table->addColumn('cluster_id', $clustersIdOptions['type']->getName(), $clustersIdOptions);
 			$table->addColumn('face_id', $faceIdOptions['type']->getName(), $faceIdOptions);
 			$table->setPrimaryKey(['cluster_id', 'face_id']);
 
@@ -113,52 +111,7 @@ class Version001000Date20250611141100 extends SimpleMigrationStep {
 				['id'], // Remote Columns
 				[
 					'onDelete' => 'CASCADE',
-					'name' => 'fk_person_faces_face_id'
-				]
-			);
-			$table->addForeignKeyConstraint(
-				'*PREFIX*facerecog_clusters', // Remote Table
-				['person_id'], // Local Columns
-				['id'], // Remote Columns
-				[
-					'onDelete' => 'CASCADE',
-					'name' => 'fk_person_faces_person_id'
-				]
-			);
-        }
-		if (!$schema->hasTable('facerecog_personNames')) {
-			$table = $schema->createTable('facerecog_personNames');
-			$table->addColumn('id', 'integer', [
-				'autoincrement'=>true,
-				'unsigned'=>true
-			]);
-			$table->addColumn('personName', 'string', [
-				'length'=> 128
-			]);
-			$table->setPrimaryKey(['id']);
-			$table->addUniqueIndex(['personName'], 'UNIQ_personName');
-		}
-
-		$personNamesTable = $schema->getTable('facerecog_personNames');
-		$personNamesOptions = $personNamesTable->getColumn('id')->toArray();
-		unset($personNamesOptions['name']);
-		unset($personNamesOptions['autoincrement']);
-
-		if (!$schema->hasTable('facerecog_name_persons')) {
-
-			$table = $schema->createTable('facerecog_name_persons');
-			$table->addColumn('cluster_id', $personsIdOptions['type']->getName(), $personsIdOptions);
-			$table->addColumn('personName_id', $personNamesOptions['type']->getName(), $personNamesOptions);
-			$table->setPrimaryKey(['person_id', 'personName_id']);
-
-			//Set Foreign keys
-			$table->addForeignKeyConstraint(
-				'*PREFIX*facerecog_personNames', // Remote Table
-				['personName_id'], // Local Columns
-				['id'], // Remote Columns
-				[
-					'onDelete' => 'CASCADE',
-					'name' => 'fk_name_persons_personName_id'
+					'name' => 'fk_face_id'
 				]
 			);
 			$table->addForeignKeyConstraint(
@@ -167,7 +120,56 @@ class Version001000Date20250611141100 extends SimpleMigrationStep {
 				['id'], // Remote Columns
 				[
 					'onDelete' => 'CASCADE',
-					'name' => 'fk_name_persons_person_id'
+					'name' => 'fk_cluster_id'
+				]
+			);
+        }
+		if (!$schema->hasTable('facerecog_persons')) {
+			$table = $schema->createTable('facerecog_persons');
+			$table->addColumn('id', 'integer', [
+				'autoincrement'=>true,
+				'unsigned'=>true
+			]);
+			$table->addColumn('name', 'string', [
+				'notnull' => false,
+				'length'=> 128
+			]);
+			$table->addColumn('is_shared', 'boolean', [
+				'notnull' => false,
+				'default' => false,
+			]);
+			$table->setPrimaryKey(['id']);
+			$table->addUniqueIndex(['name'], 'UNIQ_name');
+		}
+
+		$personsTable = $schema->getTable('facerecog_persons');
+		$personsOptions = $personsTable->getColumn('id')->toArray();
+		unset($personsOptions['name']);
+		unset($personsOptions['autoincrement']);
+
+		if (!$schema->hasTable('facerecog_person_clusters')) {
+			$table = $schema->createTable('facerecog_person_clusters');
+			$table->addColumn('cluster_id', $clustersIdOptions['type']->getName(), $clustersIdOptions);
+			$table->addColumn('person_id', $personsOptions['type']->getName(), $personsOptions);
+			$table->setPrimaryKey(['cluster_id', 'person_id']);
+
+			//Set Foreign keys
+			$table->addForeignKeyConstraint(
+				'*PREFIX*facerecog_persons', // Remote Table
+				['person_id'], // Local Columns
+				['id'], // Remote Columns
+				[
+					'onDelete' => 'CASCADE',
+					'name' => 'fk_person_id'
+				]
+			);
+			$table->addForeignKeyConstraint(
+				'*PREFIX*facerecog_clusters', // Remote Table
+				['cluster_id'], // Local Columns
+				['id'], // Remote Columns
+				[
+					'onDelete' => 'CASCADE',
+					'name' => 'fk_cluster_id'
 				]
 			);
         }
@@ -182,7 +184,7 @@ class Version001000Date20250611141100 extends SimpleMigrationStep {
 				['id'], // Remote Columns
 				[
 					'onDelete' => 'CASCADE',
-					'name' => 'fk_faces_image_id'
+					'name' => 'fk_image_id'
 				]
 			);
         }
@@ -195,79 +197,79 @@ class Version001000Date20250611141100 extends SimpleMigrationStep {
 	 * @param array $options
 	 */
 	public function postSchemaChange(IOutput $output, Closure $schemaClosure, array $options): void {
-		$output->warning("Connecting images with users, persons with faces and persons with personNames");
-		$this->migratePersonNames();
+		$output->warning("Connecting images with users, persons with faces and persons with persons");
+		$this->migratePersons();
 		$this->connectImagesWithUsers();
 		$this->connectPersonWithFaces();
-		$this->connectPersonWithPersonNames();
+		$this->connectPersonWithPersons();
 	}
 
-	private function connectPersonWithPersonNames() {
-		//Migrate personNames - Person connection
+	private function migratePersons() {
+		
+		//Migrate to persons to dedicated tabloe connection
 		//Needs to support the shared persons
-		$insertPersonNames = $this->connection->getQueryBuilder();
-		$insertPersonNames
-			->insert('facerecog_name_persons')
+		$insertPersons = $this->connection->getQueryBuilder();
+		$insertPersoinsertPersonsnNames
+			->insert('facerecog_persons')
 			->values([
+				'name' => '?'
+			]);
+
+		$queryClusters = $this->connection->getQueryBuilder();
+		$queryClusters->selectDistinct('name')
+			->from('facerecog_clusters', 'c')
+			->Where($queryClusters->expr()->isNotNull('c.name'));
+
+		$resultClusters = $queryClusters->executeQuery();
+		while ($row = $resultClusters->fetch()) {
+			$insertPersons->setParameters([
+				$row['name']
+			]);
+			$insertPersons->executeStatement();
+		}
+		$resultClusters->closeCursor();
+	}
+
+	private function connectPersonWithPersons() {
+		//Migrate persons - Person connection
+		//Needs to support the shared persons
+		$insertPersons = $this->connection->getQueryBuilder();
+		$insertPersons
+			->insert('facerecog_person_clusters')
+			->values([
+				'cluster_id' => '?',
 				'person_id' => '?',
-				'personName_id' => '?',
 			]);
 
 		//GetPersons with names
-		$queryPersons = $this->connection->getQueryBuilder();
-		$queryPersons->select('id', 'name')
+		$queryClusters = $this->connection->getQueryBuilder();
+		$queryClusters->select('id', 'name')
 			->from('facerecog_clusters', 'c')
-			->Where($queryPersons->expr()->isNotNull('c.name'));
+			->Where($queryClusters->expr()->isNotNull('c.name'));
 
-		$resultQueryPersons = $queryPersons->executeQuery();
+		$resultQueryClusters = $queryClusters->executeQuery();
 
-		while ($row = $resultQueryPersons->fetch()) {
+		while ($row = $resultQueryClusters->fetch()) {
 			//Get NameId for Person
-			$queryPersonNames = $this->connection->getQueryBuilder();
-			$queryPersonNames->select('id', 'personName')
-				->from('facerecog_personNames', 'p')
-				->Where($queryPersonNames->expr()->eq('personName', $queryPersonNames->createNamedParameter($row['name'])));
+			$queryPersons = $this->connection->getQueryBuilder();
+			$queryPersons->select('id', 'name')
+				->from('facerecog_persons', 'p')
+				->Where($queryPersons->expr()->eq('name', $queryPersons->createNamedParameter($row['name'])));
 
-			$resultPersonNames = $queryPersonNames->executeQuery();
-			while ($PersonNamesRow = $resultPersonNames->fetch()) {
-				$insertPersonNames->setParameters([
+			$resultPersons = $queryPersons->executeQuery();
+			while ($PersonsRow = $resultPersons->fetch()) {
+				$insertPersons->setParameters([
 					$row['id'],
-					$PersonNamesRow['id']
+					$PersonsRow['id']
 				]);
-				$insertPersonNames->executeStatement();
+				$insertPersons ->executeStatement();
 			}
-			$resultPersonNames->closeCursor();
+			$resultPersons->closeCursor();
 		}
 
 		$resultQueryPersons->closeCursor();
 	}
 	
-	private function migratePersonNames() {
-		
-		//Migrate to personNames to dedicated tabloe connection
-		//Needs to support the shared persons
-		$insertPersonNames = $this->connection->getQueryBuilder();
-		$insertPersonNames
-			->insert('facerecog_personNames')
-			->values([
-				'personName' => '?'
-			]);
-
-		$queryPersonNames = $this->connection->getQueryBuilder();
-		$queryPersonNames->selectDistinct('name')
-			->from('facerecog_clusters', 'c')
-			->Where($queryPersonNames->expr()->isNotNull('c.name'));
-
-		$resultPersonNames = $queryPersonNames->executeQuery();
-		while ($row = $resultPersonNames->fetch()) {
-			$insertPersonNames->setParameters([
-				$row['name']
-			]);
-			$insertPersonNames->executeStatement();
-		}
-		$resultPersonNames->closeCursor();
-	}
-
 	private function connectPersonWithFaces(){
 		//Migrate to personsFaces N2N connection
 		//Needs to support the shared files, record but different person groups
@@ -275,8 +277,8 @@ class Version001000Date20250611141100 extends SimpleMigrationStep {
 		$insertPersonFace
 			->insert('facerecog_cluster_faces')
 			->values([
+				'cluster_id' => '?',
 				'face_id' => '?',
-				'person_id' => '?'
 			]);
 
 		$queryFaces = $this->connection->getQueryBuilder();
@@ -285,8 +287,8 @@ class Version001000Date20250611141100 extends SimpleMigrationStep {
 		$resultFaces = $queryFaces->executeQuery();
 		while ($row = $resultFaces->fetch()) {
 			$insertPersonFace->setParameters([
+				$row['person'],
 				$row['id'],
-				$row['person']
 			]);
 			$insertPersonFace->executeStatement();
 		}

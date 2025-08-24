@@ -16,7 +16,8 @@
         }
     },
     "require": {
-        "php": ">=8.0"
+        "php": ">=8.0",
+        "doctrine/dbal": "*"
     },
     "require-dev": {
         "nextcloud/ocp": "dev-stable28",
