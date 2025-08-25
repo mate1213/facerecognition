@@ -24,8 +24,7 @@
 namespace OCA\FaceRecognition\Tests\Unit;
 
 use OCA\FaceRecognition\Helper\MemoryLimits;
-
-use Test\TestCase;
+use \phpunit\Framework\TestCase;
 
 class MemoryLimitsTest extends TestCase {
 

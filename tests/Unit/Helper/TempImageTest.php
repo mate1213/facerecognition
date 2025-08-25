@@ -26,8 +26,7 @@ namespace OCA\FaceRecognition\Tests\Unit;
 use OCP\Image as OCP_Image;
 
 use OCA\FaceRecognition\Helper\TempImage;
-
-use Test\TestCase;
+use \phpunit\Framework\TestCase;
 
 class TempImageTest extends TestCase {
 

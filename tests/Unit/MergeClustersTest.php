@@ -23,7 +23,7 @@
  */
 namespace OCA\FaceRecognition\Tests\Unit;
 
-use Test\TestCase;
+use \phpunit\Framework\TestCase;
 
 use OCA\FaceRecognition\Db\PersonMapper;
 use OCA\FaceRecognition\Db\ImageMapper;

@@ -24,8 +24,7 @@
 namespace OCA\FaceRecognition\Tests\Unit;
 
 use OCA\FaceRecognition\Helper\Requirements;
-
-use Test\TestCase;
+use \phpunit\Framework\TestCase;
 
 class RequirementsTest extends TestCase {
 

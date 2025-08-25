@@ -27,7 +27,7 @@ use OCA\FaceRecognition\Helper\CommandLock;
 
 use Psr\Log\LoggerInterface;
 
-use Test\TestCase;
+use \phpunit\Framework\TestCase;
 
 class LockTaskTest extends TestCase {
 	/**

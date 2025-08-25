@@ -24,8 +24,7 @@
 namespace OCA\FaceRecognition\Tests\Unit;
 
 use OCA\FaceRecognition\Helper\FaceRect;
-
-use Test\TestCase;
+use \phpunit\Framework\TestCase;
 
 class FaceRectTest extends TestCase {
 

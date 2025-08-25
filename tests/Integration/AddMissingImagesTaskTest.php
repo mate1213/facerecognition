@@ -36,6 +36,7 @@ use OCA\FaceRecognition\BackgroundJob\FaceRecognitionLogger;
 use OCA\FaceRecognition\BackgroundJob\Tasks\AddMissingImagesTask;
 
 use OCA\FaceRecognition\Model\ModelManager;
+use OCA\FaceRecognition\Tests\Integration\IntegrationTestCase;
 
 class AddMissingImagesTaskTest extends IntegrationTestCase {
 

@@ -102,7 +102,7 @@ class Version001000Date20250611141100 extends SimpleMigrationStep {
 			$table = $schema->createTable('facerecog_cluster_faces');
 			$table->addColumn('cluster_id', $clustersIdOptions['type']->getName(), $clustersIdOptions);
 			$table->addColumn('face_id', $faceIdOptions['type']->getName(), $faceIdOptions);
-			$table->setPrimaryKey(['cluster_id', 'face_id']);
+			$table->setPrimaryKey(['cluster_id', 'face_id'], "primaryKeys");
 
 			//Set Foreign keys
 			$table->addForeignKeyConstraint(
@@ -151,7 +151,7 @@ class Version001000Date20250611141100 extends SimpleMigrationStep {
 			$table = $schema->createTable('facerecog_person_clusters');
 			$table->addColumn('cluster_id', $clustersIdOptions['type']->getName(), $clustersIdOptions);
 			$table->addColumn('person_id', $personsOptions['type']->getName(), $personsOptions);
-			$table->setPrimaryKey(['cluster_id', 'person_id']);
+			$table->setPrimaryKey(['cluster_id', 'person_id'], "primaryKeys");
 
 			//Set Foreign keys
 			$table->addForeignKeyConstraint(
@@ -209,7 +209,7 @@ class Version001000Date20250611141100 extends SimpleMigrationStep {
 		//Migrate to persons to dedicated tabloe connection
 		//Needs to support the shared persons
 		$insertPersons = $this->connection->getQueryBuilder();
-		$insertPersoinsertPersonsnNames
+		$insertPersons
 			->insert('facerecog_persons')
 			->values([
 				'name' => '?'
@@ -267,7 +267,7 @@ class Version001000Date20250611141100 extends SimpleMigrationStep {
 			$resultPersons->closeCursor();
 		}
 
-		$resultQueryPersons->closeCursor();
+		$resultQueryClusters->closeCursor();
 	}
 	
 	private function connectPersonWithFaces(){

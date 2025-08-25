@@ -35,7 +35,7 @@ use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionLogger;
 use OCA\FaceRecognition\BackgroundJob\Tasks\AddMissingImagesTask;
 
-use Test\TestCase;
+use \phpunit\Framework\TestCase;
 
 /**
  * Main class that all integration tests should inherit from.
