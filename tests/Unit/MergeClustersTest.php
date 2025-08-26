@@ -25,6 +25,7 @@ namespace OCA\FaceRecognition\Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 
 use OCA\FaceRecognition\Db\PersonMapper;
 use OCA\FaceRecognition\Db\ImageMapper;
@@ -35,7 +36,6 @@ use OCA\FaceRecognition\Service\SettingsService;
 use OCA\FaceRecognition\BackgroundJob\Tasks\CreateClustersTask;
 
 #[CoversClass(CreateClustersTask::class)]
-#[CoversClass(FaceRecognitionBackgroundTask::class)]
 class MergeClustersTest extends TestCase {
 	/** @var CreateClustersTask Create cluster task */
 	private $createClusterTask;

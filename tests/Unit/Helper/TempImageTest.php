@@ -26,11 +26,13 @@ namespace OCA\FaceRecognition\Tests\Unit;
 use OCP\Image as OCP_Image;
 
 use OCA\FaceRecognition\Helper\TempImage;
+use OCA\FaceRecognition\Helper\Imaginary;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 
 #[CoversClass(TempImage::class)]
-#[CoversClass(Imaginary::class)]
+#[UsesClass(Imaginary::class)]
 class TempImageTest extends TestCase {
 
 	private $testImage = null;
