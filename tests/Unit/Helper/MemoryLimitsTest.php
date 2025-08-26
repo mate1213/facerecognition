@@ -24,8 +24,10 @@
 namespace OCA\FaceRecognition\Tests\Unit;
 
 use OCA\FaceRecognition\Helper\MemoryLimits;
-use \phpunit\Framework\TestCase;
+use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
 
+#[CoversClass(MemoryLimits::class)]
 class MemoryLimitsTest extends TestCase {
 
 	public function testReturnBytes() {

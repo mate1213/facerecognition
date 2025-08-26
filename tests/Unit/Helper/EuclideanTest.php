@@ -24,8 +24,10 @@
 namespace OCA\FaceRecognition\Tests\Unit;
 
 use OCA\FaceRecognition\Helper\Euclidean;
-use \phpunit\Framework\TestCase;
+use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
 
+#[CoversClass(Euclidean::class)]
 class EuclideanTest extends TestCase {
 
 	public function testEuclideans() {

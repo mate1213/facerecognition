@@ -24,8 +24,11 @@
 namespace OCA\FaceRecognition\Tests\Unit;
 
 use OCA\FaceRecognition\Helper\Requirements;
-use \phpunit\Framework\TestCase;
+use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
 
+#[CoversClass(Requirements::class)]
+#[CoversClass(MemoryLimits::class)]
 class RequirementsTest extends TestCase {
 
 	public function testReturnBool() {

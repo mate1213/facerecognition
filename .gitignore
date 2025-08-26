@@ -5,3 +5,7 @@ node_modules
 clover.xml
 translationtool.phar
 translationfiles
+.phpunit.cache/*
+tests/results/*
+tests/.phpunit.cache
+tests/.phpunit.result.cache

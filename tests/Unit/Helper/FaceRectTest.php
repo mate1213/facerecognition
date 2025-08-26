@@ -24,8 +24,10 @@
 namespace OCA\FaceRecognition\Tests\Unit;
 
 use OCA\FaceRecognition\Helper\FaceRect;
-use \phpunit\Framework\TestCase;
+use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
 
+#[CoversClass(FaceRect::class)]
 class FaceRectTest extends TestCase {
 
 	public function testSomeOverlaps() {

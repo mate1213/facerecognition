@@ -24,12 +24,12 @@
 namespace OCA\FaceRecognition\Tests\Unit;
 
 use OCA\FaceRecognition\Helper\CommandLock;
-
 use Psr\Log\LoggerInterface;
+use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
 
-use \phpunit\Framework\TestCase;
-
-class LockTaskTest extends TestCase {
+#[CoversClass(CommandLock::class)]
+class LockUnlockTaskTest extends TestCase {
 	/**
 	 * {@inheritDoc}
 	 */
