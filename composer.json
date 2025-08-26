@@ -21,6 +21,17 @@
         "scrutinizer/ocular": "^1.8",
         "psr/log": "^3"
     },
+    "autoload": {
+        "psr-4": {
+            "OCA\\FaceRecognition\\": "lib/"
+        }
+     },
+
+     "autoload-dev": {
+         "psr-4": {
+                "OCA\\FaceRecognition\\Tests\\Integration\\": "tests/Integration"
+          }
+     },
     "scripts": {
         "lint": "find . -name \\*.php -not -path './vendor/*' -print0 | xargs -0 -n1 php -l",
         "psalm": "psalm.phar"

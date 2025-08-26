@@ -36,6 +36,7 @@ use OCP\IDBConnection;
 class FaceMapperUnitTest extends TestCase {
     /** @var FaceMapper test instance*/
 	private $faceMapper;
+    /** @var IDBConnection test instance*/
     private $dbConnection;
 
     	/**

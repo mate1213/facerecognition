@@ -46,6 +46,10 @@ class Version001000Date20250611141100 extends SimpleMigrationStep {
 			$this->connection->executeStatement('ALTER TABLE `*PREFIX*facerecog_faces` RENAME COLUMN `image` TO `image_id`;');
         }
 		
+		if ($schema->hasTable('facerecog_images')) {
+			$this->connection->executeStatement('ALTER TABLE `*PREFIX*facerecog_images` RENAME COLUMN `file` TO `nc_file_id`;');
+        }
+
 		if ($schema->hasTable('facerecog_persons')) {
 			$this->connection->executeStatement('ALTER TABLE `*PREFIX*facerecog_persons` RENAME TO `*PREFIX*facerecog_clusters`;');
 		}
