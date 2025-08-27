@@ -87,14 +87,14 @@ class FaceMapper extends QBMapper {
 			->innerJoin('f', 'facerecog_images' ,'i', $qb->expr()->eq('f.image_id', 'i.id'))
 			->innerJoin('f', 'facerecog_user_images', 'ui', $qb->expr()->eq('ui.image_id', 'i.id'))
 			->innerJoin('f', 'facerecog_cluster_faces', 'cf', $qb->expr()->eq('cf.face_id', 'f.id'))
-			->innerJoin('f', 'facerecog_clusters', 'p', $qb->expr()->eq('p.id', 'cf.cluster_id'))
+			->innerJoin('f', 'facerecog_clusters', 'p', $qb->expr()->eq('p.id', 'cf.cluster_id')) //needed for personID
 			->where($qb->expr()->eq('ui.user', $qb->createParameter('user_id')))
 			->andWhere($qb->expr()->eq('p.user', $qb->createParameter('user_id')))
 			->andWhere($qb->expr()->eq('i.model', $qb->createParameter('model_id')))
-			->andWhere($qb->expr()->eq('i.file', $qb->createParameter('file_id')))
+			->andWhere($qb->expr()->eq('i.nc_file_id', $qb->createParameter('nc_file_id')))
 			->setParameter('user_id', $userId)
 			->setParameter('model_id', $modelId)
-			->setParameter('file_id', $fileId)
+			->setParameter('nc_file_id', $fileId)
 			->orderBy('f.confidence', 'DESC');
 
 		$faces = $this->findEntities($qb);

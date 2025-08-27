@@ -39,7 +39,7 @@ class Version001000Date20250611141101 extends SimpleMigrationStep {
 		//Get images which are duplicated
 		$resultDuplicatedImages = $this->getDuplicatedFiles();
 		while ($row = $resultDuplicatedImages->fetch()) {
-			$ncFileId = $row['file'];
+			$ncFileId = $row['nc_file_id'];
 			$modelNumber = $row['model'];
 			$flaggedForKEEP = -1;
 			//Get Images by nextcloud FileID and model <- these are shared files
@@ -149,9 +149,9 @@ class Version001000Date20250611141101 extends SimpleMigrationStep {
 	 */
 	protected function getDuplicatedFiles(): IResult {
 		return $this->connection->getQueryBuilder()
-			->select('file', 'model')
+			->select('nc_file_id', 'model')
 			->from('facerecog_images')
-			->groupBy('file','model')
+			->groupBy('nc_file_id','model')
 			->having('COUNT(*) > 1')
 			->executeQuery();
 	}
@@ -166,7 +166,7 @@ class Version001000Date20250611141101 extends SimpleMigrationStep {
 		return $this->connection->getQueryBuilder()
 			->select('*')
 			->from('facerecog_images')
-			->Where('file = ? AND model = ?')
+			->Where('nc_file_id = ? AND model = ?')
 			->setParameters([
 				$ncFileId,
 				$modelNumber

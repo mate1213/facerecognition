@@ -155,7 +155,7 @@ class Face extends Entity implements JsonSerializable {
 		return $face;
 	}
 
-	public function jsonSerialize() {
+	public function jsonSerialize() : mixed {
 		return [
 			'id' => $this->id,
 			'image' => $this->image,
