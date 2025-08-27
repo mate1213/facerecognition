@@ -39,8 +39,9 @@ class FaceMapper extends QBMapper {
 
 	public function find (int $faceId): ?Face {
 		$qb = $this->db->getQueryBuilder();
-		$qb->select('id', 'image_id as image', 'x', 'y', 'width', 'height', 'landmarks', 'descriptor', 'confidence')
+		$qb->select('id', 'cf.cluster_id as person', 'image_id as image', 'x', 'y', 'width', 'height', 'landmarks', 'descriptor', 'confidence', 'creation_time')
 			->from($this->getTableName(), 'f')
+			->leftjoin('f', 'facerecog_cluster_faces', 'cf', $qb->expr()->eq('cf.face_id', 'f.id'))
 			->where($qb->expr()->eq('id', $qb->createNamedParameter($faceId)));
 		try {
 			return $this->findEntity($qb);
@@ -116,7 +117,7 @@ class FaceMapper extends QBMapper {
 			->from($this->getTableName(), 'f')
 			->innerJoin('f', 'facerecog_images' ,'i', $qb->expr()->eq('f.image_id', 'i.id'))
 			->innerJoin('f', 'facerecog_user_images', 'ui', $qb->expr()->eq('ui.image_id', 'i.id'))
-			->leftjoin('f', 'facerecog_cluster_faces', 'cf', $qb->expr()->eq('pf.face_id', 'f.id'))
+			->leftjoin('f', 'facerecog_cluster_faces', 'cf', $qb->expr()->eq('cf.face_id', 'f.id'))
 			->where($qb->expr()->eq('ui.user', $qb->createParameter('user')))
 			->andWhere($qb->expr()->eq('model', $qb->createParameter('model')));
 		if ($onlyWithoutPersons) {
@@ -141,7 +142,7 @@ class FaceMapper extends QBMapper {
 	 * @return Face Oldest face, if any is found
 	 * @throws DoesNotExistException If there is no faces in database without person for a given user and model.
 	 */
-	public function getOldestCreatedFaceWithoutPerson(string $userId, int $model) {
+	public function getOldestCreatedFaceWithoutPerson(string $userId, int $model) : Face {
 		$qb = $this->db->getQueryBuilder();
 		$qb
 			->select('f.id', 'f.creation_time')
@@ -151,7 +152,7 @@ class FaceMapper extends QBMapper {
 			->leftJoin('f', 'facerecog_cluster_faces' ,'cf', $qb->expr()->eq('f.id', 'cf.face_id'))
 			->where($qb->expr()->eq('user', $qb->createNamedParameter($userId)))
 			->andWhere($qb->expr()->eq('model', $qb->createNamedParameter($model)))
-			->andWhere($qb->expr()->isNull('person'))
+			->andWhere($qb->expr()->isNull('cluster_id'))
 			->orderBy('f.creation_time', 'ASC');
 		$cursor = $qb->executeQuery();
 		$row = $cursor->fetch();
@@ -166,9 +167,11 @@ class FaceMapper extends QBMapper {
 
 	public function getFaces(string $userId, int $model): array {
 		$qb = $this->db->getQueryBuilder();
-		$qb->select('f.id', 'cf.cluster_id', 'f.x', 'f.y', 'f.width', 'f.height', 'f.confidence', 'f.descriptor', 'f.is_groupable')
+		$qb->select('f.id', 'cf.cluster_id as person', 'f.x', 'f.y', 'f.width', 'f.height', 'f.confidence', 'f.descriptor', 'f.is_groupable')
 			->from($this->getTableName(), 'f')
 			->innerJoin('f', 'facerecog_images' ,'i', $qb->expr()->eq('f.image_id', 'i.id'))
+			->innerJoin('f', 'facerecog_user_images' ,'ui', $qb->expr()->eq('i.id', 'ui.image_id'))
+			->leftJoin('f', 'facerecog_cluster_faces' ,'cf', $qb->expr()->eq('f.id', 'cf.face_id'))
 			->where($qb->expr()->eq('user', $qb->createParameter('user')))
 			->andWhere($qb->expr()->eq('model', $qb->createParameter('model')))
 			->setParameter('user', $userId)
