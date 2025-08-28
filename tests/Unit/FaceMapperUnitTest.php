@@ -21,7 +21,10 @@
  *
  */
 namespace OCA\FaceRecognition\Tests\Unit;
+
 use DateTime;
+
+use PHPUnit\Framework\Attributes\DataProviderExternal;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
@@ -60,10 +63,14 @@ class FaceMapperUnitTest extends TestCase {
 			$this->dbConnection->executeStatement($sql);
 			$sql = file_get_contents("tests/DatabaseInserts/50_clusterFacesInsert.sql");
 			$this->dbConnection->executeStatement($sql);
+			$sql = file_get_contents("tests/DatabaseInserts/60_personInsert.sql");
+			$this->dbConnection->executeStatement($sql);
+			$sql = file_get_contents("tests/DatabaseInserts/70_personClustersInsert.sql");
+			$this->dbConnection->executeStatement($sql);
 		}
 	}
 
-	public function test_FindById() {
+	public function test_FindById() : void {
 		//Act
         $face = $this->faceMapper->find(1);
 
@@ -83,7 +90,7 @@ class FaceMapperUnitTest extends TestCase {
 		$this->assertEquals(40, $face->getHeight());
 	}
 
-	public function test_FindDescriptorsBathed() {
+	public function test_FindDescriptorsBathed() : void {
 		//Act
         $descriptors = $this->faceMapper->findDescriptorsBathed([1,2]);
 
@@ -103,19 +110,20 @@ class FaceMapperUnitTest extends TestCase {
 		$this->assertEquals(2, $secondDescriptor['id']);
 	}
 
-	public function test_FindFromFile() {
+    #[DataProviderExternal(FaceDataProvider::class, 'findFromFile_Provider')]
+	public function test_FindFromFile($fileId, $expectedCount) : void {
 		//Act
-        $faces = $this->faceMapper->findFromFile("user1", 1, 101);
+        $faces = $this->faceMapper->findFromFile("user1", 1, $fileId);
 
 		//Assert
         $this->assertNotNull($faces);
 		$this->assertIsArray($faces);
 		$this->assertContainsOnlyInstancesOf(Face::class, $faces);
-		$this->assertCount(1, $faces);
+		$this->assertCount($expectedCount, $faces);
 		
 	}
 
-	public function test_CountFaces_ForUser_OnlyWithoutPerson() {
+	public function test_CountFaces_ForUser_OnlyWithoutPerson() : void {
 		//Act
         $facesCount = $this->faceMapper->countFaces("user1", 1, true);
 
@@ -124,16 +132,16 @@ class FaceMapperUnitTest extends TestCase {
 		$this->assertEquals(3, $facesCount);
 	}
 
-	public function test_CountFaces_ForUser() {
+	public function test_CountFaces_ForUser() : void {
 		//Act
         $facesCount = $this->faceMapper->countFaces("user1", 1, false);
 
 		//Assert
         $this->assertNotNull($facesCount);
-		$this->assertEquals(4, $facesCount);
+		$this->assertEquals(16, $facesCount);
 	}
 
-	public function test_GetOldestCreatedFaceWithoutPerson_ForUser_ByModel() {
+	public function test_GetOldestCreatedFaceWithoutPerson_ForUser_ByModel() : void {
 		//Act
         $face = $this->faceMapper->getOldestCreatedFaceWithoutPerson("user1", 1);
 
@@ -153,7 +161,8 @@ class FaceMapperUnitTest extends TestCase {
 		$this->assertNull($face->getHeight());
 	}
 
-	public function test_GetFaces_ForUser_ByModel() {
+	//MTODO: validate this test
+	public function test_GetFaces_ForUser_ByModel() : void {
 		//Act
         $faces = $this->faceMapper->getFaces("user1", 1);
 
@@ -161,8 +170,116 @@ class FaceMapperUnitTest extends TestCase {
         $this->assertNotNull($faces);
 		$this->assertIsArray($faces);
 		$this->assertContainsOnlyInstancesOf(Face::class, $faces);
-		$this->assertCount(4, $faces);
+		$this->assertCount(16, $faces);
 	}
+
+    #[DataProviderExternal(FaceDataProvider::class, 'getGroupableFaces_ForUser_ByModel_MinSize_MinConfidence_Provider')]
+	public function test_GetGroupableFaces_ForUser_ByModel_MinSize_MinConfidence(int $minSize, float $minConfidence, int $expectedCount) : void {
+		//Act
+        $faces = $this->faceMapper->getGroupableFaces("user1", 1, $minSize, $minConfidence);
+
+		//Assert
+        $this->assertNotNull($faces);
+		$this->assertIsArray($faces);
+		$this->assertContainsOnlyInstancesOf(Face::class, $faces);
+		$this->assertCount($expectedCount, $faces);
+	}
+
+    #[DataProviderExternal(FaceDataProvider::class, 'getNonGroupableFaces_ForUser_ByModel_MinSize_MinConfidence_Provider')]
+	public function test_GetNonGroupableFaces_ForUser_ByModel_MinSize_MinConfidence(int $minSize, float $minConfidence, int $expectedCount) : void {
+		//Act
+        $faces = $this->faceMapper->getNonGroupableFaces("user1", 1, $minSize, $minConfidence);
+
+		//Assert
+        $this->assertNotNull($faces);
+		$this->assertIsArray($faces);
+		$this->assertContainsOnlyInstancesOf(Face::class, $faces);
+		$this->assertCount($expectedCount, $faces);
+	}
+
+	#[DataProviderExternal(FaceDataProvider::class, 'findFromCluster_ForUser_ByClusterId_ByModel_Limit_Offset_Provider')]
+	public function test_FindFromCluster_ForUser_ByClusterId_ByModel_Limit_Offset(int $clusterId, ?int $limit, ?int $offset, int $expectedCount) : void {
+		//Act
+        $faces = $this->faceMapper->findFromCluster("user1",$clusterId, 1, $limit, $offset);
+
+		//Assert
+        $this->assertNotNull($faces);
+		$this->assertIsArray($faces);
+		$this->assertContainsOnlyInstancesOf(Face::class, $faces);
+		$this->assertCount($expectedCount, $faces);
+	}
+
+	#[DataProviderExternal(FaceDataProvider::class, 'findFromPerson_ForUser_ByPersonName_ByModel_Limit_Offset_Provider')]
+	public function test_FindFromPerson_ForUser_ByClusterId_ByModel_Limit_Offset(string $personName, ?int $limit, ?int $offset, int $expectedCount) : void {
+		//Act
+        $faces = $this->faceMapper->findFromPerson("user1",$personName, 1, $limit, $offset);
+
+		//Assert
+        $this->assertNotNull($faces);
+		$this->assertIsArray($faces);
+		$this->assertContainsOnlyInstancesOf(Face::class, $faces);
+		$this->assertCount($expectedCount, $faces);
+	}
+
+	#[DataProviderExternal(FaceDataProvider::class, 'findByImage_Provider')]
+	public function test_findByImage(int $imageId, int $expectedCount) : void {
+		//Act
+        $faces = $this->faceMapper->findByImage($imageId);
+
+		//Assert
+        $this->assertNotNull($faces);
+		$this->assertIsArray($faces);
+		$this->assertContainsOnlyInstancesOf(Face::class, $faces);
+		$this->assertCount($expectedCount, $faces);
+	}
+
+	#[DataProviderExternal(FaceDataProvider::class, 'removeFromImage_Provider')]
+	public function test_RemoveFromImage(int $imageId, int $expectedCount) : void {
+		//Act
+		$this->faceMapper->removeFromImage($imageId);
+
+		//Assert
+        $qb = $this->dbConnection->getQueryBuilder();
+		$qb->select($qb->createFunction('COUNT(id) as count'))->from('facerecog_faces')->where($qb->expr()->eq('image_id', $qb->createNamedParameter($imageId)));
+		$result = $qb->executeQuery();
+		$row = $result->fetch();
+		$this->assertNotFalse($row);
+		$this->assertEquals($expectedCount, (int)$row['count']);
+	}
+
+	public function test_deleteUserModel() : void {
+		//Assert initial state
+        $qb = $this->dbConnection->getQueryBuilder();
+		$qb->select($qb->createFunction('COUNT(id) as count'))->from('facerecog_faces');
+		$result = $qb->executeQuery();
+		$row = $result->fetch();
+		$this->assertNotFalse($row);
+		$this->assertEquals(14, (int)$row['count']);
+        $qb = $this->dbConnection->getQueryBuilder();
+		$qb->select($qb->createFunction('COUNT(*) as count'))->from('facerecog_cluster_faces');
+		$result = $qb->executeQuery();
+		$row = $result->fetch();
+		$this->assertNotFalse($row);
+		$this->assertEquals(14, (int)$row['count']);
+
+		//Act
+		$this->faceMapper->deleteUserModel('user2', 2);
+
+		//Assert
+        $qb = $this->dbConnection->getQueryBuilder();
+		$qb->select($qb->createFunction('COUNT(id) as count'))->from('facerecog_faces');
+		$result = $qb->executeQuery();
+		$row = $result->fetch();
+		$this->assertNotFalse($row);
+		$this->assertEquals(10, (int)$row['count']);
+        $qb = $this->dbConnection->getQueryBuilder();
+		$qb->select($qb->createFunction('COUNT(*) as count'))->from('facerecog_cluster_faces');
+		$result = $qb->executeQuery();
+		$row = $result->fetch();
+		$this->assertNotFalse($row);
+		$this->assertEquals(13, (int)$row['count']);
+	}
+	
 
     public function tearDown(): void
 	{
@@ -171,5 +288,75 @@ class FaceMapperUnitTest extends TestCase {
 			return;
         }
 		parent::tearDown();
+	}
+}
+
+class FaceDataProvider{
+    public static function findFromFile_Provider(): array
+    {
+        return [
+            [101,1],
+            [201, 6]
+        ];
+    }
+
+    public static function getGroupableFaces_ForUser_ByModel_MinSize_MinConfidence_Provider(): array
+    {
+        return [
+            [20, 0.97, 1],
+            [500, 0.97, 0],
+            [5000, 0, 0],
+            [0, 0, 10],
+            [0, 1, 0],
+            [20, 0.85, 9],
+        ];
+    }
+
+	public static function getNonGroupableFaces_ForUser_ByModel_MinSize_MinConfidence_Provider(): array
+    {
+        return [
+            [20, 0.97, 9],
+            [500, 0.97, 10],
+            [5000, 0, 10],
+            [0, 0, 0],
+            [0, 1, 10],
+            [20, 0.85, 1],
+        ];
+    }
+
+	public static function findFromCluster_ForUser_ByClusterId_ByModel_Limit_Offset_Provider(): array
+    {
+        return [
+            [1, null, null, 1],
+            [10, null, null, 2],
+			[1, 1, 0, 1],
+			[10, 1, 0, 1],
+			[10, 1, 1, 1],
+        ];
+    }
+
+	public static function findFromPerson_ForUser_ByPersonName_ByModel_Limit_Offset_Provider(): array
+	{
+		return [
+			['Alice', null, null, 1],
+			['Bob', null, null, 0]
+        ];
+	}
+
+	public static function findByImage_Provider(): array
+	{
+		return [
+			[1, 1],
+			[10, 6]
+        ];
+	}
+
+	public static function removeFromImage_Provider(): array
+	{
+		return [
+			[1, 0],
+			[10, 0],
+			[999, 0] //non existing image
+        ];
 	}
 }
