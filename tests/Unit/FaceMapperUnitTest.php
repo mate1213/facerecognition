@@ -170,7 +170,7 @@ class FaceMapperUnitTest extends TestCase {
         $this->assertNotNull($faces);
 		$this->assertIsArray($faces);
 		$this->assertContainsOnlyInstancesOf(Face::class, $faces);
-		$this->assertCount(16, $faces);
+		$this->assertCount(7, $faces);
 	}
 
     #[DataProviderExternal(FaceDataProvider::class, 'getGroupableFaces_ForUser_ByModel_MinSize_MinConfidence_Provider')]
@@ -247,17 +247,17 @@ class FaceMapperUnitTest extends TestCase {
 		$this->assertEquals($expectedCount, (int)$row['count']);
 	}
 
-	public function test_deleteUserModel() : void {
+	public function test_DeleteUserModel() : void {
 		//Assert initial state
-        $qb = $this->dbConnection->getQueryBuilder();
-		$qb->select($qb->createFunction('COUNT(id) as count'))->from('facerecog_faces');
-		$result = $qb->executeQuery();
+        $faceCountQuery = $this->dbConnection->getQueryBuilder();
+		$faceCountQuery->select($faceCountQuery->createFunction('COUNT(id) as count'))->from('facerecog_faces');
+		$result = $faceCountQuery->executeQuery();
 		$row = $result->fetch();
 		$this->assertNotFalse($row);
 		$this->assertEquals(14, (int)$row['count']);
-        $qb = $this->dbConnection->getQueryBuilder();
-		$qb->select($qb->createFunction('COUNT(*) as count'))->from('facerecog_cluster_faces');
-		$result = $qb->executeQuery();
+        $clusterFaceCountQuery = $this->dbConnection->getQueryBuilder();
+		$clusterFaceCountQuery->select($clusterFaceCountQuery->createFunction('COUNT(*) as count'))->from('facerecog_cluster_faces');
+		$result = $clusterFaceCountQuery->executeQuery();
 		$row = $result->fetch();
 		$this->assertNotFalse($row);
 		$this->assertEquals(14, (int)$row['count']);
@@ -266,20 +266,45 @@ class FaceMapperUnitTest extends TestCase {
 		$this->faceMapper->deleteUserModel('user2', 2);
 
 		//Assert
-        $qb = $this->dbConnection->getQueryBuilder();
-		$qb->select($qb->createFunction('COUNT(id) as count'))->from('facerecog_faces');
-		$result = $qb->executeQuery();
+		$result = $faceCountQuery->executeQuery();
 		$row = $result->fetch();
 		$this->assertNotFalse($row);
 		$this->assertEquals(10, (int)$row['count']);
-        $qb = $this->dbConnection->getQueryBuilder();
-		$qb->select($qb->createFunction('COUNT(*) as count'))->from('facerecog_cluster_faces');
-		$result = $qb->executeQuery();
+		$result = $clusterFaceCountQuery->executeQuery();
 		$row = $result->fetch();
 		$this->assertNotFalse($row);
 		$this->assertEquals(13, (int)$row['count']);
 	}
 	
+	#[DataProviderExternal(FaceDataProvider::class, 'unsetPersonsRelationForUser_Provider')]
+	public function test_UnsetPersonsRelationForUser(string $user, int $model, int $expectedCount) : void {
+		//Assert initial state
+        $faceCountQuery = $this->dbConnection->getQueryBuilder();
+		$faceCountQuery->select($faceCountQuery->createFunction('COUNT(id) as count'))->from('facerecog_faces');
+		$result = $faceCountQuery->executeQuery();
+		$row = $result->fetch();
+		$this->assertNotFalse($row);
+		$this->assertEquals(14, (int)$row['count']);
+        $clusterFaceCountQuery = $this->dbConnection->getQueryBuilder();
+		$clusterFaceCountQuery->select($clusterFaceCountQuery->createFunction('COUNT(*) as count'))->from('facerecog_cluster_faces');
+		$result = $clusterFaceCountQuery->executeQuery();
+		$row = $result->fetch();
+		$this->assertNotFalse($row);
+		$this->assertEquals(14, (int)$row['count']);
+
+		//Act
+		$this->faceMapper->unsetPersonsRelationForUser($user, $model);
+
+		//Assert
+		$result = $faceCountQuery->executeQuery();
+		$row = $result->fetch();
+		$this->assertNotFalse($row);
+		$this->assertEquals(14, (int)$row['count']);
+		$result = $clusterFaceCountQuery->executeQuery();
+		$row = $result->fetch();
+		$this->assertNotFalse($row);
+		$this->assertEquals($expectedCount, (int)$row['count']);
+	}
 
     public function tearDown(): void
 	{
@@ -296,6 +321,9 @@ class FaceDataProvider{
     {
         return [
             [101,1],
+            [102,0], //file not for this user
+            [103,1], //file for this user, but no person assigned faces
+			[999,0], //non existing file
             [201, 6]
         ];
     }
@@ -358,5 +386,15 @@ class FaceDataProvider{
 			[10, 0],
 			[999, 0] //non existing image
         ];
+	}
+	public static function unsetPersonsRelationForUser_Provider(): array
+	{
+		return [
+			['user1', 1, 7],
+			['user2', 2, 13],
+			['user2', 1, 8],
+			['user1', 2, 14], //no faces for user1 and model 2, so no change
+			['user3', 4, 14], //no faces for user3 and model 4, so no change
+		];
 	}
 }

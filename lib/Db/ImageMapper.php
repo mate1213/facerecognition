@@ -66,7 +66,7 @@ class ImageMapper extends QBMapper {
 	 */
 	public function findAll(string $userId, int $modelId): array {
 		$qb = $this->db->getQueryBuilder();
-		$qb->select('i.id', 'i.file', 'i.is_processed', 'i.error', 'i.last_processed_time', 'i.processing_duration')
+		$qb->select('i.id', 'i.nc_file_id as file', 'i.is_processed', 'i.error', 'i.last_processed_time', 'i.processing_duration')
 			->from($this->getTableName(), 'i')
 			->innerJoin('i', 'facerecog_user_images', 'ui', $qb->expr()->eq('ui.image_id', 'i.id'))
 			->where($qb->expr()->eq('ui.user', $qb->createNamedParameter($userId)))
@@ -119,8 +119,10 @@ class ImageMapper extends QBMapper {
 		$queryExec = $qb
 			->select(['id'])
 			->from($this->getTableName(), 'i')
-			->andWhere($qb->expr()->eq('i.file', $qb->createParameter('file')))
+			->Where($qb->expr()->eq('i.nc_file_id', $qb->createParameter('file')))
+			->andWhere($qb->expr()->eq('i.model', $qb->createParameter('model')))
 			->setParameter('file', $image->getFile())
+			->setParameter('model', $image->getModel())
 			->executeQuery();
 		$row = $queryExec->fetch();
 		$queryExec->closeCursor();
@@ -133,7 +135,7 @@ class ImageMapper extends QBMapper {
 			$insertImage
 				->insert($this->getTableName())
 				->values( [
-					'file' => $insertImage->createNamedParameter($image->getFile()),
+					'nc_file_id' => $insertImage->createNamedParameter($image->getFile()),
 					'model' => $insertImage->createNamedParameter($image->getModel()),
 				] )->executeStatement(); 
 			$imageID = $insertImage->getLastInsertId();
@@ -141,8 +143,8 @@ class ImageMapper extends QBMapper {
 		$insertUserImages = $this->db->getQueryBuilder();
 		$insertUserImages->insert('facerecog_user_images')
 				->values( [
-				'user' => $insertUserImages->createNamedParameter($image->getUser()),
-				'image_id' => $insertUserImages->createNamedParameter($imageID)
+					'user' => $insertUserImages->createNamedParameter($image->getUser()),
+					'image_id' => $insertUserImages->createNamedParameter($imageID)
 			] )->executeStatement(); 
 		
 		$image->setId((int) $imageID);
