@@ -44,27 +44,7 @@ class TempImageTest extends TestCase {
 		$this->testFile = \OC::$SERVERROOT . '/apps/facerecognition/tests/assets/lenna.jpg';
 	}
 
-	public function testImageTest() {
-		// Try an tempImage that not need change
-		$tempImage = new TempImage($this->testFile,
-		                           'image/png',
-		                           158*158,
-		                           100);
-
-		$this->assertFalse($tempImage->getSkipped());
-		$this->assertEquals(1, $tempImage->getRatio());
-
-		$tempPath = $tempImage->getTempPath();
-		$this->assertTrue(file_exists($tempPath));
-
-		$image = new OCP_Image();
-		$image->loadFromFile($tempPath);
-		$this->assertEquals(158, imagesx($image->resource()));
-		$this->assertEquals(158, imagesy($image->resource()));
-
-		$tempImage->clean();
-		$this->assertFalse(file_exists($tempPath));
-
+	public function testImageTest_DoubleScaling() {
 		// Try image with double scaling up
 		$tempImage = new TempImage($this->testFile,
 		                           'image/png',
@@ -84,7 +64,31 @@ class TempImageTest extends TestCase {
 
 		$tempImage->clean();
 		$this->assertFalse(file_exists($tempPath));
+	}
 
+	public function testImageTest_NoChange() {
+		// Try an tempImage that not need change
+		$tempImage = new TempImage($this->testFile,
+		                           'image/png',
+		                           158*158,
+		                           100);
+
+		$this->assertFalse($tempImage->getSkipped());
+		$this->assertEquals(1, $tempImage->getRatio());
+
+		$tempPath = $tempImage->getTempPath();
+		$this->assertTrue(file_exists($tempPath));
+
+		$image = new OCP_Image();
+		$image->loadFromFile($tempPath);
+		$this->assertEquals(158, imagesx($image->resource()));
+		$this->assertEquals(158, imagesy($image->resource()));
+
+		$tempImage->clean();
+		$this->assertFalse(file_exists($tempPath));
+	}
+
+	public function testImageTest_SmallerThanMin() {
 		// Try a file smaller than the minimum
 		$tempImage = new TempImage($this->testFile,
 		                           'image/png',
@@ -96,5 +100,4 @@ class TempImageTest extends TestCase {
 		$this->assertEquals(158, imagesx($tempImage->resource()));
 		$this->assertEquals(158, imagesy($tempImage->resource()));
 	}
-
 }

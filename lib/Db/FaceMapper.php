@@ -92,10 +92,10 @@ class FaceMapper extends QBMapper {
 			->andWhere($qb->expr()->eq('i.model', $qb->createParameter('model_id')))
 			->andWhere($qb->expr()->eq('i.nc_file_id', $qb->createParameter('nc_file_id')))
 			->setParameter('user_id', $userId)
-			->setParameter('model_id', $modelId)
-			->setParameter('nc_file_id', $fileId)
 			->groupBy('f.id')
-			->orderBy('f.confidence', 'DESC');
+			->orderBy('f.confidence', 'DESC')
+			->setParameter('model_id', $modelId)
+			->setParameter('nc_file_id', $fileId);
 
 		$faces = $this->findEntities($qb);
 		return $faces;
@@ -164,23 +164,47 @@ class FaceMapper extends QBMapper {
 		return $face;
 	}
 
-	//MTODO: fix if person is null
+	//MTODO: fix if person is null 
+	/**
+	 * Gets all faces that belong to images of a given user, created using given model
+	 * 
+	 * Used only in tests!
+	 * 
+	 * @param string $userId User to which faces and associated images belongs to
+	 * @param int $model Model ID
+	 * @return Face[]
+	 */
 	public function getFaces(string $userId, int $model): array {
 		$qb = $this->db->getQueryBuilder();
-		$qb->select('f.id', 'cf.cluster_id as person', 'f.x', 'f.y', 'f.width', 'f.height', 'f.confidence', 'f.descriptor', 'f.is_groupable')
+		$qb->select('f.id', 'cf.cluster_id as person', 'f.image_id as image', 'x', 'y', 'width', 'height', 'landmarks', 'descriptor', 'confidence', 'creation_time')
 			->from($this->getTableName(), 'f')
 			->innerJoin('f', 'facerecog_images' ,'i', $qb->expr()->eq('f.image_id', 'i.id'))
 			->innerJoin('f', 'facerecog_user_images' ,'ui', $qb->expr()->eq('i.id', 'ui.image_id'))
 			->leftJoin('f', 'facerecog_cluster_faces' ,'cf', $qb->expr()->eq('f.id', 'cf.face_id'))
 			->leftJoin('f', 'facerecog_clusters' ,'c', $qb->expr()->orX($qb->expr()->isNull('cf.face_id'),$qb->expr()->eq('f.id', 'cf.face_id')))
 			->where($qb->expr()->eq('ui.user', $qb->createParameter('user')))
-			->andWhere($qb->expr()->eq('c.user', $qb->createParameter('user')))
+			->andWhere($qb->expr()->orX(
+				$qb->expr()->isNull('c.user'),
+				$qb->expr()->eq('c.user', $qb->createParameter('user')))
+			)
 			->andWhere($qb->expr()->eq('model', $qb->createParameter('model')))
+			->groupBy('f.id')
 			->setParameter('user', $userId)
 			->setParameter('model', $model);
 		return $this->findEntities($qb);
 	}
 
+	/**
+	 * Gets all faces that belong to images of a given user, created using given model
+	 * and that are groupable (size and confidence above threshold)
+	 *
+	 * @param string $userId User to which faces and associated images belongs to
+	 * @param int $model Model ID
+	 * @param int $minSize Minimum size (width and height) for face to be considered groupable
+	 * @param float $minConfidence Minimum confidence for face to be considered groupable
+	 *
+	 * @return Face[]
+	 */
 	public function getGroupableFaces(string $userId, int $model, int $minSize, float $minConfidence): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('f.id', 'cf.cluster_id as person')
@@ -208,6 +232,17 @@ class FaceMapper extends QBMapper {
 		return $this->findEntities($qb);
 	}
 
+	/**
+	 * Gets all faces that belong to images of a given user, created using given model
+	 * and that are not groupable (size or confidence below threshold)
+	 *
+	 * @param string $userId User to which faces and associated images belongs to
+	 * @param int $model Model ID
+	 * @param int $minSize Minimum size (width and height) for face to be considered groupable
+	 * @param float $minConfidence Minimum confidence for face to be considered groupable
+	 *
+	 * @return Face[]
+	 */
 	public function getNonGroupableFaces(string $userId, int $model, int $minSize, float $minConfidence): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('f.id', 'cf.cluster_id as person')
@@ -238,9 +273,16 @@ class FaceMapper extends QBMapper {
 	}
 
 	/**
-	 * @param int|null $limit
+	 * Gets all faces that belong to cluster of a given user, created using given model
+	 *
+	 * @param string $userId User to which faces and associated images belongs to
+	 * @param int $clusterId Cluster ID
+	 * @param int|null $model Model ID
+	 * @param int $minSize Minimum size (width and height) for face to be considered groupable
+	 * @param float $minConfidence Minimum confidence for face to be considered groupable
+	 *
+	 * @return Face[]
 	 */
-
 	public function findFromCluster(string $userId, int $clusterId, int $model, ?int $limit = null, $offset = null): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('f.id', 'f.image_id as image', 'cf.cluster_id as person')
@@ -289,7 +331,6 @@ class FaceMapper extends QBMapper {
 	 * Note that this is independent of any Model
 	 *
 	 * @param int $imageId Image for which to find all faces for
-	 *
 	 */
 	public function findByImage(int $imageId): array {
 		$qb = $this->db->getQueryBuilder();
@@ -369,8 +410,6 @@ class FaceMapper extends QBMapper {
 
 	/**
 	 * Insert one face to database.
-	 * Note: only reason we are not using (idiomatic) QBMapper method is
-	 * because "QueryBuilder::PARAM_DATE" cannot be set there
 	 *
 	 * @param Face $face Face to insert
 	 * @param IDBConnection $db Existing connection, if we need to reuse it. Null if we commit immediatelly.
