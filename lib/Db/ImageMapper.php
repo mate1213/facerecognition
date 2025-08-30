@@ -47,7 +47,7 @@ class ImageMapper extends QBMapper {
 	 */
 	public function find(string $userId, int $imageId): ?Image {
 		$qb = $this->db->getQueryBuilder();
-		$qb->select('i.id', 'i.file', 'i.is_processed', 'i.error', 'i.last_processed_time', 'i.processing_duration')
+		$qb->select('i.id', 'ui.user', 'i.model', 'i.nc_file_id as file', 'i.is_processed', 'i.error', 'i.last_processed_time', 'i.processing_duration')
 			->from($this->getTableName(), 'i')
 			->innerJoin('i', 'facerecog_user_images', 'ui', $qb->expr()->eq('ui.image_id', 'i.id'))
 			->where($qb->expr()->eq('ui.user', $qb->createNamedParameter($userId)))
@@ -66,7 +66,7 @@ class ImageMapper extends QBMapper {
 	 */
 	public function findAll(string $userId, int $modelId): array {
 		$qb = $this->db->getQueryBuilder();
-		$qb->select('i.id', 'i.nc_file_id as file', 'i.is_processed', 'i.error', 'i.last_processed_time', 'i.processing_duration')
+		$qb->select('i.id', 'ui.user', 'i.model', 'i.nc_file_id as file', 'i.is_processed', 'i.error', 'i.last_processed_time', 'i.processing_duration')
 			->from($this->getTableName(), 'i')
 			->innerJoin('i', 'facerecog_user_images', 'ui', $qb->expr()->eq('ui.image_id', 'i.id'))
 			->where($qb->expr()->eq('ui.user', $qb->createNamedParameter($userId)))
@@ -82,13 +82,12 @@ class ImageMapper extends QBMapper {
 	 */
 	public function findFromFile(string $userId, int $modelId, int $fileId): ?Image {
 		$qb = $this->db->getQueryBuilder();
-		$qb->select('i.id', 'i.is_processed', 'i.error')
+		$qb->select('i.id', 'ui.user', 'i.model', 'i.nc_file_id as file', 'i.is_processed', 'i.error', 'i.last_processed_time', 'i.processing_duration')
 			->from($this->getTableName(), 'i')
 			->innerJoin('i', 'facerecog_user_images', 'ui', $qb->expr()->eq('ui.image_id', 'i.id'))
 			->where($qb->expr()->eq('ui.user', $qb->createNamedParameter($userId)))
 			->andwhere($qb->expr()->eq('i.model', $qb->createNamedParameter($modelId)))
-			->andWhere($qb->expr()->eq('i.file', $qb->createNamedParameter($fileId)));
-
+			->andWhere($qb->expr()->eq('i.nc_file_id', $qb->createNamedParameter($fileId)));
 		try {
 			return $this->findEntity($qb);
 		} catch (DoesNotExistException $e) {
@@ -110,7 +109,7 @@ class ImageMapper extends QBMapper {
 		$data = $resultStatement->fetch(\PDO::FETCH_NUM);
 		$resultStatement->closeCursor();
 
-		return (int)$data[0] > 0;
+		return (int)$data[0] > 1;
 	}
 
     #[\Override]
@@ -155,6 +154,8 @@ class ImageMapper extends QBMapper {
 	public function update(Entity $entity): Entity {
 		// if entity wasn't changed it makes no sense to run a db query
 		$properties = $entity->getUpdatedFields();
+		if ($properties->count() === 0)
+			return $entity;
 		// do not update the user field
 		unset($properties['user']);
 
@@ -191,7 +192,7 @@ class ImageMapper extends QBMapper {
 			->from($this->getTableName(), 'i')
 			->innerJoin('i', 'facerecog_user_images', 'ui', $qb->expr()->eq('ui.image_id', 'i.id'))
 			->where($qb->expr()->eq('ui.user', $qb->createParameter('user')))
-			->andWhere($qb->expr()->eq('i.file', $qb->createParameter('file')))
+			->andWhere($qb->expr()->eq('i.nc_file_id', $qb->createParameter('file')))
 			->andWhere($qb->expr()->eq('i.model', $qb->createParameter('model')))
 			->setParameter('user', $image->getUser())
 			->setParameter('file', $image->getFile())
@@ -210,7 +211,8 @@ class ImageMapper extends QBMapper {
 			->where($qb->expr()->eq('model', $qb->createParameter('model')))
 			->setParameter('model', $model);
 		$resultStatement = $query->executeQuery();
-		$data = $resultStatement->fetch(\PDO::FETCH_NUM);
+		$data = $resultStatement->
+		fetch(\PDO::FETCH_NUM);
 		$resultStatement->closeCursor();
 
 		return (int)$data[0];
@@ -224,7 +226,7 @@ class ImageMapper extends QBMapper {
 			->where($qb->expr()->eq('model', $qb->createParameter('model')))
 			->andWhere($qb->expr()->eq('is_processed', $qb->createParameter('is_processed')))
 			->setParameter('model', $model)
-			->setParameter('is_processed', True);
+			->setParameter('is_processed', TRUE);
 		$resultStatement = $query->executeQuery();
 		$data = $resultStatement->fetch(\PDO::FETCH_NUM);
 		$resultStatement->closeCursor();

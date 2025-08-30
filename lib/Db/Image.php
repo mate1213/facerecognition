@@ -26,6 +26,7 @@ namespace OCA\FaceRecognition\Db;
 use JsonSerializable;
 
 use OCP\AppFramework\Db\Entity;
+use OCP\DB\Types;
 
 /**
  * Image represent one image file for one user.
@@ -41,7 +42,7 @@ use OCP\AppFramework\Db\Entity;
  *
  * @method string|null getError()
  * @method void setError(string $error)
- *
+ * 
  * @method bool getIsProcessed()
  * @method void setIsProcessed($isProcessed)
  *
@@ -105,11 +106,12 @@ class Image extends Entity implements JsonSerializable {
 	protected $processingDuration;
 
 	public function __construct() {
-		$this->addType('id', 'integer');
-		$this->addType('user', 'string');
-		$this->addType('file', 'integer');
-		$this->addType('model', 'integer');
-		$this->addType('isProcessed', 'bool');
+		$this->addType('id', Types::INTEGER);
+		$this->addType('user', Types::STRING);
+		$this->addType('file', Types::INTEGER);
+		$this->addType('model', Types::INTEGER);
+		$this->addType('isProcessed', Types::BOOLEAN);
+		$this->addType('lastProcessedTime', Types::DATETIME);
 	}
 
 	public function jsonSerialize() {
@@ -133,5 +135,4 @@ class Image extends Entity implements JsonSerializable {
 		}
 		$this->markFieldUpdated('isProcessed');
 	}
-
 }
