@@ -44,6 +44,9 @@ class ImageMapperTest extends TestCase {
     /** @var IDBConnection test instance*/
     private $dbConnection;
 	private $isSetupComplete = true;
+	private $imageCountQuery;
+	private $userImageCountQuery;
+
     /**
 	 * {@inheritDoc}
 	 */
@@ -53,6 +56,11 @@ class ImageMapperTest extends TestCase {
 		$this->dbConnection->beginTransaction();
 
 		$this->imageMapper = new ImageMapper($this->dbConnection, new FaceMapper($this->dbConnection));
+		
+		$this->imageCountQuery = $this->dbConnection->getQueryBuilder();
+		$this->imageCountQuery->select($this->imageCountQuery->createFunction('COUNT(id) as count'))->from('facerecog_images');
+		$this->userImageCountQuery = $this->dbConnection->getQueryBuilder();
+		$this->userImageCountQuery->select($this->userImageCountQuery->createFunction('COUNT(*) as count'))->from('facerecog_user_images');
 		if ($this->isSetupComplete === false) {
 			$this->isSetupComplete = true;
 			$sql = file_get_contents("tests/DatabaseInserts/10_imageInsert.sql");
@@ -99,6 +107,11 @@ class ImageMapperTest extends TestCase {
 		$this->assertIsArray($images);
 		$this->assertContainsOnlyInstancesOf(Image::class, $images);
 		$this->assertCount($expectedCount, $images);
+		foreach ($images as $image)
+		{
+			$this->assertEquals($user, $image->getUser());
+			$this->assertEquals($model, $image->getModel());
+		}
 	}
 
     #[DataProviderExternal(ImageDataProvider::class, 'findFromFile_Provider')]
@@ -133,18 +146,8 @@ class ImageMapperTest extends TestCase {
     #[DataProviderExternal(ImageDataProvider::class, 'removeUserImageConnection_Provider')]
     public function test_removeUserImageConnection(string $user, int $imageId, int $expectedConnections) : void {
 		//Assert initial state
-        $imageCountQuery = $this->dbConnection->getQueryBuilder();
-		$imageCountQuery->select($imageCountQuery->createFunction('COUNT(id) as count'))->from('facerecog_images');
-        $userImageCountQuery = $this->dbConnection->getQueryBuilder();
-		$userImageCountQuery->select($userImageCountQuery->createFunction('COUNT(*) as count'))->from('facerecog_user_images');
-
-		$row  = $imageCountQuery->executeQuery()->fetch();
-		$this->assertNotFalse($row);
-		$this->assertEquals(9, (int)$row['count']);
-
-		$row = $userImageCountQuery->executeQuery()->fetch();
-		$this->assertNotFalse($row);
-		$this->assertEquals(10, (int)$row['count']);
+		$this->assertRowCountImages(9);
+		$this->assertRowCountUserImages(10);
 
 		$image = new Image();
 		$image->id = $imageId;
@@ -154,12 +157,8 @@ class ImageMapperTest extends TestCase {
         $this->imageMapper->removeUserImageConnection($image);
 
 		//Assert
-		$row = $imageCountQuery->executeQuery()->fetch();
-		$this->assertNotFalse($row);
-		$this->assertEquals(9, (int)$row['count']);
-		$row = $userImageCountQuery->executeQuery()->fetch();
-		$this->assertNotFalse($row);
-		$this->assertEquals($expectedConnections, (int)$row['count']);
+		$this->assertRowCountImages(9);
+		$this->assertRowCountUserImages($expectedConnections);
 	}
 
     #[DataProviderExternal(ImageDataProvider::class, 'insert_Provider')]
@@ -167,18 +166,8 @@ class ImageMapperTest extends TestCase {
 								int $expectedFileCount, int $expectedConnections,
 								bool $exceptionExpected, ?string $expectedErrorMessage) : void {
 		//Assert initial state
-        $imageCountQuery = $this->dbConnection->getQueryBuilder();
-		$imageCountQuery->select($imageCountQuery->createFunction('COUNT(id) as count'))->from('facerecog_images');
-        $userImageCountQuery = $this->dbConnection->getQueryBuilder();
-		$userImageCountQuery->select($userImageCountQuery->createFunction('COUNT(*) as count'))->from('facerecog_user_images');
-
-		$row  = $imageCountQuery->executeQuery()->fetch();
-		$this->assertNotFalse($row);
-		$this->assertEquals(9, (int)$row['count']);
-
-		$row = $userImageCountQuery->executeQuery()->fetch();
-		$this->assertNotFalse($row);
-		$this->assertEquals(10, (int)$row['count']);
+		$this->assertRowCountImages(9);
+		$this->assertRowCountUserImages(10);
 
 		$image = new Image();
 		$image->user = $user;
@@ -194,12 +183,8 @@ class ImageMapperTest extends TestCase {
         $this->imageMapper->insert($image);
 
 		//Assert
-		$row = $imageCountQuery->executeQuery()->fetch();
-		$this->assertNotFalse($row);
-		$this->assertEquals($expectedFileCount, (int)$row['count']);
-		$row = $userImageCountQuery->executeQuery()->fetch();
-		$this->assertNotFalse($row);
-		$this->assertEquals($expectedConnections, (int)$row['count']);
+		$this->assertRowCountImages($expectedFileCount);
+		$this->assertRowCountUserImages($expectedConnections);
 	}
 
     #[DataProviderExternal(ImageDataProvider::class, 'findFromFile_Provider')]
@@ -271,6 +256,11 @@ class ImageMapperTest extends TestCase {
 		$this->assertIsArray($images);
 		$this->assertContainsOnlyInstancesOf(Image::class, $images);
 		$this->assertCount($expectedCount, $images);
+		foreach ($images as $image)
+		{
+			$this->assertEquals($user, $image->getUser());
+			$this->assertEquals($model, $image->getModel());
+		}
 	}
 
     #[DataProviderExternal(ImageDataProvider::class, 'findImages_Provider')]
@@ -283,6 +273,11 @@ class ImageMapperTest extends TestCase {
 		$this->assertIsArray($images);
 		$this->assertContainsOnlyInstancesOf(Image::class, $images);
 		$this->assertCount($expectedCount, $images);
+		foreach ($images as $image)
+		{
+			$this->assertEquals($user, $image->getUser());
+			$this->assertEquals($model, $image->getModel());
+		}
 	}
 
     #[DataProviderExternal(ImageDataProvider::class, 'findFromPersonLike_Provider')]
@@ -298,7 +293,7 @@ class ImageMapperTest extends TestCase {
 	}
 
     #[DataProviderExternal(ImageDataProvider::class, 'findFromPerson_Provider')]
-	public function test_findFromPerson(string $user, int $model, string $nameLike, ?int $offset, ?int $limit, int $expectedCount) : void {
+	public function test_findFromPerson(string $user, int $model, string $name, ?int $offset, ?int $limit, int $expectedCount) : void {
 		//Act
         $images = $this->imageMapper->findFromPerson($user, $model, $nameLike, $offset, $limit);
 
@@ -307,6 +302,73 @@ class ImageMapperTest extends TestCase {
 		$this->assertIsArray($images);
 		$this->assertContainsOnlyInstancesOf(Image::class, $images);
 		$this->assertCount($expectedCount, $images);
+	}
+
+    #[DataProviderExternal(ImageDataProvider::class, 'countFromPerson_Provider')]
+	public function test_countFromPerson(string $user, int $model, string $name, int $expectedCount) : void {
+		//Act
+        $resultCount = $this->imageMapper->countFromPerson($user, $model, $name);
+
+		//Assert
+        $this->assertNotNull($resultCount);
+		$this->assertEquals($expectedCount, $resultCount);
+	}
+
+	public function test_resetImage() : void {
+		$image = $this->imageMapper->find('user1', 1);
+		//Act
+        $this->imageMapper->resetImage($image);
+
+		//Assert
+		$image = $this->imageMapper->find('user1', 1);
+        $this->assertNotNull($image);
+		$this->assertEquals(false, $image->getIsProcessed());
+		$this->assertNull($image->getError());
+		$this->assertNull($image->getLastProcessedTime());
+	}
+
+	public function test_resetErrors() : void {
+		//Act
+        $this->imageMapper->resetErrors('user2');
+
+		//Assert
+		$images = $this->imageMapper->findAll('user2', 2);
+        $this->assertNotNull($images);
+		foreach ($images as $image)
+		{
+			if ($image->getId() === 2 || $image->getId() === 4 || $image->getId() === 7)
+			{
+				$this->assertEquals(false, $image->getIsProcessed(), "Image id: ".$image->getId()." is_processed set true, but it should be false");
+				$this->assertNull($image->getError(), "Image id: ".$image->getId()." error not null, but it should be null");
+				$this->assertNull($image->getLastProcessedTime(), "Image id: ".$image->getId()." last_processed_time not null, but it should be null");
+				continue;
+			}
+		}
+	}
+
+    public function test_deleteUserImages() : void {
+		//Assert initial state
+		$this->assertRowCountImages(9);
+		$this->assertRowCountUserImages(10);
+
+		//Act
+        $this->imageMapper->deleteUserImages("user1");
+
+		//Assert
+		$this->assertRowCountUserImages(5);	
+		$this->assertRowCountImages(5);
+	}
+
+	private function assertRowCountImages(int $expectedCount): void {
+		$row =$this->imageCountQuery->executeQuery()->fetch();
+		$this->assertNotFalse($row);
+		$this->assertEquals($expectedCount, (int)$row['count'], "Expected image count: ".$expectedCount." actual: ".(int)$row['count']);
+	}
+
+	private function assertRowCountUserImages($expectedCount): void {
+		$row =$this->userImageCountQuery->executeQuery()->fetch();
+		$this->assertNotFalse($row);
+		$this->assertEquals($expectedCount, (int)$row['count'], "Expected user_image count: ".$expectedCount." actual: ".(int)$row['count']);
 	}
 
     public function tearDown(): void {
@@ -473,6 +535,19 @@ class ImageDataProvider{
             ["user1", 3,"Alice",null,null, 0], // non existing model
             ["user3", 1,"Alice",null,null, 0], // non existing user
             ["user3", 3,"Alice",null,null, 0], // non existing user and model
+        ];
+    }
+	
+	public static function countFromPerson_Provider(): array {
+        return [
+            ["user1", 1,"Alice", 1],
+            ["user1", 1,"alice", 0],
+            ["user2", 1,"Alice", 0],
+            ["user2", 2,"Alice", 0],
+            ["user2", 2,"Bob", 1],//MTODO: Investigate - Why actual is 0?
+            ["user1", 3,"Alice", 0], // non existing model
+            ["user3", 1,"Alice", 0], // non existing user
+            ["user3", 3,"Alice", 0], // non existing user and model
         ];
     }
 }

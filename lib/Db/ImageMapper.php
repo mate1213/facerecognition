@@ -352,8 +352,9 @@ class ImageMapper extends QBMapper {
 			->from($this->getTableName(), 'i')
 			->innerJoin('i', 'facerecog_user_images', 'ui', $qb->expr()->eq('ui.image_id', 'i.id'))
 			->innerJoin('i', 'facerecog_faces', 'f', $qb->expr()->eq('f.image_id', 'i.id'))
-			->innerJoin('f', 'facerecog_cluster_faces' ,'cf', $qb->expr()->eq('cf.face_id', 'f.id'))
-			->innerJoin('cf', 'facerecog_clusters', 'p', $qb->expr()->eq('p.id', 'cf.cluster_id'))
+			->innerJoin('i', 'facerecog_cluster_faces', 'cf', $qb->expr()->eq('cf.face_id', 'f.id'))
+			->innerJoin('i', 'facerecog_person_clusters', 'pc', $qb->expr()->eq('pc.cluster_id', 'cf.cluster_id'))
+			->innerJoin('i', 'facerecog_persons', 'p', $qb->expr()->eq('pc.person_id', 'p.id'))
 			->where($qb->expr()->eq('ui.user', $qb->createNamedParameter($userId)))
 			->andWhere($qb->expr()->eq('i.model', $qb->createNamedParameter($modelId)))
 			->andWhere($qb->expr()->eq('i.is_processed', $qb->createNamedParameter(True)))
@@ -429,7 +430,7 @@ class ImageMapper extends QBMapper {
 			->set("is_processed", $qb->createNamedParameter(false, IQueryBuilder::PARAM_BOOL))
 			->set("error", $qb->createNamedParameter(null))
 			->set("last_processed_time", $qb->createNamedParameter(null))
-			->Where($qb->expr()->eq('file', $qb->createNamedParameter($image->getFile())))
+			->Where($qb->expr()->eq('nc_file_id', $qb->createNamedParameter($image->getFile())))
 			->andWhere($qb->expr()->eq('model', $qb->createNamedParameter($image->getModel())))
 			->executeStatement();
 	}
@@ -442,12 +443,23 @@ class ImageMapper extends QBMapper {
 	 * @return void
 	 */
 	public function resetErrors(string $userId): void {
+		//Collect all imageId whitch has error and belongs to that user
+		$sub = $this->db->getQueryBuilder();
+		$sub->select('ui.image_id')
+			->from($this->getTableName(), 'i')
+			->innerJoin('i', 'facerecog_user_images' ,'ui', $sub->expr()->eq('ui.image_id', 'i.id'))
+			->where($sub->expr()->eq('ui.user', $sub->createParameter('userId')))
+			->andWhere($sub->expr()->isNotNull('i.error'));
+
 		$qb = $this->db->getQueryBuilder();
 		$qb->update($this->getTableName())
 			->set("is_processed", $qb->createNamedParameter(false, IQueryBuilder::PARAM_BOOL))
-			->set("error", $qb->createNamedParameter(null))
-			->set("last_processed_time", $qb->createNamedParameter(null))
-			->Where($qb->expr()->isNotNull('error'))
+			->set("error", $qb->createParameter('error'))
+			->set("last_processed_time", $qb->createParameter("last_processed_time"))
+			->Where('id in (' . $sub->getSQL() . ')')
+			->setParameter('userId', $userId, IQueryBuilder::PARAM_STR)
+			->setParameter('error', null)
+			->setParameter('last_processed_time', null)
 			->executeStatement();
 	}
 
@@ -467,11 +479,11 @@ class ImageMapper extends QBMapper {
 
 		//Collect all imageId whitch has no more references by other Users
 		$sub = $this->db->getQueryBuilder();
-		$sub->select('ui.image')
+		$sub->select('ui.image_id')
 			->from($this->getTableName(), 'i')
-			->rightJoin('i', 'facerecog_user_images' ,'ui', $sub->expr()->eq('ui.image_id', 'i.id'))
-			->where($sub->expr()->isNull('i.id'))
-			->groupBy('ui.image_id');
+			->leftJoin('i', 'facerecog_user_images' ,'ui', $sub->expr()->eq('ui.image_id', 'i.id'))
+			->where($sub->expr()->isNull('ui.image_id'))
+			->groupBy('i.id');
 		
 		//Delete image where the connection table has no reference
 		$qb = $this->db->getQueryBuilder();
