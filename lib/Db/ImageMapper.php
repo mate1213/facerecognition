@@ -172,8 +172,7 @@ class ImageMapper extends QBMapper {
 	 * @param Entity $entity image entity
 	 * @param string $userName name of user
 	 */
-	public function removeUserImageConnection(Entity $entity)
-	{
+	public function removeUserImageConnection(Entity $entity){
 		$qb = $this->db->getQueryBuilder();
 
 		$qb->delete('facerecog_user_images')
@@ -185,6 +184,7 @@ class ImageMapper extends QBMapper {
 			);
 		$qb->executeStatement();
 	}
+
 	public function imageExists(Image $image): ?int {
 		$qb = $this->db->getQueryBuilder();
 		$query = $qb
@@ -274,24 +274,23 @@ class ImageMapper extends QBMapper {
 	 * @param IUser|null $user User for which to get images for. If not given, all images from instance are returned.
 	 * @param int $modelId Model Id to get images for.
 	 */
-	public function findImagesWithoutFaces(IUser $user = null, int $modelId): array {
+	public function findImagesWithoutFaces(?string $user = null, int $modelId): array {
 		$qb = $this->db->getQueryBuilder();
-		$qb
-			->select(['id', 'user', 'file', 'model'])
+		$qb->select('i.id', 'ui.user', 'i.model', 'i.nc_file_id as file', 'i.is_processed', 'i.error', 'i.last_processed_time', 'i.processing_duration')
 			->from($this->getTableName(), 'i')
 			->innerJoin('i', 'facerecog_user_images', 'ui', $qb->expr()->eq('ui.image_id', 'i.id'))
 			->where($qb->expr()->eq('i.is_processed',  $qb->createParameter('is_processed')))
 			->andWhere($qb->expr()->eq('i.model', $qb->createNamedParameter($modelId)))
 			->setParameter('is_processed', false, IQueryBuilder::PARAM_BOOL);
 		if (!is_null($user)) {
-			$qb->andWhere($qb->expr()->eq('ui.user', $qb->createNamedParameter($user->getUID())));
+			$qb->andWhere($qb->expr()->eq('ui.user', $qb->createNamedParameter($user)));
 		}
 		return $this->findEntities($qb);
 	}
 
 	public function findImages(string $userId, int $model): array {
 		$qb = $this->db->getQueryBuilder();
-		$qb->select('i.id', 'i.file','ui.user')
+		$qb->select('i.id', 'ui.user', 'i.model', 'i.nc_file_id as file', 'i.is_processed', 'i.error', 'i.last_processed_time', 'i.processing_duration')
 			->from($this->getTableName(), 'i')
 			->innerJoin('i', 'facerecog_user_images', 'ui', $qb->expr()->eq('ui.image_id', 'i.id'))
 			->where($qb->expr()->eq('ui.user', $qb->createNamedParameter($userId)))
@@ -301,14 +300,16 @@ class ImageMapper extends QBMapper {
 		return $images;
 	}
 
+	//MTODO: NEVER called
 	public function findFromPersonLike(string $userId, int $model, string $name, $offset = null, $limit = null): array {
 		$qb = $this->db->getQueryBuilder();
-		$qb->select('i.id', 'i.file')
+		$qb->select('i.id', 'ui.user', 'i.model', 'i.nc_file_id as file', 'i.is_processed', 'i.error', 'i.last_processed_time', 'i.processing_duration')
 			->from($this->getTableName(), 'i')
 			->innerJoin('i', 'facerecog_user_images', 'ui', $qb->expr()->eq('ui.image_id', 'i.id'))
 			->innerJoin('i', 'facerecog_faces', 'f', $qb->expr()->eq('f.image_id', 'i.id'))
-			->innerJoin('i', 'facerecog_clusters', 'p', $qb->expr()->eq('f.person', 'p.id'))
-			->innerJoin('i', 'facerecog_cluster_faces', 'cf', $qb->expr()->eq('cf.cluster_id', 'p.id'))
+			->innerJoin('i', 'facerecog_cluster_faces', 'cf', $qb->expr()->eq('cf.face_id', 'f.id'))
+			->innerJoin('i', 'facerecog_person_clusters', 'pc', $qb->expr()->eq('pc.cluster_id', 'cf.cluster_id'))
+			->innerJoin('i', 'facerecog_persons', 'p', $qb->expr()->eq('pc.person_id', 'p.id'))
 			->where($qb->expr()->eq('ui.user', $qb->createNamedParameter($userId)))
 			->andWhere($qb->expr()->eq('i.model', $qb->createNamedParameter($model)))
 			->andWhere($qb->expr()->eq('i.is_processed', $qb->createNamedParameter(True)))
@@ -325,17 +326,18 @@ class ImageMapper extends QBMapper {
 
 	public function findFromPerson(string $userId, int $modelId, string $name, $offset = null, $limit = null): array {
 		$qb = $this->db->getQueryBuilder();
-		$qb->select('i.file')
+		$qb->select('i.id', 'ui.user', 'i.model', 'i.nc_file_id as file', 'i.is_processed', 'i.error', 'i.last_processed_time', 'i.processing_duration')
 			->from($this->getTableName(), 'i')
 			->innerJoin('i', 'facerecog_user_images', 'ui', $qb->expr()->eq('ui.image_id', 'i.id'))
 			->innerJoin('i', 'facerecog_faces', 'f', $qb->expr()->eq('f.image_id', 'i.id'))
-			->innerJoin('f', 'facerecog_cluster_faces' ,'cf', $qb->expr()->eq('cf.face_id', 'f.id'))
-			->innerJoin('cf', 'facerecog_clusters', 'p', $qb->expr()->eq('p.id', 'cf.cluster_id'))
+			->innerJoin('i', 'facerecog_cluster_faces', 'cf', $qb->expr()->eq('cf.face_id', 'f.id'))
+			->innerJoin('i', 'facerecog_person_clusters', 'pc', $qb->expr()->eq('pc.cluster_id', 'cf.cluster_id'))
+			->innerJoin('i', 'facerecog_persons', 'p', $qb->expr()->eq('pc.person_id', 'p.id'))
 			->where($qb->expr()->eq('ui.user', $qb->createNamedParameter($userId)))
-			->andWhere($qb->expr()->eq('model', $qb->createNamedParameter($modelId)))
-			->andWhere($qb->expr()->eq('is_processed', $qb->createNamedParameter(True)))
+			->andWhere($qb->expr()->eq('i.model', $qb->createNamedParameter($modelId)))
+			->andWhere($qb->expr()->eq('i.is_processed', $qb->createNamedParameter(True)))
 			->andWhere($qb->expr()->eq('p.name', $qb->createNamedParameter($name)))
-			->orderBy('i.file', 'DESC');
+			->orderBy('i.nc_file_id', 'DESC');
 
 		$qb->setFirstResult($offset);
 		$qb->setMaxResults($limit);

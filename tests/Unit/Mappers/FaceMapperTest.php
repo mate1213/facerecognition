@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-namespace OCA\FaceRecognition\Tests\Unit;
+namespace OCA\FaceRecognition\Tests\Unit\Mappers;
 
 use DateTime;
 
@@ -36,12 +36,12 @@ use OCP\IDBConnection;
 
 #[CoversClass(FaceMapper::class)]
 #[UsesClass(Face::class)]
-class FaceMapperUnitTest extends TestCase {
+class FaceMapperTest extends TestCase {
     /** @var FaceMapper test instance*/
 	private $faceMapper;
     /** @var IDBConnection test instance*/
     private $dbConnection;
-	private $isSetupComplete = false;
+	private $isSetupComplete = true;
     	/**
 	 * {@inheritDoc}
 	 */

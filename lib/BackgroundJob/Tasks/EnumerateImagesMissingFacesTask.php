@@ -69,7 +69,7 @@ class EnumerateImagesMissingFacesTask extends FaceRecognitionBackgroundTask {
 
 		$modelId = $this->settingsService->getCurrentFaceModel();
 
-		$images = $this->imageMapper->findImagesWithoutFaces($this->context->user, $modelId);
+		$images = $this->imageMapper->findImagesWithoutFaces($this->context->user->getUID(), $modelId);
 		yield;
 
 		shuffle($images);
