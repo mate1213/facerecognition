@@ -346,6 +346,11 @@ class ImageMapperTest extends TestCase {
 		}
 	}
 
+	/*
+	* DELETE FROM `oc_facerecog_user_images` WHERE `user` = 'user1'
+	* SELECT `ui`.`image_id` FROM `oc_facerecog_images` `i` LEFT JOIN `oc_facerecog_user_images` `ui` ON `ui`.`image_id` = `i`.`id` WHERE `ui`.`image_id` IS NULL GROUP BY `i`.`id`
+	* DELETE FROM `oc_facerecog_images` WHERE id in (SELECT `ui`.`image_id` FROM `oc_facerecog_images` `i` LEFT JOIN `oc_facerecog_user_images` `ui` ON `ui`.`image_id` = `i`.`id` WHERE `ui`.`image_id` IS NULL GROUP BY `i`.`id`)
+	*/
     public function test_deleteUserImages() : void {
 		//Assert initial state
 		$this->assertRowCountImages(9);
