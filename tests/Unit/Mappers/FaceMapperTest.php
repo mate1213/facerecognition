@@ -208,32 +208,31 @@ class FaceMapperTest extends TestCase {
 		$this->assertEquals(16, $facesCount);
 	}
 
-	public function test_GetOldestCreatedFaceWithoutPerson_ForUser_ByModel() : void {
+    #[DataProviderExternal(FaceDataProvider::class, 'getOldestCreatedFaceWithoutPerson_ForUser_ByModel_Provider')]
+	public function test_GetOldestCreatedFaceWithoutPerson_ForUser_ByModel(string $user, int $model, ?int $expectedPerson, bool $isfaceNull ) : void {
 		//Act
         $face = $this->faceMapper->getOldestCreatedFaceWithoutPerson("user1", 1);
 
 		//Assert
-        $this->assertNotNull($face);
-		$this->assertInstanceOf(Face::class, $face);
-        $this->assertEquals(7, $face->getId());
-		$this->assertEquals(DateTime::createFromFormat('Y-m-d H:i:s', '2025-08-25 09:32:00'), $face->getCreationTime());
-		$this->assertEquals(7,$face->getImage()); //only id and creation time are selected
-		$this->assertNull($face->getPerson());
-		$this->assertNotEquals("null",$face->getDescriptor());
-		$this->assertNotEquals("null",$face->getLandmarks());
-		$this->assertEquals(0.75, $face->getConfidence());
-		$this->assertEquals(20, $face->getX());
-		$this->assertEquals(30, $face->getY());
-		$this->assertEquals(40, $face->getWidth());
-		$this->assertEquals(50, $face->getHeight());
-	}
-
-	public function test_GetOldestCreatedFaceWithoutPerson_ForUser_ByModel_NullResult() : void {
-		//Act
-        $face = $this->faceMapper->getOldestCreatedFaceWithoutPerson("user1", 2);
-
-		//Assert
-        $this->assertNull($face);
+		if ($isFaceNull) {
+			$this->assertNull($face);
+		}
+		else {
+			$this->assertNotNull($face);
+			$this->assertInstanceOf(Face::class, $face);
+			$this->assertNotNull($face->getId());
+			$this->assertInstanceOf(DateTime::class, $face->getCreationTime());
+			$this->assertNotNull($face->getCreationTime());
+			$this->assertNotNull(7,$face->getImage()); //only id and creation time are selected
+			$this->assertEquals($expectedPerson, $face->getPerson());
+			$this->assertNotEquals("null",$face->getDescriptor());
+			$this->assertNotEquals("null",$face->getLandmarks());
+			$this->assertNotNull($face->getConfidence());
+			$this->assertNotNull($face->getX());
+			$this->assertNotNull($face->getY());
+			$this->assertNotNull($face->getWidth());
+			$this->assertNotNull($face->getHeight());
+		}
 	}
 
 
@@ -351,7 +350,7 @@ class FaceMapperTest extends TestCase {
 	}
 
 	#[DataProviderExternal(FaceDataProvider::class, 'insertFace_Provider')]
-	public function test_InsertFace(Face $faceToInsert, int $expectedCount) : void {
+	public function test_InsertFace(Face $faceToInsert, int $expectedFaceCount, int $expectedConnectionCount) : void {
 		//Assert initial state
 		$this->assertFaceCount(14);
 		$this->assertFaceClusterConnectionCount(14);
@@ -360,12 +359,12 @@ class FaceMapperTest extends TestCase {
 		$this->faceMapper->insertFace($faceToInsert);
 
 		//Assert
-		$this->assertFaceCount($expectedCount);
-		$this->assertFaceClusterConnectionCount($expectedCount);
+		$this->assertFaceCount($expectedFaceCount);
+		$this->assertFaceClusterConnectionCount($expectedConnectionCount);
 	}
 
 	#[DataProviderExternal(FaceDataProvider::class, 'insertFace_Provider')]
-	public function test_InsertFace_withDbContext(Face $faceToInsert, int $expectedCount) : void {
+	public function test_InsertFace_withDbContext(Face $faceToInsert, int $expectedFaceCount, int $expectedConnectionCount) : void {
 		//Assert initial state
 		$this->assertFaceCount(14);
 		$this->assertFaceClusterConnectionCount(14);
@@ -374,8 +373,8 @@ class FaceMapperTest extends TestCase {
 		$this->faceMapper->insertFace($faceToInsert, $this->dbConnection);
 
 		//Assert
-		$this->assertFaceCount($expectedCount);
-		$this->assertFaceClusterConnectionCount($expectedCount);
+		$this->assertFaceCount($expectedFaceCount);
+		$this->assertFaceClusterConnectionCount($expectedConnectionCount);
 	}
 
     public function tearDown(): void {
@@ -423,6 +422,13 @@ class FaceDataProvider{
             ["user3", 6, 0]  //non existing user and model
         ];
     }
+	public static function getOldestCreatedFaceWithoutPerson_ForUser_ByModel_Provider(): array {
+		return [
+			["user1", 1, 1, false],
+			["user1", 2, null, true],
+			["user2", 3, null, false],
+		];
+	}
 
     public static function getGroupableFaces_ForUser_ByModel_MinSize_MinConfidence_Provider(): array {
         return [
@@ -500,13 +506,22 @@ class FaceDataProvider{
 		$face1->setLandmarks('"[{\"x\": 1, \"y\": 2}, {\"x\": 3, \"y\": 4}, {\"x\": 5, \"y\": 6}, {\"x\": 7, \"y\": 8}, {\"x\": 9, \"y\": 10}, {\"x\": 11, \"y\": 12}]"');
 		$face1->setCreationTime(DateTime::createFromFormat('Y-m-d H:i:s', '2025-08-30 12:00:00'));
 		$face1->setIsGroupable(true);
-		$face1->setPerson(1); //Alice			
+		$face1->setPerson(1); //Alice
+		$face2 = new Face();
+		$face2->setImage(1);
+		$face2->setX(10);
+		$face2->setY(20);
+		$face2->setWidth(30);
+		$face2->setHeight(40);
+		$face2->setConfidence(0.95);
+		$face2->setDescriptor('[0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.1,0.11,0.12,0.13,0.14,0.15,0.16,0.17]');
+		$face2->setLandmarks('"[{\"x\": 1, \"y\": 2}, {\"x\": 3, \"y\": 4}, {\"x\": 5, \"y\": 6}, {\"x\": 7, \"y\": 8}, {\"x\": 9, \"y\": 10}, {\"x\": 11, \"y\": 12}]"');
+		$face2->setCreationTime(DateTime::createFromFormat('Y-m-d H:i:s', '2025-08-30 12:00:00'));
+		$face2->setIsGroupable(true);
+		$face2->setPerson(null); //Alice	
 		return [
-			[$face1, 15],
-			// ['user2', 2, 13],
-			// ['user2', 1, 8],
-			// ['user1', 2, 14], //no faces for user1 and model 2, so no change
-			// ['user3', 4, 14], //no faces for user3 and model 4, so no change
+			[$face1, 15, 15],
+			[$face2, 15, 14],
 		];
 	}
 }
