@@ -479,7 +479,7 @@ class ImageMapper extends QBMapper {
 
 		//Collect all imageId whitch has no more references by other Users
 		$sub = $this->db->getQueryBuilder();
-		$sub->select('ui.image_id')
+		$sub->select('i.id')
 			->from($this->getTableName(), 'i')
 			->leftJoin('i', 'facerecog_user_images' ,'ui', $sub->expr()->eq('ui.image_id', 'i.id'))
 			->where($sub->expr()->isNull('ui.image_id'))

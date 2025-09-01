@@ -41,8 +41,11 @@ class FaceMapperTest extends TestCase {
 	private $faceMapper;
     /** @var IDBConnection test instance*/
     private $dbConnection;
-	private $isSetupComplete = true;
-    	/**
+	private $isSetupComplete = false;
+	private $clusterFaceCountQuery;
+	private $faceCountQuery;
+
+    /**
 	 * {@inheritDoc}
 	 */
 	public function setUp(): void {
@@ -51,7 +54,15 @@ class FaceMapperTest extends TestCase {
 		$this->dbConnection->beginTransaction();
 
 		$this->faceMapper = new FaceMapper($this->dbConnection);
-		if ($this->isSetupComplete === false) {
+
+		
+        $this->clusterFaceCountQuery = $this->dbConnection->getQueryBuilder();
+		$this->clusterFaceCountQuery->select($this->clusterFaceCountQuery->createFunction('COUNT(*) as count'))->from('facerecog_cluster_faces');
+
+        $this->faceCountQuery = $this->dbConnection->getQueryBuilder();
+		$this->faceCountQuery->select($this->faceCountQuery->createFunction('COUNT(id) as count'))->from('facerecog_faces');
+
+		if (!$this->isSetupComplete) {
 			$this->isSetupComplete = true;
 			$sql = file_get_contents("tests/DatabaseInserts/10_imageInsert.sql");
 			$this->dbConnection->executeStatement($sql);
@@ -70,9 +81,9 @@ class FaceMapperTest extends TestCase {
 		}
 	}
 
-	public function test_FindById() : void {
+	public function test_FindById_existingFace_connectedCluster() : void {
 		//Act
-        $face = $this->faceMapper->find(1);
+        $face = $this->faceMapper->find(1, "user1"); //face id 1 belongs to user1
 
 		//Assert
         $this->assertNotNull($face);
@@ -88,6 +99,52 @@ class FaceMapperTest extends TestCase {
 		$this->assertEquals(20, $face->getY());
 		$this->assertEquals(30, $face->getWidth());
 		$this->assertEquals(40, $face->getHeight());
+	}
+	public function test_FindById_existingFace_NOTconnectedCluster() : void {
+		//Act
+        $face = $this->faceMapper->find(3, "user1"); //face id 1 belongs to user1
+
+		//Assert
+        $this->assertNotNull($face);
+		$this->assertInstanceOf(Face::class, $face);
+        $this->assertEquals(3, $face->getId());
+		$this->assertEquals(3, $face->getImage());
+		$this->assertNull($face->getPerson());
+		$this->assertNotNull($face->getDescriptor());
+		$this->assertNotNull($face->getLandmarks());
+		$this->assertEquals(DateTime::createFromFormat('Y-m-d H:i:s', '2025-08-26 10:16:00'), $face->getCreationTime());
+		$this->assertEquals(0.92, $face->getConfidence());
+		$this->assertEquals(12, $face->getX());
+		$this->assertEquals(22, $face->getY());
+		$this->assertEquals(32, $face->getWidth());
+		$this->assertEquals(42, $face->getHeight());
+	}
+	public function test_FindById_existingFace_connectedToMultipleCluster() : void {
+		//Act
+        $face = $this->faceMapper->find(100, "user1"); //face id 1 belongs to user1
+
+		//Assert
+        $this->assertNotNull($face);
+		$this->assertInstanceOf(Face::class, $face);
+        $this->assertEquals(100, $face->getId());
+		$this->assertEquals(10, $face->getImage());
+		$this->assertEquals(10, $face->getPerson());
+		$this->assertNotNull($face->getDescriptor());
+		$this->assertNotNull($face->getLandmarks());
+		$this->assertEquals(DateTime::createFromFormat('Y-m-d H:i:s', '2025-08-28 12:01:00'), $face->getCreationTime());
+		$this->assertEquals(0.95, $face->getConfidence());
+		$this->assertEquals(10, $face->getX());
+		$this->assertEquals(20, $face->getY());
+		$this->assertEquals(30, $face->getWidth());
+		$this->assertEquals(40, $face->getHeight());
+	}
+	//SELECT `id`, `cf`.`cluster_id` as `person`, `image_id` as `image`, `x`, `y`, `width`, `height`, `landmarks`, `descriptor`, `confidence`, `creation_time` FROM `oc_acerecog_faces` `f` RIGHT JOIN `oc_facerecog_cluster_faces` `cf` ON `cf`.`face_id` = `f`.`id` WHERE `id` = 100
+	public function test_FindById_nonExisting() : void {
+		//Act
+        $face = $this->faceMapper->find(1000, "user1");
+		//Assert
+        $this->assertNull($face);
+
 	}
 
 	public function test_FindDescriptorsBathed() : void {
@@ -108,6 +165,16 @@ class FaceMapperTest extends TestCase {
 		$this->assertIsArray($secondDescriptor['descriptor']);
 		$this->assertCount(128, $secondDescriptor['descriptor']);
 		$this->assertEquals(2, $secondDescriptor['id']);
+	}
+	
+	public function test_FindDescriptorsBathed_emptyarray() : void {
+		//Act
+        $descriptors = $this->faceMapper->findDescriptorsBathed([]);
+
+		//Assert
+        $this->assertNotNull($descriptors);
+		$this->assertIsArray($descriptors);
+		$this->assertEmpty($descriptors);
 	}
 
     #[DataProviderExternal(FaceDataProvider::class, 'findFromFile_Provider')]
@@ -150,16 +217,25 @@ class FaceMapperTest extends TestCase {
 		$this->assertInstanceOf(Face::class, $face);
         $this->assertEquals(7, $face->getId());
 		$this->assertEquals(DateTime::createFromFormat('Y-m-d H:i:s', '2025-08-25 09:32:00'), $face->getCreationTime());
-		$this->assertNull($face->getImage()); //only id and creation time are selected
+		$this->assertEquals(7,$face->getImage()); //only id and creation time are selected
 		$this->assertNull($face->getPerson());
-		$this->assertEquals("null",$face->getDescriptor());
-		$this->assertEquals("null",$face->getLandmarks());
-		$this->assertNull($face->getConfidence());
-		$this->assertNull($face->getX());
-		$this->assertNull($face->getY());
-		$this->assertNull($face->getWidth());
-		$this->assertNull($face->getHeight());
+		$this->assertNotEquals("null",$face->getDescriptor());
+		$this->assertNotEquals("null",$face->getLandmarks());
+		$this->assertEquals(0.75, $face->getConfidence());
+		$this->assertEquals(20, $face->getX());
+		$this->assertEquals(30, $face->getY());
+		$this->assertEquals(40, $face->getWidth());
+		$this->assertEquals(50, $face->getHeight());
 	}
+
+	public function test_GetOldestCreatedFaceWithoutPerson_ForUser_ByModel_NullResult() : void {
+		//Act
+        $face = $this->faceMapper->getOldestCreatedFaceWithoutPerson("user1", 2);
+
+		//Assert
+        $this->assertNull($face);
+	}
+
 
     #[DataProviderExternal(FaceDataProvider::class, 'getFaces_ForUser_ByModel_Provider')]
 	public function test_GetFaces_ForUser_ByModel(string $user, int $model, int $expectedCount) : void {
@@ -249,87 +325,57 @@ class FaceMapperTest extends TestCase {
 
 	public function test_DeleteUserModel() : void {
 		//Assert initial state
-        $faceCountQuery = $this->dbConnection->getQueryBuilder();
-		$faceCountQuery->select($faceCountQuery->createFunction('COUNT(id) as count'))->from('facerecog_faces');
-        $clusterFaceCountQuery = $this->dbConnection->getQueryBuilder();
-		$clusterFaceCountQuery->select($clusterFaceCountQuery->createFunction('COUNT(*) as count'))->from('facerecog_cluster_faces');
-
-		$row  = $faceCountQuery->executeQuery()->fetch();
-		$this->assertNotFalse($row);
-		$this->assertEquals(14, (int)$row['count']);
-
-		$row = $clusterFaceCountQuery->executeQuery()->fetch();
-		$this->assertNotFalse($row);
-		$this->assertEquals(14, (int)$row['count']);
+		$this->assertFaceCount(14);
+		$this->assertFaceClusterConnectionCount(14);
 
 		//Act
 		$this->faceMapper->deleteUserModel('user2', 2);
 
 		//Assert
-		$row = $faceCountQuery->executeQuery()->fetch();
-		$this->assertNotFalse($row);
-		$this->assertEquals(10, (int)$row['count']);
-		$row = $clusterFaceCountQuery->executeQuery()->fetch();
-		$this->assertNotFalse($row);
-		$this->assertEquals(13, (int)$row['count']);
+		$this->assertFaceCount(10);
+		$this->assertFaceClusterConnectionCount(13);
 	}
 	
 	#[DataProviderExternal(FaceDataProvider::class, 'unsetPersonsRelationForUser_Provider')]
 	public function test_UnsetPersonsRelationForUser(string $user, int $model, int $expectedCount) : void {
 		//Assert initial state
-        $faceCountQuery = $this->dbConnection->getQueryBuilder();
-		$faceCountQuery->select($faceCountQuery->createFunction('COUNT(id) as count'))->from('facerecog_faces');
-		$result = $faceCountQuery->executeQuery();
-		$row = $result->fetch();
-		$this->assertNotFalse($row);
-		$this->assertEquals(14, (int)$row['count']);
-        $clusterFaceCountQuery = $this->dbConnection->getQueryBuilder();
-		$clusterFaceCountQuery->select($clusterFaceCountQuery->createFunction('COUNT(*) as count'))->from('facerecog_cluster_faces');
-		$result = $clusterFaceCountQuery->executeQuery();
-		$row = $result->fetch();
-		$this->assertNotFalse($row);
-		$this->assertEquals(14, (int)$row['count']);
+		$this->assertFaceCount(14);
+		$this->assertFaceClusterConnectionCount(14);
 
 		//Act
 		$this->faceMapper->unsetPersonsRelationForUser($user, $model);
 
 		//Assert
-		$result = $faceCountQuery->executeQuery();
-		$row = $result->fetch();
-		$this->assertNotFalse($row);
-		$this->assertEquals(14, (int)$row['count']);
-		$result = $clusterFaceCountQuery->executeQuery();
-		$row = $result->fetch();
-		$this->assertNotFalse($row);
-		$this->assertEquals($expectedCount, (int)$row['count']);
+		$this->assertFaceCount(14);
+		$this->assertFaceClusterConnectionCount($expectedCount);
 	}
 
 	#[DataProviderExternal(FaceDataProvider::class, 'insertFace_Provider')]
 	public function test_InsertFace(Face $faceToInsert, int $expectedCount) : void {
 		//Assert initial state
-        $faceCountQuery = $this->dbConnection->getQueryBuilder();
-		$faceCountQuery->select($faceCountQuery->createFunction('COUNT(id) as count'))->from('facerecog_faces');
-        $clusterFaceCountQuery = $this->dbConnection->getQueryBuilder();
-		$clusterFaceCountQuery->select($clusterFaceCountQuery->createFunction('COUNT(*) as count'))->from('facerecog_cluster_faces');
-
-		$row  = $faceCountQuery->executeQuery()->fetch();
-		$this->assertNotFalse($row);
-		$this->assertEquals(14, (int)$row['count']);
-
-		$row = $clusterFaceCountQuery->executeQuery()->fetch();
-		$this->assertNotFalse($row);
-		$this->assertEquals(14, (int)$row['count']);
+		$this->assertFaceCount(14);
+		$this->assertFaceClusterConnectionCount(14);
 
 		//Act
 		$this->faceMapper->insertFace($faceToInsert);
 
 		//Assert
-		$row = $faceCountQuery->executeQuery()->fetch();
-		$this->assertNotFalse($row);
-		$this->assertEquals($expectedCount, (int)$row['count']);
-		$row = $clusterFaceCountQuery->executeQuery()->fetch();
-		$this->assertNotFalse($row);
-		$this->assertEquals($expectedCount, (int)$row['count']);
+		$this->assertFaceCount($expectedCount);
+		$this->assertFaceClusterConnectionCount($expectedCount);
+	}
+
+	#[DataProviderExternal(FaceDataProvider::class, 'insertFace_Provider')]
+	public function test_InsertFace_withDbContext(Face $faceToInsert, int $expectedCount) : void {
+		//Assert initial state
+		$this->assertFaceCount(14);
+		$this->assertFaceClusterConnectionCount(14);
+
+		//Act
+		$this->faceMapper->insertFace($faceToInsert, $this->dbConnection);
+
+		//Assert
+		$this->assertFaceCount($expectedCount);
+		$this->assertFaceClusterConnectionCount($expectedCount);
 	}
 
     public function tearDown(): void {
@@ -338,6 +384,20 @@ class FaceMapperTest extends TestCase {
 			return;
         }
 		parent::tearDown();
+	}
+
+	private function assertFaceCount($expectedCount)
+	{
+		$row  = $this->faceCountQuery->executeQuery()->fetch();
+		$this->assertNotFalse($row);
+		$this->assertEquals($expectedCount, (int)$row['count']);
+	}
+
+	private function assertFaceClusterConnectionCount($expectedCount)
+	{
+		$row  = $this->clusterFaceCountQuery->executeQuery()->fetch();
+		$this->assertNotFalse($row);
+		$this->assertEquals($expectedCount, (int)$row['count']);
 	}
 }
 

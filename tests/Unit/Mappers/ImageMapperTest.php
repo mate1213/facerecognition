@@ -43,7 +43,7 @@ class ImageMapperTest extends TestCase {
 	private $imageMapper;
     /** @var IDBConnection test instance*/
     private $dbConnection;
-	private $isSetupComplete = true;
+	private $isSetupComplete = false;
 	private $imageCountQuery;
 	private $userImageCountQuery;
 
@@ -61,7 +61,7 @@ class ImageMapperTest extends TestCase {
 		$this->imageCountQuery->select($this->imageCountQuery->createFunction('COUNT(id) as count'))->from('facerecog_images');
 		$this->userImageCountQuery = $this->dbConnection->getQueryBuilder();
 		$this->userImageCountQuery->select($this->userImageCountQuery->createFunction('COUNT(*) as count'))->from('facerecog_user_images');
-		if ($this->isSetupComplete === false) {
+		if (!$this->isSetupComplete) {
 			$this->isSetupComplete = true;
 			$sql = file_get_contents("tests/DatabaseInserts/10_imageInsert.sql");
 			$this->dbConnection->executeStatement($sql);
@@ -295,7 +295,7 @@ class ImageMapperTest extends TestCase {
     #[DataProviderExternal(ImageDataProvider::class, 'findFromPerson_Provider')]
 	public function test_findFromPerson(string $user, int $model, string $name, ?int $offset, ?int $limit, int $expectedCount) : void {
 		//Act
-        $images = $this->imageMapper->findFromPerson($user, $model, $nameLike, $offset, $limit);
+        $images = $this->imageMapper->findFromPerson($user, $model, $name);
 
 		//Assert
         $this->assertNotNull($images);
@@ -346,11 +346,6 @@ class ImageMapperTest extends TestCase {
 		}
 	}
 
-	/*
-	* DELETE FROM `oc_facerecog_user_images` WHERE `user` = 'user1'
-	* SELECT `ui`.`image_id` FROM `oc_facerecog_images` `i` LEFT JOIN `oc_facerecog_user_images` `ui` ON `ui`.`image_id` = `i`.`id` WHERE `ui`.`image_id` IS NULL GROUP BY `i`.`id`
-	* DELETE FROM `oc_facerecog_images` WHERE id in (SELECT `ui`.`image_id` FROM `oc_facerecog_images` `i` LEFT JOIN `oc_facerecog_user_images` `ui` ON `ui`.`image_id` = `i`.`id` WHERE `ui`.`image_id` IS NULL GROUP BY `i`.`id`)
-	*/
     public function test_deleteUserImages() : void {
 		//Assert initial state
 		$this->assertRowCountImages(9);
@@ -384,6 +379,7 @@ class ImageMapperTest extends TestCase {
 		parent::tearDown();
 	}
 }
+
 class ImageDataProvider{
     public static function findAll_Provider(): array {
         return [

@@ -419,7 +419,7 @@ class ApiController extends NcApiController {
 		if (!$this->settingsService->getUserEnabled($this->userId))
 			return new JSONResponse([], Http::STATUS_PRECONDITION_FAILED);
 
-		$face = $this->faceMapper->find($faceId);
+		$face = $this->faceMapper->find($faceId, $this->userId);
 		$person = $this->personMapper->detachFace($face->getPerson(), $faceId, $name);
 		return new JSONResponse($person, Http::STATUS_OK);
 	}
