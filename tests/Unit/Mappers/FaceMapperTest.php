@@ -41,7 +41,7 @@ class FaceMapperTest extends TestCase {
 	private $faceMapper;
     /** @var IDBConnection test instance*/
     private $dbConnection;
-	private $isSetupComplete = false;
+	private $isSetupComplete = false; //set to true after first setup, so the inserts are done only once
 	private $clusterFaceCountQuery;
 	private $faceCountQuery;
 
@@ -100,6 +100,7 @@ class FaceMapperTest extends TestCase {
 		$this->assertEquals(30, $face->getWidth());
 		$this->assertEquals(40, $face->getHeight());
 	}
+
 	public function test_FindById_existingFace_NOTconnectedCluster() : void {
 		//Act
         $face = $this->faceMapper->find(3, "user1"); //face id 1 belongs to user1
@@ -119,6 +120,7 @@ class FaceMapperTest extends TestCase {
 		$this->assertEquals(32, $face->getWidth());
 		$this->assertEquals(42, $face->getHeight());
 	}
+
 	public function test_FindById_existingFace_connectedToMultipleCluster() : void {
 		//Act
         $face = $this->faceMapper->find(100, "user1"); //face id 1 belongs to user1
@@ -138,7 +140,7 @@ class FaceMapperTest extends TestCase {
 		$this->assertEquals(30, $face->getWidth());
 		$this->assertEquals(40, $face->getHeight());
 	}
-	//SELECT `id`, `cf`.`cluster_id` as `person`, `image_id` as `image`, `x`, `y`, `width`, `height`, `landmarks`, `descriptor`, `confidence`, `creation_time` FROM `oc_acerecog_faces` `f` RIGHT JOIN `oc_facerecog_cluster_faces` `cf` ON `cf`.`face_id` = `f`.`id` WHERE `id` = 100
+
 	public function test_FindById_nonExisting() : void {
 		//Act
         $face = $this->faceMapper->find(1000, "user1");
@@ -209,9 +211,9 @@ class FaceMapperTest extends TestCase {
 	}
 
     #[DataProviderExternal(FaceDataProvider::class, 'getOldestCreatedFaceWithoutPerson_ForUser_ByModel_Provider')]
-	public function test_GetOldestCreatedFaceWithoutPerson_ForUser_ByModel(string $user, int $model, ?int $expectedPerson, bool $isfaceNull ) : void {
+	public function test_GetOldestCreatedFaceWithoutPerson_ForUser_ByModel(string $user, int $model, bool $isFaceNull ) : void {
 		//Act
-        $face = $this->faceMapper->getOldestCreatedFaceWithoutPerson("user1", 1);
+        $face = $this->faceMapper->getOldestCreatedFaceWithoutPerson($user, $model);
 
 		//Assert
 		if ($isFaceNull) {
@@ -223,8 +225,8 @@ class FaceMapperTest extends TestCase {
 			$this->assertNotNull($face->getId());
 			$this->assertInstanceOf(DateTime::class, $face->getCreationTime());
 			$this->assertNotNull($face->getCreationTime());
-			$this->assertNotNull(7,$face->getImage()); //only id and creation time are selected
-			$this->assertEquals($expectedPerson, $face->getPerson());
+			$this->assertNotNull($face->getImage());
+			$this->assertNull($face->getPerson());
 			$this->assertNotEquals("null",$face->getDescriptor());
 			$this->assertNotEquals("null",$face->getLandmarks());
 			$this->assertNotNull($face->getConfidence());
@@ -424,9 +426,10 @@ class FaceDataProvider{
     }
 	public static function getOldestCreatedFaceWithoutPerson_ForUser_ByModel_Provider(): array {
 		return [
-			["user1", 1, 1, false],
-			["user1", 2, null, true],
-			["user2", 3, null, false],
+			["user1", 1, false],
+			["user1", 2, true],
+			["user2", 1, true],
+			["user2", 2, false]
 		];
 	}
 

@@ -7,5 +7,6 @@ INSERT INTO *PREFIX*facerecog_user_images (image_id, user) VALUES
   (6, 'user2'),
   (7, 'user1'),
   (8, 'user2'),
+  (9, 'user1'),
   (10, 'user1'),
   (10, 'user2');

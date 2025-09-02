@@ -162,7 +162,6 @@ class FaceMapper extends QBMapper {
 		}
 	}
 
-	//MTODO: fix if person is null 
 	/**
 	 * Gets all faces that belong to images of a given user, created using given model
 	 * 
