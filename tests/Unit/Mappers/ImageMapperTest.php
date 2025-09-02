@@ -97,6 +97,51 @@ class ImageMapperTest extends TestCase {
         $this->assertEquals(DateTime::createFromFormat('Y-m-d H:i:s', '2025-08-26 10:05:00'), $image->getLastProcessedTime());
 	}
 
+    public function test_Find_ConnectedToMultipleUser() : void {
+		//Act
+        $image = $this->imageMapper->find('user2', 10);
+
+		//Assert
+        $this->assertNotNull($image);
+		unset($image);
+
+		//Act
+        $image = $this->imageMapper->find('user1', 10);
+
+		//Assert
+        $this->assertNotNull($image);
+	}
+
+    public function test_Find_NonExistingUserImageConnection() : void {
+		//Act
+        $image = $this->imageMapper->find('user2', 1);
+
+		//Assert
+        $this->assertNull($image);
+	}
+    public function test_Find_NonExistingUser() : void {
+		//Act
+        $image = $this->imageMapper->find('user3', 1);
+
+		//Assert
+        $this->assertNull($image);
+	}
+    public function test_Find_NonExistingImage() : void {
+		//Act
+        $image = $this->imageMapper->find('user1', 10000);
+
+		//Assert
+        $this->assertNull($image);
+	}
+    public function test_Find_NonExistingUserAndImage() : void {
+		//Act
+        $image = $this->imageMapper->find('user3', 10000);
+
+		//Assert
+        $this->assertNull($image);
+	}
+
+
     #[DataProviderExternal(ImageDataProvider::class, 'findAll_Provider')]
     public function test_FindAll(string $user, int $model, int $expectedCount) : void {
 		//Act
@@ -316,6 +361,17 @@ class ImageMapperTest extends TestCase {
         $this->assertNotNull($resultCount);
 		$this->assertEquals($expectedCount, $resultCount);
 	}
+
+    #[DataProviderExternal(ImageDataProvider::class, 'imageProcessed_Provider')]
+	public function test_imageProcessed(Image $image, array $faces, int $duration, ?Exception $e, int $expectedCount) : void {
+		//Act
+		$this->imageMapper->imageProcessed($image, $faces, $duration, $e);
+
+		//Assert
+        $this->assertNotNull($resultCount);
+		$this->assertEquals($expectedCount, $resultCount);
+	}
+
 
 	public function test_resetImage() : void {
 		$image = $this->imageMapper->find('user1', 1);

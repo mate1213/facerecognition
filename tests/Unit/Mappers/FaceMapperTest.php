@@ -149,7 +149,7 @@ class FaceMapperTest extends TestCase {
 
 	}
 
-	public function test_FindDescriptorsBathed() : void {
+	public function test_FindDescriptorsBathed_multipleEntry() : void {
 		//Act
         $descriptors = $this->faceMapper->findDescriptorsBathed([1,2]);
 
@@ -167,6 +167,22 @@ class FaceMapperTest extends TestCase {
 		$this->assertIsArray($secondDescriptor['descriptor']);
 		$this->assertCount(128, $secondDescriptor['descriptor']);
 		$this->assertEquals(2, $secondDescriptor['id']);
+	}
+	
+	public function test_FindDescriptorsBathed_singleEntry() : void {
+		//Act
+        $descriptors = $this->faceMapper->findDescriptorsBathed([1]);
+
+		//Assert
+        $this->assertNotNull($descriptors);
+		$this->assertIsArray($descriptors);
+		$this->assertCount(1, $descriptors);
+
+		$firstDescriptor = $descriptors[0];
+
+		$this->assertIsArray($firstDescriptor['descriptor']);
+		$this->assertCount(128, $firstDescriptor['descriptor']);
+		$this->assertEquals(1, $firstDescriptor['id']);
 	}
 	
 	public function test_FindDescriptorsBathed_emptyarray() : void {
