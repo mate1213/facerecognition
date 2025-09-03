@@ -154,12 +154,46 @@ class ImageMapper extends QBMapper {
 	public function update(Entity $entity): Entity {
 		// if entity wasn't changed it makes no sense to run a db query
 		$properties = $entity->getUpdatedFields();
-		if ($properties->count() === 0)
+		if (count($properties) === 0)
 			return $entity;
+				// entity needs an id
+		$id = $entity->getId();
+		if ($id === null) {
+			throw new \InvalidArgumentException(
+				'Entity which should be updated has no id');
+		}
+
+		// get updated fields to save, fields have to be set using a setter to
+		// be saved
+		// do not update the id field
 		// do not update the user field
+		unset($properties['id']);
 		unset($properties['user']);
 
-		return parent::update($entity);
+		$qb = $this->db->getQueryBuilder();
+		$qb->update($this->tableName);
+
+		// build the fields
+		foreach ($properties as $property => $updated) {
+			$column = $entity->propertyToColumn($property);
+			if ($column === "file") {
+				$column = "nc_file_id";
+			}
+			$getter = 'get' . ucfirst($property);
+			$value = $entity->$getter();
+
+			$type = $this->getParameterTypeForProperty($entity, $property);
+			$qb->set($column, $qb->createNamedParameter($value, $type));
+		}
+
+		$idType = $this->getParameterTypeForProperty($entity, 'id');
+
+		$qb->where(
+			$qb->expr()->eq('id', $qb->createNamedParameter($id, $idType))
+		);
+		$qb->executeStatement();
+
+		return $entity;
 	}
 
     #[\Override]
@@ -497,12 +531,35 @@ class ImageMapper extends QBMapper {
 	 *
 	 * @return void
 	 */
-	public function deleteUserModel(string $userId, $modelId): void {
+	public function deleteUserModel(string $userId, int $modelId): void {
+		//Collect all imageId where user has connection and it's the required model
+		$sub = $this->db->getQueryBuilder();
+		$sub->select('i.id')
+			->from($this->getTableName(), 'i')
+			->leftJoin('i', 'facerecog_user_images' ,'ui', $sub->expr()->eq('ui.image_id', 'i.id'))
+			->where($sub->expr()->eq('ui.user', $sub->createParameter('userId')))
+			->andWhere($sub->expr()->eq('i.model', $sub->createParameter('modelId')))
+			->groupBy('i.id');
+		//Delete User-ImageConnection
 		$qb = $this->db->getQueryBuilder();
-		$qb->delete($this->getTableName(), 'i')
-			->innerJoin('i', 'facerecog_user_images', 'ui', $qb->expr()->eq('ui.image_id', 'i.id'))
-			->where($qb->expr()->eq('ui.user', $qb->createNamedParameter($userId)))
-			->andWhere($qb->expr()->eq('i.model', $qb->createNamedParameter($modelId)))
+		$qb->delete('facerecog_user_images')
+			->where($qb->expr()->eq('user', $qb->createParameter('userId')))
+			->AndWhere('image_id in (' . $sub->getSQL() . ')')
+			->setParameter('userId', $userId, IQueryBuilder::PARAM_STR)
+			->setParameter('modelId', $modelId, IQueryBuilder::PARAM_INT)
+			->executeStatement();
+
+		//Collect all imageId whitch has no more references by other Users
+		$sub = $this->db->getQueryBuilder();
+		$sub->select('i.id')
+			->from($this->getTableName(), 'i')
+			->leftJoin('i', 'facerecog_user_images' ,'ui', $sub->expr()->eq('ui.image_id', 'i.id'))
+			->where($sub->expr()->isNull('ui.image_id'))
+			->groupBy('i.id');
+		//Delete image where the connection table has no reference
+		$qb = $this->db->getQueryBuilder();
+		$qb->delete($this->getTableName())
+			->Where('id in (' . $sub->getSQL() . ')')
 			->executeStatement();
 	}
 

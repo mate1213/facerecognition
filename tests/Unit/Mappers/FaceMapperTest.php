@@ -228,7 +228,6 @@ class FaceMapperTest extends UnitBaseTestCase {
 		}
 	}
 
-
     #[DataProviderExternal(FaceDataProvider::class, 'getFaces_ForUser_ByModel_Provider')]
 	public function test_GetFaces_ForUser_ByModel(string $user, int $model, int $expectedCount) : void {
 		//Act
@@ -315,6 +314,20 @@ class FaceMapperTest extends UnitBaseTestCase {
 		$this->assertEquals($expectedCount, (int)$row['count']);
 	}
 
+	#[DataProviderExternal(FaceDataProvider::class, 'removeFromImage_Provider')]
+	public function test_RemoveFromImage_WithDbConnection(int $imageId, int $expectedCount) : void {
+		//Act
+		$this->faceMapper->removeFromImage($imageId, $this->dbConnection);
+
+		//Assert
+        $qb = $this->dbConnection->getQueryBuilder();
+		$qb->select($qb->createFunction('COUNT(id) as count'))->from('facerecog_faces')->where($qb->expr()->eq('image_id', $qb->createNamedParameter($imageId)));
+		$result = $qb->executeQuery();
+		$row = $result->fetch();
+		$this->assertNotFalse($row);
+		$this->assertEquals($expectedCount, (int)$row['count']);
+	}
+
 	public function test_DeleteUserModel() : void {
 		//Assert initial state
 		$this->assertFaceCount(14);
@@ -378,15 +391,13 @@ class FaceMapperTest extends UnitBaseTestCase {
 		parent::tearDown();
 	}
 
-	private function assertFaceCount($expectedCount)
-	{
+	private function assertFaceCount($expectedCount) {
 		$row  = $this->faceCountQuery->executeQuery()->fetch();
 		$this->assertNotFalse($row);
 		$this->assertEquals($expectedCount, (int)$row['count']);
 	}
 
-	private function assertFaceClusterConnectionCount($expectedCount)
-	{
+	private function assertFaceClusterConnectionCount($expectedCount) {
 		$row  = $this->clusterFaceCountQuery->executeQuery()->fetch();
 		$this->assertNotFalse($row);
 		$this->assertEquals($expectedCount, (int)$row['count']);

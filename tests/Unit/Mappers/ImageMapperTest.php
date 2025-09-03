@@ -55,13 +55,16 @@ class ImageMapperTest extends UnitBaseTestCase {
 	*/
 	public function setUp(): void {
         parent::setUp();
+
 		$this->faceMapper = new FaceMapper($this->dbConnection);
 		$this->imageMapper = new ImageMapper($this->dbConnection, $this->faceMapper);
 		
 		$this->imageCountQuery = $this->dbConnection->getQueryBuilder();
 		$this->imageCountQuery->select($this->imageCountQuery->createFunction('COUNT(id) as count'))->from('facerecog_images');
+
 		$this->userImageCountQuery = $this->dbConnection->getQueryBuilder();
 		$this->userImageCountQuery->select($this->userImageCountQuery->createFunction('COUNT(*) as count'))->from('facerecog_user_images');
+
 		$this->faceCountQuery = $this->dbConnection->getQueryBuilder();
 		$this->faceCountQuery->select($this->faceCountQuery->createFunction('COUNT(*) as count'))->from('facerecog_faces');
 	}
@@ -89,6 +92,15 @@ class ImageMapperTest extends UnitBaseTestCase {
 
 		//Assert
         $this->assertNotNull($image);
+		$this->assertInstanceOf(Image::class, $image);
+        $this->assertEquals(10, $image->getId());
+        $this->assertEquals(1, $image->getModel());
+        $this->assertEquals(100, $image->getProcessingDuration());
+		$this->assertEquals('user2', $image->getUser());
+		$this->assertEquals(201, $image->getFile());
+		$this->assertEquals(true, $image->getIsProcessed());
+		$this->assertEquals(null, $image->getError());
+        $this->assertEquals(DateTime::createFromFormat('Y-m-d H:i:s', '2025-08-28 12:00:00'), $image->getLastProcessedTime());
 		unset($image);
 
 		//Act
@@ -96,35 +108,21 @@ class ImageMapperTest extends UnitBaseTestCase {
 
 		//Assert
         $this->assertNotNull($image);
+		$this->assertInstanceOf(Image::class, $image);
+        $this->assertEquals(10, $image->getId());
+        $this->assertEquals(1, $image->getModel());
+        $this->assertEquals(100, $image->getProcessingDuration());
+		$this->assertEquals('user1', $image->getUser());
+		$this->assertEquals(201, $image->getFile());
+		$this->assertEquals(true, $image->getIsProcessed());
+		$this->assertEquals(null, $image->getError());
+        $this->assertEquals(DateTime::createFromFormat('Y-m-d H:i:s', '2025-08-28 12:00:00'), $image->getLastProcessedTime());
 	}
 
-    public function test_Find_NonExistingUserImageConnection() : void {
+    #[DataProviderExternal(ImageDataProvider::class, 'find_Provider')]
+    public function test_Find_InvalidQuery(string $userId, int $modelId) : void {
 		//Act
-        $image = $this->imageMapper->find('user2', 1);
-
-		//Assert
-        $this->assertNull($image);
-	}
-
-    public function test_Find_NonExistingUser() : void {
-		//Act
-        $image = $this->imageMapper->find('user3', 1);
-
-		//Assert
-        $this->assertNull($image);
-	}
-
-    public function test_Find_NonExistingImage() : void {
-		//Act
-        $image = $this->imageMapper->find('user1', 10000);
-
-		//Assert
-        $this->assertNull($image);
-	}
-
-    public function test_Find_NonExistingUserAndImage() : void {
-		//Act
-        $image = $this->imageMapper->find('user3', 10000);
+        $image = $this->imageMapper->find($userId, $modelId);
 
 		//Assert
         $this->assertNull($image);
@@ -190,31 +188,6 @@ class ImageMapperTest extends UnitBaseTestCase {
 
 		//Assert
 		$this->assertRowCountImages(10);
-		$this->assertRowCountUserImages($expectedConnections);
-	}
-
-    #[DataProviderExternal(ImageDataProvider::class, 'insert_Provider')]
-	public function test_insert(?string $user, int $model, int $nc_file_id, 
-								int $expectedFileCount, int $expectedConnections,
-								bool $exceptionExpected, ?string $expectedErrorMessage) : void {
-		//Assert initial state
-		$this->assertInitialDBstate();
-
-		$image = new Image();
-		$image->user = $user;
-		$image->setModel($model);
-		$image->file = $nc_file_id;
-
-		//Act
-		if ($exceptionExpected)
-		{
-			$this->expectException(OC\DB\Exceptions\DbalException::class);
-			$this->expectExceptionMessage($expectedErrorMessage);
-		}
-        $this->imageMapper->insert($image);
-
-		//Assert
-		$this->assertRowCountImages($expectedFileCount);
 		$this->assertRowCountUserImages($expectedConnections);
 	}
 
@@ -351,13 +324,18 @@ class ImageMapperTest extends UnitBaseTestCase {
 	}
 
     #[DataProviderExternal(ImageDataProvider::class, 'imageProcessed_Provider')]
-	public function test_imageProcessed(int $imageId, array $faces, int $duration, ?Exception $e, int $expectedFaceCount) : void {
+	public function test_imageProcessed(int $imageId, array $faces, int $duration, ?Exception $e, int $expectedFaceCount, ?Exception $expected = null) : void {
 		foreach ($faces as $face)
 		{
 			$face->setImage($imageId);
 		}
 		//Initial face count
 		$this->assertRowCountFaces(14);
+		if ($expected !== null)
+		{
+			$this->expectException(get_class($expected));
+			$this->expectExceptionMessage($expected->getMessage());
+		}
 
 		//Act
 		$this->imageMapper->imageProcessed($imageId, $faces, $duration, $e);
@@ -410,11 +388,99 @@ class ImageMapperTest extends UnitBaseTestCase {
 		$this->assertRowCountImages(5);
 	}
 
+    #[DataProviderExternal(ImageDataProvider::class, 'deleteUserModel_Provider')]
+	public function test_deleteUserModel(string $userId, int $modelId, int $expectedConnections, int $expectedImages) : void {
+		//Initial face count
+		$this->assertInitialDBstate();
+
+		//Act
+		$this->imageMapper->deleteUserModel($userId, $modelId);
+
+		//Assert
+		$this->assertRowCountImages($expectedImages);
+		$this->assertRowCountUserImages($expectedConnections);
+	}
+
+    #[DataProviderExternal(ImageDataProvider::class, 'insert_Provider')]
+	public function test_insert(?string $user, int $model, int $nc_file_id, 
+								int $expectedFileCount, int $expectedConnections,
+								bool $exceptionExpected, ?string $expectedErrorMessage) : void {
+		//Assert initial state
+		$this->assertInitialDBstate();
+
+		$image = new Image();
+		$image->user = $user;
+		$image->setModel($model);
+		$image->file = $nc_file_id;
+
+		//Act
+		if ($exceptionExpected)
+		{
+			$this->expectException(OC\DB\Exceptions\DbalException::class);
+			$this->expectExceptionMessage($expectedErrorMessage);
+		}
+        $this->imageMapper->insert($image);
+
+		//Assert
+		$this->assertRowCountImages($expectedFileCount);
+		$this->assertRowCountUserImages($expectedConnections);
+	}
+
+	#[DataProviderExternal(ImageDataProvider::class, 'update_Provider')]
+	public function test_update(int $imageId, ?string $user, int $model, int $nc_file_id) : void {
+		//Assert initial state
+		$this->assertInitialDBstate();
+
+		$image = new Image();
+		$image->id = 1;
+		$image->user = "user1";
+		$image->file = "101";
+
+		$image->setId($imageId);
+		$image->setUser($user);
+		$image->setFile($nc_file_id);
+		$image->setModel($model);
+		//Act
+        $image = $this->imageMapper->update($image);
+
+		//Assert
+		$this->assertInitialDBstate();
+        $this->assertNotNull($image);
+		$this->assertInstanceOf(Image::class, $image);
+        $this->assertEquals($imageId, $image->getId());
+        $this->assertEquals($model, $image->getModel());
+		$this->assertEquals($user, $image->getUser());
+		$this->assertEquals($nc_file_id, $image->getFile());
+	}
+
+	#[DataProviderExternal(ImageDataProvider::class, 'delete_Provider')]
+	public function test_delete(int $imageId, ?string $user, int $model, int $nc_file_id) : void {
+		//Assert initial state
+		$this->assertInitialDBstate();
+
+		$image = new Image();
+		$image->id = $imageId;
+		$image->user = $user;
+		$image->file = $nc_file_id;
+		$image->setModel($model);
+
+		//Act
+        $this->imageMapper->delete($image);
+
+		//Assert
+		$this->assertRowCountImages();
+		$this->assertRowCountUserImages();
+	}
+
+    /**
+	* {@inheritDoc}
+	*/
     public function tearDown(): void {
 		$this->imageMapper = null;
 		$this->faceMapper = null;
 		$this->imageCountQuery = null;
 		$this->userImageCountQuery = null;
+
 		parent::tearDown();
 	}
 
@@ -443,6 +509,15 @@ class ImageMapperTest extends UnitBaseTestCase {
 }
 
 class ImageDataProvider{
+	public static function find_Provider(): array {
+		return [
+			["user2",1], //existing user and model, but not connected
+			["user3",1], //not existing user
+			["user1",10000], //not existing model
+			["user3",10000], //not existing user and model
+		];
+	}
+
     public static function findAll_Provider(): array {
         return [
             ["user1",1,5],
@@ -635,23 +710,63 @@ class ImageDataProvider{
 		$face2->width = 35;
 		$face2->height = 45;
 		$face2->confidence = 0.85;
+		//Wrong face to test multiple faces
+		$wrongface = new Face();
+		$wrongface->person = null;
+		$wrongface->creationTime = new \DateTime();
+		$wrongface->x = 15;
+		$wrongface->y = 25;
+		$wrongface->width = 35;
+		$wrongface->height = 45;
 		//Exception to test error handling
-		$exception = new Exception("Test exception");
+		$exceptionToImage = new Exception("Test exception");
+		$exceptionWrongImage = new Exception("An exception occurred while executing a query: SQLSTATE[23000]: Integrity constraint violation: 1452 Cannot add or update a child row: a foreign key constraint fails (`nextcloud_db`.`oc_facerecog_faces`, CONSTRAINT `FK_222E69C83DA5256D` FOREIGN KEY (`image_id`) REFERENCES `oc_facerecog_images` (`id`) ON DELETE CASCADE)");
+		$exceptionWrongFace = new Exception("An exception occurred while executing a query: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'confidence' cannot be null");
         return [
 			//Single image
             [5, [], 100, null, 13],
-            [6, [], 100, $exception, 13],
+            [6, [], 100, $exceptionToImage, 13],
             [5, [$face1], 100, null, 14],
-            [6, [$face1], 100, $exception, 14],
+            [6, [$face1], 100, $exceptionToImage, 14],
             [5, [$face1, $face2], 100, null, 15],
-            [6, [$face1, $face2], 100, $exception, 15],
+            [6, [$face1, $face2], 100, $exceptionToImage, 15],
 			//Shared image
             [10, [], 100, null, 8],
-            [10, [], 100, $exception, 8],
+            [10, [], 100, $exceptionToImage, 8],
             [10, [$face1], 100, null, 9],
-            [10, [$face1], 100, $exception, 9],
+            [10, [$face1], 100, $exceptionToImage, 9],
             [10, [$face1, $face2], 100, null, 10],
-            [10, [$face1, $face2], 100, $exception, 10]
+            [10, [$face1, $face2], 100, $exceptionToImage, 10],
+			//ExpectedExteption
+			[100, [$face1], 100, null, 14, $exceptionWrongImage], //non existing image
+			[100, [$face1], 100, $exceptionToImage, 14, $exceptionWrongImage], //non existing image
+			[100, [$wrongface], 100, null, 14, $exceptionWrongFace], //non existing image
+			[100, [$wrongface], 100, $exceptionToImage, 14, $exceptionWrongFace], //non existing image
         ];
     }
+
+	public static function deleteUserModel_Provider(): array {
+        return [
+			["user1", 1, 6, 6],
+			["user1", 2, 10, 9], 
+			["user2", 1, 10, 10],
+			["user2", 2, 7, 6],
+			["user1", 3, 11, 10], //not existing model
+			["user3", 1, 11, 10], //not existing user
+			["user3", 3, 11, 10], //not existing user and model
+        ];
+    }
+	
+	public static function update_Provider(): array {
+        return [
+			[1, "user1", 1, 101], //no update
+			[1, "user1", 2, 101], //model update
+			[1, "user2", 1, 101], //user update
+			[1, "user2", 2, 101], //user and model update
+			[1, "user1", 1, 102], //file update
+			[1, "user1", 2, 102], //model and file update
+			[1, "user2", 1, 102], //user and file update
+			[1, "user2", 2, 102], //user and model and file update
+		];
+	}
 }
