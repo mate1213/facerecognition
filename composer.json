@@ -29,7 +29,8 @@
 
      "autoload-dev": {
          "psr-4": {
-                "OCA\\FaceRecognition\\Tests\\Integration\\": "tests/Integration"
+                "OCA\\FaceRecognition\\Tests\\Integration\\": "tests/Integration",
+                "OCA\\FaceRecognition\\Tests\\Unit\\": "tests/Unit"
           }
      },
     "scripts": {

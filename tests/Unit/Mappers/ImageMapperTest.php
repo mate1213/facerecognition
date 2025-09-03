@@ -23,61 +23,47 @@
 namespace OCA\FaceRecognition\Tests\Unit\Mappers;
 
 use DateTime;
+use Exception;
 
 use PHPUnit\Framework\Attributes\DataProviderExternal;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
-use PHPUnit\Framework\TestCase;
 
+use OCA\FaceRecognition\Tests\Unit\UnitBaseTestCase;
 use OCA\FaceRecognition\Db\FaceMapper;
 use OCA\FaceRecognition\Db\ImageMapper;
 use OCA\FaceRecognition\Db\Image;
+use OCA\FaceRecognition\Db\Face;
 use OC;
 use OCP\IDBConnection;
 
 #[CoversClass(ImageMapper::class)]
 #[UsesClass(FaceMapper::class)]
 #[UsesClass(Image::class)]
-class ImageMapperTest extends TestCase {
+#[UsesClass(Face::class)]
+class ImageMapperTest extends UnitBaseTestCase {
     /** @var ImageMapper test instance*/
 	private $imageMapper;
-    /** @var IDBConnection test instance*/
-    private $dbConnection;
-	private $isSetupComplete = false;
+	/** @var FaceMapper test instance*/
+	private $faceMapper;
 	private $imageCountQuery;
 	private $userImageCountQuery;
+	private $faceCountQuery;
 
     /**
-	 * {@inheritDoc}
-	 */
+	* {@inheritDoc}
+	*/
 	public function setUp(): void {
         parent::setUp();
-        $this->dbConnection = OC::$server->getDatabaseConnection();
-		$this->dbConnection->beginTransaction();
-
-		$this->imageMapper = new ImageMapper($this->dbConnection, new FaceMapper($this->dbConnection));
+		$this->faceMapper = new FaceMapper($this->dbConnection);
+		$this->imageMapper = new ImageMapper($this->dbConnection, $this->faceMapper);
 		
 		$this->imageCountQuery = $this->dbConnection->getQueryBuilder();
 		$this->imageCountQuery->select($this->imageCountQuery->createFunction('COUNT(id) as count'))->from('facerecog_images');
 		$this->userImageCountQuery = $this->dbConnection->getQueryBuilder();
 		$this->userImageCountQuery->select($this->userImageCountQuery->createFunction('COUNT(*) as count'))->from('facerecog_user_images');
-		if (!$this->isSetupComplete) {
-			$this->isSetupComplete = true;
-			$sql = file_get_contents("tests/DatabaseInserts/10_imageInsert.sql");
-			$this->dbConnection->executeStatement($sql);
-			$sql = file_get_contents("tests/DatabaseInserts/20_userImagesInsert.sql");
-			$this->dbConnection->executeStatement($sql);
-			$sql = file_get_contents("tests/DatabaseInserts/30_facesInsert.sql");
-			$this->dbConnection->executeStatement($sql);
-			$sql = file_get_contents("tests/DatabaseInserts/40_clustersInsert.sql");
-			$this->dbConnection->executeStatement($sql);
-			$sql = file_get_contents("tests/DatabaseInserts/50_clusterFacesInsert.sql");
-			$this->dbConnection->executeStatement($sql);
-			$sql = file_get_contents("tests/DatabaseInserts/60_personInsert.sql");
-			$this->dbConnection->executeStatement($sql);
-			$sql = file_get_contents("tests/DatabaseInserts/70_personClustersInsert.sql");
-			$this->dbConnection->executeStatement($sql);
-		}
+		$this->faceCountQuery = $this->dbConnection->getQueryBuilder();
+		$this->faceCountQuery->select($this->faceCountQuery->createFunction('COUNT(*) as count'))->from('facerecog_faces');
 	}
 
     public function test_Find() : void {
@@ -119,6 +105,7 @@ class ImageMapperTest extends TestCase {
 		//Assert
         $this->assertNull($image);
 	}
+
     public function test_Find_NonExistingUser() : void {
 		//Act
         $image = $this->imageMapper->find('user3', 1);
@@ -126,6 +113,7 @@ class ImageMapperTest extends TestCase {
 		//Assert
         $this->assertNull($image);
 	}
+
     public function test_Find_NonExistingImage() : void {
 		//Act
         $image = $this->imageMapper->find('user1', 10000);
@@ -133,6 +121,7 @@ class ImageMapperTest extends TestCase {
 		//Assert
         $this->assertNull($image);
 	}
+
     public function test_Find_NonExistingUserAndImage() : void {
 		//Act
         $image = $this->imageMapper->find('user3', 10000);
@@ -140,7 +129,6 @@ class ImageMapperTest extends TestCase {
 		//Assert
         $this->assertNull($image);
 	}
-
 
     #[DataProviderExternal(ImageDataProvider::class, 'findAll_Provider')]
     public function test_FindAll(string $user, int $model, int $expectedCount) : void {
@@ -363,15 +351,20 @@ class ImageMapperTest extends TestCase {
 	}
 
     #[DataProviderExternal(ImageDataProvider::class, 'imageProcessed_Provider')]
-	public function test_imageProcessed(Image $image, array $faces, int $duration, ?Exception $e, int $expectedCount) : void {
+	public function test_imageProcessed(int $imageId, array $faces, int $duration, ?Exception $e, int $expectedFaceCount) : void {
+		foreach ($faces as $face)
+		{
+			$face->setImage($imageId);
+		}
+		//Initial face count
+		$this->assertRowCountFaces(14);
+
 		//Act
-		$this->imageMapper->imageProcessed($image, $faces, $duration, $e);
+		$this->imageMapper->imageProcessed($imageId, $faces, $duration, $e);
 
 		//Assert
-        $this->assertNotNull($resultCount);
-		$this->assertEquals($expectedCount, $resultCount);
+		$this->assertRowCountFaces($expectedFaceCount);
 	}
-
 
 	public function test_resetImage() : void {
 		$image = $this->imageMapper->find('user1', 1);
@@ -418,10 +411,10 @@ class ImageMapperTest extends TestCase {
 	}
 
     public function tearDown(): void {
-        if ($this->dbConnection != null) {
-			$this->dbConnection->rollBack();
-			return;
-        }
+		$this->imageMapper = null;
+		$this->faceMapper = null;
+		$this->imageCountQuery = null;
+		$this->userImageCountQuery = null;
 		parent::tearDown();
 	}
 
@@ -440,6 +433,12 @@ class ImageMapperTest extends TestCase {
 		$row =$this->userImageCountQuery->executeQuery()->fetch();
 		$this->assertNotFalse($row);
 		$this->assertEquals($expectedCount, (int)$row['count'], "Expected user_image count: ".$expectedCount." actual: ".(int)$row['count']);
+	}
+
+	private function assertRowCountFaces($expectedCount): void {
+		$row =$this->faceCountQuery->executeQuery()->fetch();
+		$this->assertNotFalse($row);
+		$this->assertEquals($expectedCount, (int)$row['count'], "Expected face count: ".$expectedCount." actual: ".(int)$row['count']);
 	}
 }
 
@@ -614,6 +613,45 @@ class ImageDataProvider{
             ["user1", 3,"Alice", 0], // non existing model
             ["user3", 1,"Alice", 0], // non existing user
             ["user3", 3,"Alice", 0], // non existing user and model
+        ];
+    }
+
+	public static function imageProcessed_Provider(): array {
+		//First face to test single face
+		$face1 = new Face();
+		$face1->person = null;
+		$face1->creationTime = new \DateTime();
+		$face1->x = 10;
+		$face1->y = 20;
+		$face1->width = 30;
+		$face1->height = 40;
+		$face1->confidence = 0.95;
+		//Second face to test multiple faces
+		$face2 = new Face();
+		$face2->person = null;
+		$face2->creationTime = new \DateTime();
+		$face2->x = 15;
+		$face2->y = 25;
+		$face2->width = 35;
+		$face2->height = 45;
+		$face2->confidence = 0.85;
+		//Exception to test error handling
+		$exception = new Exception("Test exception");
+        return [
+			//Single image
+            [5, [], 100, null, 13],
+            [6, [], 100, $exception, 13],
+            [5, [$face1], 100, null, 14],
+            [6, [$face1], 100, $exception, 14],
+            [5, [$face1, $face2], 100, null, 15],
+            [6, [$face1, $face2], 100, $exception, 15],
+			//Shared image
+            [10, [], 100, null, 8],
+            [10, [], 100, $exception, 8],
+            [10, [$face1], 100, null, 9],
+            [10, [$face1], 100, $exception, 9],
+            [10, [$face1, $face2], 100, null, 10],
+            [10, [$face1, $face2], 100, $exception, 10]
         ];
     }
 }

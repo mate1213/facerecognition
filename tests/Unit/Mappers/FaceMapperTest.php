@@ -27,8 +27,8 @@ use DateTime;
 use PHPUnit\Framework\Attributes\DataProviderExternal;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
-use PHPUnit\Framework\TestCase;
 
+use OCA\FaceRecognition\Tests\Unit\UnitBaseTestCase;
 use OCA\FaceRecognition\Db\FaceMapper;
 use OCA\FaceRecognition\Db\Face;
 use OC;
@@ -36,12 +36,9 @@ use OCP\IDBConnection;
 
 #[CoversClass(FaceMapper::class)]
 #[UsesClass(Face::class)]
-class FaceMapperTest extends TestCase {
+class FaceMapperTest extends UnitBaseTestCase {
     /** @var FaceMapper test instance*/
 	private $faceMapper;
-    /** @var IDBConnection test instance*/
-    private $dbConnection;
-	private $isSetupComplete = false; //set to true after first setup, so the inserts are done only once
 	private $clusterFaceCountQuery;
 	private $faceCountQuery;
 
@@ -50,35 +47,13 @@ class FaceMapperTest extends TestCase {
 	 */
 	public function setUp(): void {
         parent::setUp();
-        $this->dbConnection = OC::$server->getDatabaseConnection();
-		$this->dbConnection->beginTransaction();
-
 		$this->faceMapper = new FaceMapper($this->dbConnection);
 
-		
         $this->clusterFaceCountQuery = $this->dbConnection->getQueryBuilder();
 		$this->clusterFaceCountQuery->select($this->clusterFaceCountQuery->createFunction('COUNT(*) as count'))->from('facerecog_cluster_faces');
 
         $this->faceCountQuery = $this->dbConnection->getQueryBuilder();
 		$this->faceCountQuery->select($this->faceCountQuery->createFunction('COUNT(id) as count'))->from('facerecog_faces');
-
-		if (!$this->isSetupComplete) {
-			$this->isSetupComplete = true;
-			$sql = file_get_contents("tests/DatabaseInserts/10_imageInsert.sql");
-			$this->dbConnection->executeStatement($sql);
-			$sql = file_get_contents("tests/DatabaseInserts/20_userImagesInsert.sql");
-			$this->dbConnection->executeStatement($sql);
-			$sql = file_get_contents("tests/DatabaseInserts/30_facesInsert.sql");
-			$this->dbConnection->executeStatement($sql);
-			$sql = file_get_contents("tests/DatabaseInserts/40_clustersInsert.sql");
-			$this->dbConnection->executeStatement($sql);
-			$sql = file_get_contents("tests/DatabaseInserts/50_clusterFacesInsert.sql");
-			$this->dbConnection->executeStatement($sql);
-			$sql = file_get_contents("tests/DatabaseInserts/60_personInsert.sql");
-			$this->dbConnection->executeStatement($sql);
-			$sql = file_get_contents("tests/DatabaseInserts/70_personClustersInsert.sql");
-			$this->dbConnection->executeStatement($sql);
-		}
 	}
 
 	public function test_FindById_existingFace_connectedCluster() : void {
@@ -396,10 +371,10 @@ class FaceMapperTest extends TestCase {
 	}
 
     public function tearDown(): void {
-        if ($this->dbConnection != null) {
-			$this->dbConnection->rollBack();
-			return;
-        }
+		$this->faceMapper = null;
+		$this->clusterFaceCountQuery = null;
+		$this->faceCountQuery = null;
+
 		parent::tearDown();
 	}
 

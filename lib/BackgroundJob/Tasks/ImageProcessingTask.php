@@ -155,7 +155,7 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 
 				if ($tempImage->getSkipped() === true) {
 					$this->logInfo('Faces found: 0 (image will be skipped because it is too small)');
-					$this->imageMapper->imageProcessed($image, array(), 0);
+					$this->imageMapper->imageProcessed($image->getId(), array(), 0);
 					// Release lock of file.
 					$this->lockingProvider->releaseLock($lockKey, $lockType);
 					continue;
@@ -180,7 +180,7 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 				// Save new faces fo database
 				$endMillis = round(microtime(true) * 1000);
 				$duration = (int) max($endMillis - $startMillis, 0);
-				$this->imageMapper->imageProcessed($image, $faces, $duration);
+				$this->imageMapper->imageProcessed($image->getId(), $faces, $duration);
 
 				// Release lock of file.
 				$this->lockingProvider->releaseLock($lockKey, $lockType);
@@ -194,7 +194,7 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 				$this->logDebug((string) $e);
 
 				// Save an empty entry so it can be analyzed again later
-				$this->imageMapper->imageProcessed($image, array(), 0, $e);
+				$this->imageMapper->imageProcessed($image->getId(), array(), 0, $e);
 			} finally {
 				// Clean temporary image.
 				if (isset($tempImage)) {

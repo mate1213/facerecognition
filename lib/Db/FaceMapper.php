@@ -346,8 +346,13 @@ class FaceMapper extends QBMapper {
 	 *
 	 * @return void
 	 */
-	public function removeFromImage(int $imageId): void {
-		$qb = $this->db->getQueryBuilder();
+	public function removeFromImage(int $imageId, IDBConnection $db = null): void {
+		if ($db !== null) {
+			$qb = $db->getQueryBuilder();
+		} else {
+			$qb = $this->db->getQueryBuilder();
+		}
+		
 		$qb->delete($this->getTableName())
 			->where($qb->expr()->eq('image_id', $qb->createNamedParameter($imageId)))
 			->executeStatement();

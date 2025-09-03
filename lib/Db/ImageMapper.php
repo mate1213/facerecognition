@@ -378,7 +378,7 @@ class ImageMapper extends QBMapper {
 	 *
 	 * @return void
 	 */
-	public function imageProcessed(Image $image, array $faces, int $duration, \Exception $e = null): void {
+	public function imageProcessed(int $imageId, array $faces, int $duration, \Exception $e = null): void {
 		$this->db->beginTransaction();
 		try {
 			// Update image itself
@@ -394,15 +394,12 @@ class ImageMapper extends QBMapper {
 				->set("error", $qb->createNamedParameter($error))
 				->set("last_processed_time", $qb->createNamedParameter(new \DateTime(), IQueryBuilder::PARAM_DATE))
 				->set("processing_duration", $qb->createNamedParameter($duration))
-				->where($qb->expr()->eq('id', $qb->createNamedParameter($image->id)))
+				->where($qb->expr()->eq('id', $qb->createNamedParameter($imageId)))
 				->executeStatement();
 
 			// Delete all previous faces
 			//
-			$qb = $this->db->getQueryBuilder();
-			$qb->delete('facerecog_faces')
-				->where($qb->expr()->eq('image_id', $qb->createNamedParameter($image->id)))
-				->executeStatement();
+			$this->faceMapper->removeFromImage($imageId, $this->db);
 
 			// Insert all faces
 			//
