@@ -434,7 +434,7 @@ class ImageMapperTest extends UnitBaseTestCase {
 		$image = new Image();
 		$image->id = 1;
 		$image->user = "user1";
-		$image->file = "101";
+		$image->file = 101;
 
 		$image->setId($imageId);
 		$image->setUser($user);
@@ -453,8 +453,39 @@ class ImageMapperTest extends UnitBaseTestCase {
 		$this->assertEquals($nc_file_id, $image->getFile());
 	}
 
+	public function test_update_nochange() : void {
+		//Assert initial state
+		$this->assertInitialDBstate();
+
+		$image = new Image();
+		$image->id = 1;
+		$image->user = "user1";
+		$image->file = "101";
+
+		//Act
+        $image = $this->imageMapper->update($image);
+
+		//Assert
+		$this->assertInitialDBstate();
+        $this->assertNotNull($image);
+		$this->assertInstanceOf(Image::class, $image);
+        $this->assertEquals(1, $image->getId());
+		$this->assertEquals("user1", $image->getUser());
+		$this->assertEquals(101, $image->getFile());
+	}
+
+	public function test_update_invalidId() : void {
+		$image = new Image();
+		$image->setUser("user1");
+
+		$this->expectException(\InvalidArgumentException::class);
+		$this->expectExceptionMessage('Entity which should be updated has no id');
+
+		//Act
+        $image = $this->imageMapper->update($image);
+	}
 	#[DataProviderExternal(ImageDataProvider::class, 'delete_Provider')]
-	public function test_delete(int $imageId, ?string $user, int $model, int $nc_file_id) : void {
+	public function test_delete(int $imageId, ?string $user, int $model, int $nc_file_id, int $imageCount, int $connectionCount) : void {
 		//Assert initial state
 		$this->assertInitialDBstate();
 
@@ -468,8 +499,8 @@ class ImageMapperTest extends UnitBaseTestCase {
         $this->imageMapper->delete($image);
 
 		//Assert
-		$this->assertRowCountImages();
-		$this->assertRowCountUserImages();
+		$this->assertRowCountImages($imageCount);
+		$this->assertRowCountUserImages($connectionCount);
 	}
 
     /**
@@ -767,6 +798,16 @@ class ImageDataProvider{
 			[1, "user1", 2, 102], //model and file update
 			[1, "user2", 1, 102], //user and file update
 			[1, "user2", 2, 102], //user and model and file update
+		];
+	}
+		
+	public static function delete_Provider(): array {
+        return [
+			[1, "user1", 1, 101, 9, 10],
+			[2, "user2", 2, 102, 9, 10],
+			[10, "user1", 1, 201, 9, 9], //shared image
+			[10, "user2", 1, 201, 9, 9], //shared image
+			[100, "user3", 1, 101, 10, 11], //not existing imageId
 		];
 	}
 }

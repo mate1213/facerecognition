@@ -198,7 +198,6 @@ class ImageMapper extends QBMapper {
 
     #[\Override]
 	public function delete(Entity $entity): Entity {
-		$this->removeUserImageConnection($entity);
 		return parent::delete($entity);
 	}
 
