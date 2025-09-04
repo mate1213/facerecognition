@@ -26,6 +26,7 @@ namespace OCA\FaceRecognition\Db;
 use JsonSerializable;
 
 use OCP\AppFramework\Db\Entity;
+use OCP\DB\Types;
 
 /**
  * Person represent one cluster, set of faces. It belongs to $user_id.
@@ -80,10 +81,12 @@ class Person extends Entity implements JsonSerializable {
 	protected $linkedUser;
 
 	public function __construct() {
-		$this->addType('id', 'integer');
-		$this->addType('user', 'string');
-		$this->addType('isVisible', 'bool');
-		$this->addType('isValid', 'bool');
+		$this->addType('id', Types::INTEGER);
+		$this->addType('user', Types::STRING);
+		$this->addType('isVisible', Types::BOOLEAN);
+		$this->addType('isValid', Types::BOOLEAN);
+		$this->addType('lastGenerationTime', Types::DATETIME);
+		$this->addType('linkedUser', Types::STRING);
 	}
 
 	public function jsonSerialize() {

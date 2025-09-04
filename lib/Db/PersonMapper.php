@@ -46,10 +46,12 @@ class PersonMapper extends QBMapper {
 	 */
 	public function find(string $userId, int $personId): Person {
 		$qb = $this->db->getQueryBuilder();
-		$qb->select('id', 'name', 'is_visible')
-			->from($this->getTableName(), 'p')
-			->where($qb->expr()->eq('p.id', $qb->createNamedParameter($personId)))
-			->andWhere($qb->expr()->eq('p.user', $qb->createNamedParameter($userId)));
+		$qb->select('c.id', 'user', 'p.name', 'is_visible', 'is_valid', 'last_generation_time', 'linked_user')
+			->from($this->getTableName(), 'c')
+			->leftJoin('c', 'facerecog_person_clusters' ,'pc', $qb->expr()->eq('pc.cluster_id', 'c.id'))
+			->leftJoin('c', 'facerecog_persons' ,'p', $qb->expr()->andX($qb->expr()->eq('pc.person_id', 'p.id'),$qb->expr()->isNotNull('pc.cluster_id')))
+			->where($qb->expr()->eq('c.id', $qb->createNamedParameter($personId)))
+			->andWhere($qb->expr()->eq('c.user', $qb->createNamedParameter($userId)));
 		return $this->findEntity($qb);
 	}
 
@@ -60,13 +62,19 @@ class PersonMapper extends QBMapper {
 	 * @return Person[]
 	 */
 	public function findByName(string $userId, int $modelId, string $personName): array {
-		$sub = $this->subquery();
-
 		$qb = $this->db->getQueryBuilder();
-		$qb->select('id', 'name', 'is_valid')
-			->from($this->getTableName(), 'p')
-			->where('EXISTS (' . $sub->getSQL() . ')')
-			->andWhere($sub->expr()->eq('p.name', $sub->createParameter('person_name')))
+		$qb->select('c.id', 'c.user', 'p.name', 'c.is_visible', 'c.is_valid', 'c.last_generation_time', 'c.linked_user')
+			->from($this->getTableName(), 'c')
+			->innerJoin('c', 'facerecog_cluster_faces' ,'cf', $qb->expr()->eq('cf.cluster_id', 'c.id'))
+			->innerJoin('c', 'facerecog_faces' ,'f', $qb->expr()->eq('cf.face_id', 'f.id'))
+			->innerJoin('c', 'facerecog_images' ,'i', $qb->expr()->eq('f.image_id', 'i.id'))
+			->innerJoin('c', 'facerecog_user_images' ,'ui', $qb->expr()->eq('i.id', 'ui.image_id'))
+			->leftJoin('c', 'facerecog_person_clusters' ,'pc', $qb->expr()->eq('pc.cluster_id', 'c.id'))
+			->leftJoin('c', 'facerecog_persons' ,'p', $qb->expr()->andX($qb->expr()->eq('pc.person_id', 'p.id'),$qb->expr()->isNotNull('pc.cluster_id')))
+			->Where($qb->expr()->eq('p.name', $qb->createParameter('person_name')))
+			->andWhere($qb->expr()->eq('ui.user', $qb->createParameter('user_id')))
+			->andWhere($qb->expr()->eq('c.user', $qb->createParameter('user_id')))
+			->andWhere($qb->expr()->eq('i.model', $qb->createParameter('model_id')))
 			->setParameter('user_id', $userId)
 			->setParameter('model_id', $modelId)
 			->setParameter('person_name', $personName);
@@ -90,6 +98,38 @@ class PersonMapper extends QBMapper {
 	 */
 	public function findIgnored(string $userId, int $modelId): array {
 		return $this->GetPersons($userId, $modelId, true, false);
+	}
+
+	/**
+	 * @param string $userId ID of the user
+	 * @param int $modelId ID of the model
+	 * @param bool $isValid
+	 * @param bool $isVisible
+	 * @return Person[]
+	 */
+	protected function GetPersons(string $userId, int $modelId, bool $isValid, bool $isVisible): array {
+		$sub = $this->subquery();
+
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('c.id', 'c.user', 'p.name', 'c.is_visible', 'c.is_valid', 'c.last_generation_time', 'c.linked_user')
+			->from($this->getTableName(), 'c')
+			->innerJoin('c', 'facerecog_cluster_faces' ,'cf', $qb->expr()->eq('cf.cluster_id', 'c.id'))
+			->innerJoin('c', 'facerecog_faces' ,'f', $qb->expr()->eq('cf.face_id', 'f.id'))
+			->innerJoin('c', 'facerecog_images' ,'i', $qb->expr()->eq('f.image_id', 'i.id'))
+			->innerJoin('c', 'facerecog_user_images' ,'ui', $qb->expr()->eq('i.id', 'ui.image_id'))
+			->leftJoin('c', 'facerecog_person_clusters' ,'pc', $qb->expr()->eq('pc.cluster_id', 'c.id'))
+			->leftJoin('c', 'facerecog_persons' ,'p', $qb->expr()->andX($qb->expr()->eq('pc.person_id', 'p.id'),$qb->expr()->isNotNull('pc.cluster_id')))
+			->where('EXISTS (' . $sub->getSQL() . ')')
+			->andWhere($qb->expr()->eq('p.is_valid', $qb->createParameter('is_valid')))
+			->andWhere($qb->expr()->eq('p.is_visible', $qb->createParameter('is_visible')))
+			->andWhere($qb->expr()->eq('p.user', $qb->createParameter('user_id')))
+			->andWhere($qb->expr()->isNull('name'))
+			->setParameter('user_id', $userId)
+			->setParameter('model_id', $modelId)
+			->setParameter('is_valid', $isValid, IQueryBuilder::PARAM_BOOL)
+			->setParameter('is_visible', $isVisible, IQueryBuilder::PARAM_BOOL);
+
+		return $this->findEntities($qb);
 	}
 
 	/**
@@ -535,31 +575,6 @@ class PersonMapper extends QBMapper {
 		return (int)$data[0];
 	}
 
-	/**
-	 * @param string $userId ID of the user
-	 * @param int $modelId ID of the model
-	 * @param bool $isValid
-	 * @param bool $isVisible
-	 * @return Person[]
-	 */
-	protected function GetPersons(string $userId, int $modelId, bool $isValid, bool $isVisible): array {
-		$sub = $this->subquery();
-
-		$qb = $this->db->getQueryBuilder();
-		$qb->select('id', 'is_valid')
-			->from($this->getTableName(), 'p')
-			->where('EXISTS (' . $sub->getSQL() . ')')
-			->andWhere($qb->expr()->eq('p.is_valid', $qb->createParameter('is_valid')))
-			->andWhere($qb->expr()->eq('p.is_visible', $qb->createParameter('is_visible')))
-			->andWhere($qb->expr()->eq('p.user', $qb->createParameter('user_id')))
-			->andWhere($qb->expr()->isNull('name'))
-			->setParameter('user_id', $userId)
-			->setParameter('model_id', $modelId)
-			->setParameter('is_valid', $isValid, IQueryBuilder::PARAM_BOOL)
-			->setParameter('is_visible', $isVisible, IQueryBuilder::PARAM_BOOL);
-
-		return $this->findEntities($qb);
-	}
 
 	/**
 	 * return subquery with literal 1 
