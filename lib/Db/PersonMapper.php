@@ -23,14 +23,13 @@
  */
 namespace OCA\FaceRecognition\Db;
 
-use OC\DB\QueryBuilder\Literal;
 
 use OCP\IDBConnection;
-use OCP\IUser;
 
 use OCP\AppFramework\Db\QBMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\DB\QueryBuilder\IQueryBuilder;
+use OC\DB\QueryBuilder\Literal;
 
 class PersonMapper extends QBMapper {
 
@@ -160,8 +159,6 @@ class PersonMapper extends QBMapper {
 	 * @return Person[]
 	 */
 	public function findDistinctNames(string $userId, int $modelId): array {
-		$sub = $this->subquery();
-
 		$qb = $this->db->getQueryBuilder();
 		$qb->selectDistinct('name')
 			->from($this->getTableName(), 'p')
@@ -179,8 +176,6 @@ class PersonMapper extends QBMapper {
 	 * @return Person[]
 	 */
 	public function findDistinctNamesSelected(string $userId, int $modelId, $faceNames): array {
-		$sub = $this->subquery();
-
 		$qb = $this->db->getQueryBuilder();
 		$qb->selectDistinct('name')
 			->from($this->getTableName(), 'p')
@@ -200,7 +195,6 @@ class PersonMapper extends QBMapper {
 	 * @param int|null $limit
 	 */
 	public function findPersonsLike(string $userId, int $modelId, string $name, ?int $offset = null, ?int $limit = null): array {
-
 		$qb = $this->db->getQueryBuilder();
 		$qb->selectDistinct('p.name')
 			->from($this->getTableName(), 'p')
@@ -244,8 +238,6 @@ class PersonMapper extends QBMapper {
 	 * @return int Count of clusters
 	 */
 	public function countClusters(string $userId, int $modelId, bool $onlyInvalid=false): int {
-		$sub = $this->subquery();
-
 		$qb = $this->db->getQueryBuilder();
 		$qb->select($qb->createFunction('COUNT(' . $qb->getColumnName('id') . ')'))
 			->from($this->getTableName(), 'p')
@@ -324,7 +316,6 @@ class PersonMapper extends QBMapper {
 
 			// Add new clusters and update person if already existting
 			foreach($newClusters as $newPerson=>$newFaces) {
-				$insertedPersonId;
 				if (array_key_exists($newPerson, $currentClusters)) {
 					// This cluster already existed, update cluster
 
@@ -571,25 +562,6 @@ class PersonMapper extends QBMapper {
 		$resultStatement->closeCursor();
 
 		return (int)$data[0];
-	}
-
-
-	/**
-	 * return subquery with literal 1 
-	 * @return IQueryBuilder
-	 */
-	protected function subquery(string $origTable): IQueryBuilder {
-		$sub = $this->db->getQueryBuilder();
-		$sub->select(new Literal('1'))
-			->from('facerecog_faces', 'f')
-			->innerJoin('f', 'facerecog_images' ,'i', $sub->expr()->eq('f.image_id', 'i.id'))
-			->innerJoin('f', 'facerecog_user_images' ,'ui', $sub->expr()->eq('ui.image_id', 'i.id'))
-			->innerJoin('f', 'facerecog_cluster_faces' ,'cf', $sub->expr()->eq('cf.face_id', 'f.id'))
-			->where($sub->expr()->eq($origTable.'.id', 'cf.cluster_id'))
-			->andWhere($sub->expr()->eq($origTable.'.user', $sub->createParameter('user_id')))
-			->andWhere($sub->expr()->eq('ui.user', $sub->createParameter('user_id')))
-			->andWhere($sub->expr()->eq('i.model', $sub->createParameter('model_id')));
-		return $sub;
 	}
 
 	/**
