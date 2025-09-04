@@ -91,79 +91,25 @@ class PersonMapperTest extends UnitBaseTestCase {
         $this->assertNull($person);
 	}
     
-    public function test_FindByName() : void {        
+
+    #[DataProviderExternal(ImageDataProvider::class, 'findByName_Provider')]
+    public function test_FindByName(string $userId, int $modelId, string $personName, int $expectedCount) : void {        
 		//Act
-        $people = $this->personMapper->findByName('user1', 1, 'Alice');
+        $people = $this->personMapper->findByName($userId, $modelId, $personName);
 
 		//Assert
         $this->assertNotNull($people);
 		$this->assertIsArray($people);
 		$this->assertContainsOnlyInstancesOf(Person::class, $people);
-		$this->assertCount(1, $people);
-		foreach ($people as $person)
-		{
-			$this->assertEquals('user1', $person->getUser());
-			$this->assertEquals('Alice', $person->getName());
-		}
-	}
-
-    public function test_FindByName_noneExixtingModel() : void {        
-		//Act
-        $people = $this->personMapper->findByName('user1', 3, 'Alice');
-
-		//Assert
-        $this->assertNotNull($people);
-		$this->assertIsArray($people);
-		$this->assertContainsOnlyInstancesOf(Person::class, $people);
-		$this->assertCount(0, $people);
-	}
-
-    public function test_FindByName_noneExixtingUser() : void {        
-		//Act
-        $people = $this->personMapper->findByName('user3', 1, 'Alice');
-
-		//Assert
-        $this->assertNotNull($people);
-		$this->assertIsArray($people);
-		$this->assertContainsOnlyInstancesOf(Person::class, $people);
-		$this->assertCount(0, $people);
-	}
-
-    public function test_FindByName_noneExixtingPerson() : void {        
-		//Act
-        $people = $this->personMapper->findByName('user3', 1, 'Dummy');
-
-		//Assert
-        $this->assertNotNull($people);
-		$this->assertIsArray($people);
-		$this->assertContainsOnlyInstancesOf(Person::class, $people);
-		$this->assertCount(0, $people);
-	}
-
-    public function test_FindByName_notConnectedPerson() : void {        
-		//Act
-        $people = $this->personMapper->findByName('user2', 1, 'Alice');
-
-		//Assert
-        $this->assertNotNull($people);
-		$this->assertIsArray($people);
-		$this->assertContainsOnlyInstancesOf(Person::class, $people);
-		$this->assertCount(0, $people);
-	}
-
-    public function test_FindByName_ConnectedPerson() : void {        
-		//Act
-        $people = $this->personMapper->findByName('user2', 2, 'Bob');
-
-		//Assert
-        $this->assertNotNull($people);
-		$this->assertIsArray($people);
-		$this->assertContainsOnlyInstancesOf(Person::class, $people);
-		$this->assertCount(1, $people);		foreach ($people as $person)
-		{
-			$this->assertEquals('user2', $person->getUser());
-			$this->assertEquals('Bob', $person->getName());
-		}
+		$this->assertCount($expectedCount, $people);
+        if  ($expectedCount > 0)
+        {
+            foreach ($people as $person)
+            {
+                $this->assertEquals($userId, $person->getUser());
+                $this->assertEquals($personName, $person->getName());
+            }
+        }
 	}
 
     /**
@@ -172,4 +118,17 @@ class PersonMapperTest extends UnitBaseTestCase {
     public function tearDown(): void {
 		parent::tearDown();
 	}
+}
+
+class ImageDataProvider{
+	public static function findByName_Provider(): array {
+        return [
+            ['user1',1,'Alice',1],
+            ['user1', 3, 'Alice',0],
+            ['user3', 1, 'Alice',0],
+            ['user1',1,'Dummy',0],
+            ['user2', 1, 'Alice',0],
+            ['user2', 2, 'Bob',1],
+    ];
+    }
 }
