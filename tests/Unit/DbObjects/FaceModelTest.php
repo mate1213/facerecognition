@@ -24,18 +24,15 @@ namespace OCA\FaceRecognition\Tests\Unit\DbOjects;
 
 use DateTime;
 
+use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 
-use OCA\FaceRecognition\Tests\Unit\UnitBaseTestCase;
 use OCA\FaceRecognition\Db\FaceModel;
 use OCP\AppFramework\Db\Entity;
-use JsonSerializable;
 
 #[CoversClass(FaceModel::class)]
-#[UsesClass(JsonSerializable::class)]
-#[UsesClass(Entity::class)]
-class FaceModelTest extends UnitBaseTestCase {
+class FaceModelTest extends TestCase {
     /** @var FaceModel test instance*/
 	private $faceModel;
 

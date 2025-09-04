@@ -24,18 +24,17 @@ namespace OCA\FaceRecognition\Tests\Unit\DbOjects;
 
 use DateTime;
 
+use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\CoversFunction;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 
-use OCA\FaceRecognition\Tests\Unit\UnitBaseTestCase;
 use OCA\FaceRecognition\Db\Face;
 use OCP\AppFramework\Db\Entity;
-use JsonSerializable;
 
 #[CoversClass(Face::class)]
-#[UsesClass(JsonSerializable::class)]
-#[UsesClass(Entity::class)]
-class FaceTest extends UnitBaseTestCase {
+class FaceTest extends TestCase {
     /** @var Face test instance*/
 	private $face;
 
@@ -43,7 +42,11 @@ class FaceTest extends UnitBaseTestCase {
 	* {@inheritDoc}
 	*/
 	public function setUp(): void {
+        parent::setUp();
         $this->face = new Face();
+	}
+    
+    public function test_jsonSerialize() : void {
         $this->face->setId(1);
         $this->face->setImage(1);
         $this->face->setPerson(2);
@@ -57,9 +60,6 @@ class FaceTest extends UnitBaseTestCase {
         $this->face->setDescriptor('[0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0]');
         $this->face->setCreationTime(new DateTime('2024-01-01 10:00:00'));
         $this->face->resetUpdatedFields();
-        parent::setUp();
-	}
-    public function test_jsonSerialize() : void {
         //Act
         $jsonObject = $this->face->jsonSerialize();
         //Assert
@@ -80,8 +80,8 @@ class FaceTest extends UnitBaseTestCase {
         $this->assertArrayHasKey('creation_time',$jsonObject);
     }
 
-    
-    public function test_getLandmarks() : void {
+    public function test_Landmarks() : void {
+        $this->face->setLandmarks('[{"x":30,"y":40},{"x":50,"y":60},{"x":70,"y":80}]');
         //Act
         $jsonString = $this->face->getLandmarks();
         //Assert
@@ -89,10 +89,13 @@ class FaceTest extends UnitBaseTestCase {
         $this->assertIsString($jsonString);
         $this->assertJson($jsonString);
         $this->assertEquals('[{"x":30,"y":40},{"x":50,"y":60},{"x":70,"y":80}]',$jsonString);
+        $this->assertIsArray($this->face->getUpdatedFields());
+        $this->assertCount(1,$this->face->getUpdatedFields());
+        $this->assertArrayHasKey('landmarks',$this->face->getUpdatedFields());
     }
 
-    
-    public function test_getDescriptor() : void {
+    public function test_Descriptor() : void { 
+        $this->face->setDescriptor('[0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0]');
         //Act
         $jsonString = $this->face->getDescriptor();
         //Assert
@@ -100,9 +103,60 @@ class FaceTest extends UnitBaseTestCase {
         $this->assertIsString($jsonString);
         $this->assertJson($jsonString);
         $this->assertEquals('[0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]',$jsonString);
+        $this->assertIsArray($this->face->getUpdatedFields());
+        $this->assertCount(1,$this->face->getUpdatedFields());
+        $this->assertArrayHasKey('descriptor',$this->face->getUpdatedFields());
     }
 
-    public function test_fromModel_filledproperly() : void {
+    public function test_CreationDate() : void { 
+        $this->face->setCreationTime(new DateTime('2024-01-01 10:00:00'));
+        //Act
+        $creationDate = $this->face->getCreationTime();
+        //Assert
+        $this->assertNotNull($creationDate);
+        $this->assertInstanceOf(DateTime::class,$creationDate);
+        $this->assertEquals(new DateTime('2024-01-01 10:00:00'),$creationDate);
+        $this->assertIsArray($this->face->getUpdatedFields());
+        $this->assertCount(1,$this->face->getUpdatedFields());
+        $this->assertArrayHasKey('creationTime',$this->face->getUpdatedFields());
+    }
+    public function test_CreationDate_withint() : void { 
+        $this->face->setCreationTime(20250904100000);
+        //Act
+        $creationDate = $this->face->getCreationTime();
+        //Assert
+        $this->assertNotNull($creationDate);
+        $this->assertInstanceOf(DateTime::class,$creationDate);
+        $this->assertEquals(new DateTime('2025-09-04 10:00:00'),$creationDate);
+        $this->assertIsArray($this->face->getUpdatedFields());
+        $this->assertCount(1,$this->face->getUpdatedFields());
+        $this->assertArrayHasKey('creationTime',$this->face->getUpdatedFields());
+    }
+    public function test_CreationDate_withstring() : void { 
+        $this->face->setCreationTime('2024-01-01 10:00:00');
+        //Act
+        $creationDate = $this->face->getCreationTime();
+        //Assert
+        $this->assertNotNull($creationDate);
+        $this->assertInstanceOf(DateTime::class,$creationDate);
+        $this->assertEquals(new DateTime('2024-01-01 10:00:00'),$creationDate);
+        $this->assertIsArray($this->face->getUpdatedFields());
+        $this->assertCount(1,$this->face->getUpdatedFields());
+        $this->assertArrayHasKey('creationTime',$this->face->getUpdatedFields());
+    }
+    public function test_CreationDate_withbool() : void { 
+        $this->face->setCreationTime(false);
+        //Act
+        $creationDate = $this->face->getCreationTime();
+        //Assert
+        $this->assertNotNull($creationDate);
+        $this->assertInstanceOf(DateTime::class,$creationDate);
+        $this->assertIsArray($this->face->getUpdatedFields());
+        $this->assertCount(1,$this->face->getUpdatedFields());
+        $this->assertArrayHasKey('creationTime',$this->face->getUpdatedFields());
+    }
+
+    public function test_fromModel_filledProperly() : void {
         $face = [];
 		$face['left'] = 10;
 		$face['right'] = 40;
@@ -112,7 +166,7 @@ class FaceTest extends UnitBaseTestCase {
 		$face['landmarks'] = [["x"=>30,"y"=>40],["x"=>50,"y"=>60],["x"=>70,"y"=>80]];
 		$face['descriptor'] = [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0];
         //Act
-        $faceObject = $this->face->fromModel(1, $face);
+        $faceObject = Face::fromModel(1, $face);
         //Assert
         $this->assertNotNull($faceObject);
         $this->assertInstanceOf(Face::class,$faceObject);
@@ -126,7 +180,8 @@ class FaceTest extends UnitBaseTestCase {
         $this->assertEquals('[0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]',$faceObject->getDescriptor());
         
     }
-    public function test_fromModel_filledempty() : void {
+
+    public function test_fromModel_filledEmpty() : void {
         $face = [];
 		$face['left'] = 10;
 		$face['right'] = 40;
@@ -136,7 +191,7 @@ class FaceTest extends UnitBaseTestCase {
 		$face['landmarks'] = null;
 		$face['descriptor'] = null;
         //Act
-        $faceObject = $this->face->fromModel(1, $face);
+        $faceObject = Face::fromModel(1, $face);
         //Assert
         $this->assertNotNull($faceObject);
         $this->assertInstanceOf(Face::class,$faceObject);
