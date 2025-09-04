@@ -92,7 +92,7 @@ class PersonMapperTest extends UnitBaseTestCase {
 	}
     
 
-    #[DataProviderExternal(ImageDataProvider::class, 'findByName_Provider')]
+    #[DataProviderExternal(PersonDataProvider::class, 'findByName_Provider')]
     public function test_FindByName(string $userId, int $modelId, string $personName, int $expectedCount) : void {        
 		//Act
         $people = $this->personMapper->findByName($userId, $modelId, $personName);
@@ -120,7 +120,7 @@ class PersonMapperTest extends UnitBaseTestCase {
 	}
 }
 
-class ImageDataProvider{
+class PersonDataProvider{
 	public static function findByName_Provider(): array {
         return [
             ['user1',1,'Alice',1],
