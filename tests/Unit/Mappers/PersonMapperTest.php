@@ -36,99 +36,150 @@ use OCP\IDBConnection;
 
 #[CoversClass(PersonMapper::class)]
 #[UsesClass(Person::class)]
-class PersonMapperTest extends UnitBaseTestCase {
+class PersonMapperTest extends UnitBaseTestCase
+{
     /** @var PersonMapper test instance*/
-	private $personMapper;
+    private $personMapper;
 
     /**
-	 * {@inheritDoc}
-	 */
-	public function setUp(): void {
+     * {@inheritDoc}
+     */
+    public function setUp(): void
+    {
         parent::setUp();
-		$this->personMapper = new PersonMapper($this->dbConnection);
-	}
+        $this->personMapper = new PersonMapper($this->dbConnection);
+    }
 
-    public function test_Find_nameExists() : void {
-		//Act
+    public function test_Find_nameExists(): void
+    {
+        //Act
         $person = $this->personMapper->find('user1', 1);
 
-		//Assert
+        //Assert
         $this->assertNotNull($person);
-		$this->assertInstanceOf(Person::class, $person);
+        $this->assertInstanceOf(Person::class, $person);
         $this->assertEquals(1, $person->getId());
-		$this->assertEquals('user1', $person->getUser());
-		$this->assertEquals('Alice', $person->getName());
-		$this->assertEquals(null, $person->getLinkedUser());
-		$this->assertEquals(true, $person->getIsVisible());
-		$this->assertEquals(true, $person->getIsValid());
+        $this->assertEquals('user1', $person->getUser());
+        $this->assertEquals('Alice', $person->getName());
+        $this->assertEquals(null, $person->getLinkedUser());
+        $this->assertEquals(true, $person->getIsVisible());
+        $this->assertEquals(true, $person->getIsValid());
         $this->assertEquals(DateTime::createFromFormat('Y-m-d H:i:s', '2025-08-26 10:00:00'), $person->getLastGenerationTime());
-	}
+    }
 
-    public function test_Find_noNameExists() : void {
-		//Act
+    public function test_Find_noNameExists(): void
+    {
+        //Act
         $person = $this->personMapper->find('user1', 3);
 
-		//Assert
+        //Assert
         $this->assertNotNull($person);
-		$this->assertInstanceOf(Person::class, $person);
+        $this->assertInstanceOf(Person::class, $person);
         $this->assertEquals(3, $person->getId());
-		$this->assertEquals('user1', $person->getUser());
-		$this->assertEquals(null, $person->getName());
-		$this->assertEquals(null, $person->getLinkedUser());
-		$this->assertEquals(true, $person->getIsVisible());
-		$this->assertEquals(true, $person->getIsValid());
+        $this->assertEquals('user1', $person->getUser());
+        $this->assertEquals(null, $person->getName());
+        $this->assertEquals(null, $person->getLinkedUser());
+        $this->assertEquals(true, $person->getIsVisible());
+        $this->assertEquals(true, $person->getIsValid());
         $this->assertEquals(DateTime::createFromFormat('Y-m-d H:i:s', '2025-08-26 11:00:00'), $person->getLastGenerationTime());
-	}
+    }
 
-    public function test_Find_noneExisting() : void {
+    public function test_Find_noneExisting(): void
+    {
         $this->expectException(\OCP\AppFramework\Db\DoesNotExistException::class);
         $this->expectExceptionMessage('Did expect one result but found none when executing: query "SELECT `c`.`id`, `user`, `p`.`name`, `is_visible`, `is_valid`, `last_generation_time`, `linked_user` FROM `*PREFIX*facerecog_clusters` `c` LEFT JOIN `*PREFIX*facerecog_person_clusters` `pc` ON `pc`.`cluster_id` = `c`.`id` LEFT JOIN `*PREFIX*facerecog_persons` `p` ON (`pc`.`person_id` = `p`.`id`) AND (`pc`.`cluster_id` IS NOT NULL) WHERE (`c`.`id` = :dcValue1) AND (`c`.`user` = :dcValue2)"');
 
-		//Act
+        //Act
         $person = $this->personMapper->find('user1', 8);
 
-		//Assert
+        //Assert
         $this->assertNull($person);
-	}
-    
+    }
+
 
     #[DataProviderExternal(PersonDataProvider::class, 'findByName_Provider')]
-    public function test_FindByName(string $userId, int $modelId, string $personName, int $expectedCount) : void {        
-		//Act
+    public function test_FindByName(string $userId, int $modelId, string $personName, int $expectedCount): void
+    {
+        //Act
         $people = $this->personMapper->findByName($userId, $modelId, $personName);
 
-		//Assert
+        //Assert
         $this->assertNotNull($people);
-		$this->assertIsArray($people);
-		$this->assertContainsOnlyInstancesOf(Person::class, $people);
-		$this->assertCount($expectedCount, $people);
-        if  ($expectedCount > 0)
-        {
-            foreach ($people as $person)
-            {
-                $this->assertEquals($userId, $person->getUser());
-                $this->assertEquals($personName, $person->getName());
+        $this->assertIsArray($people);
+        $this->assertContainsOnlyInstancesOf(Person::class, $people);
+        $this->assertCount($expectedCount, $people);
+        if ($expectedCount > 0) {
+            foreach ($people as $person) {
+                $this->assertEquals(expected: $userId, actual: $person->getUser());
+                $this->assertEquals(expected: $personName, actual: $person->getName());
             }
         }
-	}
+    }
+    //MTODO: insert more Ignored and unassigned faces
+    #[DataProviderExternal(className: PersonDataProvider::class, methodName: 'getPersonsByFlagsWithoutName_Provider')]
+    public function test_getPersonsByFlagsWithoutName(string $userId, int $modelId, bool $isValid, bool $isVisible, int $expectedCount): void
+    {
+        //Act
+        $people = $this->personMapper->getPersonsByFlagsWithoutName($userId, $modelId, $isValid, $isVisible);
 
+        //Assert
+        $this->assertNotNull($people);
+        $this->assertIsArray($people);
+        $this->assertContainsOnlyInstancesOf(Person::class, $people);
+        $this->assertCount($expectedCount, $people);
+        if ($expectedCount > 0) {
+            foreach ($people as $person) {
+                $this->assertEquals($userId, $person->getUser());
+                $this->assertEquals($isValid, $person->getIsValid());
+                $this->assertEquals($isVisible, $person->getIsVisible());
+            }
+        }
+    }
     /**
-	 * {@inheritDoc}
-	 */
-    public function tearDown(): void {
-		parent::tearDown();
-	}
+     * {@inheritDoc}
+     */
+    public function tearDown(): void
+    {
+        parent::tearDown();
+    }
 }
 
-class PersonDataProvider{
-	public static function findByName_Provider(): array {
+class PersonDataProvider
+{
+    public static function findByName_Provider(): array
+    {
         return [
-            ['user1',1,'Alice',1],
-            ['user1', 3, 'Alice',0],
-            ['user3', 1, 'Alice',0],
-            ['user1',1,'Dummy',0],
-            ['user2', 1, 'Alice',0],
-            ['user2', 2, 'Bob',1],
-    ];
+            ['user1', 1, 'Alice', 1],
+            ['user1', 3, 'Alice', 0],
+            ['user3', 1, 'Alice', 0],
+            ['user1', 1, 'Dummy', 0],
+            ['user2', 1, 'Alice', 0],
+            ['user2', 2, 'Bob', 1],
+        ];
+    }
+    public static function getPersonsByFlagsWithoutName_Provider(): array
+    {
+        return [
+            ['user1', 1, false, false, 0],
+            ['user1', 1, false, true,  0],
+            ['user1', 1, true, false,  12],
+            ['user1', 1, true, true,   0],
+            ['user1', 3, false, false, 0],
+            ['user1', 3, false, true,  0],
+            ['user1', 3, true, false,  0],
+            ['user1', 3, true, true,   0],
+            ['user3', 1, false, false, 0],
+            ['user3', 1, false, true,  0],
+            ['user3', 1, true, false,  0],
+            ['user3', 1, true, true,   0],
+            ['user2', 1, false, false, 0],
+            ['user2', 1, false, true,  0],
+            ['user2', 1, true, false,  0],
+            ['user2', 1, true, true,   12],
+            ['user2', 2, false, false, 0],
+            ['user2', 2, false, true,  0],
+            ['user2', 2, true, false,  0],
+            ['user2', 2, true, true,   0],
+        ];
     }
 }

@@ -88,7 +88,7 @@ class PersonMapper extends QBMapper {
 	 * @return Person[]
 	 */
 	public function findUnassigned(string $userId, int $modelId): array {
-		return $this->GetPersons($userId, $modelId, true, true);
+		return $this->getPersonsByFlagsWithoutName($userId, $modelId, true, true);
 	}
 
 	/**
@@ -97,7 +97,7 @@ class PersonMapper extends QBMapper {
 	 * @return Person[]
 	 */
 	public function findIgnored(string $userId, int $modelId): array {
-		return $this->GetPersons($userId, $modelId, true, false);
+		return $this->getPersonsByFlagsWithoutName($userId, $modelId, true, false);
 	}
 
 	/**
@@ -107,9 +107,7 @@ class PersonMapper extends QBMapper {
 	 * @param bool $isVisible
 	 * @return Person[]
 	 */
-	protected function GetPersons(string $userId, int $modelId, bool $isValid, bool $isVisible): array {
-		$sub = $this->subquery();
-
+	public function getPersonsByFlagsWithoutName(string $userId, int $modelId, bool $isValid, bool $isVisible): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('c.id', 'c.user', 'p.name', 'c.is_visible', 'c.is_valid', 'c.last_generation_time', 'c.linked_user')
 			->from($this->getTableName(), 'c')
@@ -119,10 +117,10 @@ class PersonMapper extends QBMapper {
 			->innerJoin('c', 'facerecog_user_images' ,'ui', $qb->expr()->eq('i.id', 'ui.image_id'))
 			->leftJoin('c', 'facerecog_person_clusters' ,'pc', $qb->expr()->eq('pc.cluster_id', 'c.id'))
 			->leftJoin('c', 'facerecog_persons' ,'p', $qb->expr()->andX($qb->expr()->eq('pc.person_id', 'p.id'),$qb->expr()->isNotNull('pc.cluster_id')))
-			->where('EXISTS (' . $sub->getSQL() . ')')
-			->andWhere($qb->expr()->eq('p.is_valid', $qb->createParameter('is_valid')))
-			->andWhere($qb->expr()->eq('p.is_visible', $qb->createParameter('is_visible')))
-			->andWhere($qb->expr()->eq('p.user', $qb->createParameter('user_id')))
+			->Where($qb->expr()->eq('c.is_valid', $qb->createParameter('is_valid')))
+			->andWhere($qb->expr()->eq('c.is_visible', $qb->createParameter('is_visible')))
+			->andWhere($qb->expr()->eq('c.user', $qb->createParameter('user_id')))
+			->andWhere($qb->expr()->eq('i.model', $qb->createParameter('model_id')))
 			->andWhere($qb->expr()->isNull('name'))
 			->setParameter('user_id', $userId)
 			->setParameter('model_id', $modelId)
