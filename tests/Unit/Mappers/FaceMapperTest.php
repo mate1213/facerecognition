@@ -405,7 +405,7 @@ class FaceDataProvider{
             ["user1", 1, 10],
             ["user1", 2, 0],
             ["user2", 1, 6],
-			["user2", 2, 4], 
+			["user2", 2, 5], 
 			["user2", 6, 0], //non existing model
 			["user3", 1, 0], //non existing user
             ["user3", 6, 0]  //non existing user and model

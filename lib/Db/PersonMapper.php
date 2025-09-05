@@ -162,10 +162,16 @@ class PersonMapper extends QBMapper {
 	public function findDistinctNames(string $userId, int $modelId): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->selectDistinct('name')
-			->from($this->getTableName(), 'p')
-			->where('EXISTS (' . $sub->getSQL() . ')')
-			->andwhere($qb->expr()->isNotNull('p.name'))
-			->andwhere($sub->expr()->eq('p.user', $sub->createParameter('user_id')))
+			->from($this->getTableName(), 'c')
+			->innerJoin('c', 'facerecog_cluster_faces' ,'cf', $qb->expr()->eq('cf.cluster_id', 'c.id'))
+			->innerJoin('c', 'facerecog_faces' ,'f', $qb->expr()->eq('cf.face_id', 'f.id'))
+			->innerJoin('c', 'facerecog_images' ,'i', $qb->expr()->eq('f.image_id', 'i.id'))
+			->innerJoin('c', 'facerecog_user_images' ,'ui', $qb->expr()->eq('i.id', 'ui.image_id'))
+			->leftJoin('c', 'facerecog_person_clusters' ,'pc', $qb->expr()->eq('pc.cluster_id', 'c.id'))
+			->leftJoin('c', 'facerecog_persons' ,'p', $qb->expr()->eq('pc.person_id', 'p.id'))
+			->where($qb->expr()->isNotNull('p.name'))
+			->andwhere($qb->expr()->eq('p.user', $qb->createParameter('user_id')))
+			->andwhere($qb->expr()->eq('i.model', $qb->createParameter('model_id')))
 			->setParameter('user_id', $userId)
 			->setParameter('model_id', $modelId);
 		return $this->findEntities($qb);
