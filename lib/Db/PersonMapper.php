@@ -115,14 +115,15 @@ class PersonMapper extends QBMapper {
 			->innerJoin('c', 'facerecog_images' ,'i', $qb->expr()->eq('f.image_id', 'i.id'))
 			->innerJoin('c', 'facerecog_user_images' ,'ui', $qb->expr()->eq('i.id', 'ui.image_id'))
 			->leftJoin('c', 'facerecog_person_clusters' ,'pc', $qb->expr()->eq('pc.cluster_id', 'c.id'))
-			->leftJoin('c', 'facerecog_persons' ,'p', $qb->expr()->andX($qb->expr()->eq('pc.person_id', 'p.id'),$qb->expr()->isNotNull('pc.cluster_id')))
+			->leftJoin('c', 'facerecog_persons' ,'p', $qb->expr()->eq('pc.person_id', 'p.id'))
 			->Where($qb->expr()->eq('c.is_valid', $qb->createParameter('is_valid')))
 			->andWhere($qb->expr()->eq('c.is_visible', $qb->createParameter('is_visible')))
 			->andWhere($qb->expr()->eq('c.user', $qb->createParameter('user_id')))
 			->andWhere($qb->expr()->eq('i.model', $qb->createParameter('model_id')))
 			->andWhere($qb->expr()->isNull('name'))
-			->setParameter('user_id', $userId)
-			->setParameter('model_id', $modelId)
+			->groupBy('c.id')
+			->setParameter('user_id', $userId, IQueryBuilder::PARAM_STR)
+			->setParameter('model_id', $modelId, IQueryBuilder::PARAM_INT)
 			->setParameter('is_valid', $isValid, IQueryBuilder::PARAM_BOOL)
 			->setParameter('is_visible', $isVisible, IQueryBuilder::PARAM_BOOL);
 
@@ -135,18 +136,18 @@ class PersonMapper extends QBMapper {
 	 * @return Person[]
 	 */
 	public function findAll(string $userId, int $modelId): array {
-		$sub = $this->db->getQueryBuilder();
-		$sub->select(new Literal('1'))
-			->from('facerecog_faces', 'f')
-			->innerJoin('f', 'facerecog_images' ,'i', $sub->expr()->eq('f.image_id', 'i.id'))
-			->where($sub->expr()->eq('p.id', 'f.person'))
-			->andWhere($sub->expr()->eq('i.user', $sub->createParameter('user_id')))
-			->andWhere($sub->expr()->eq('i.model', $sub->createParameter('model_id')));
-
 		$qb = $this->db->getQueryBuilder();
-		$qb->select('id', 'name', 'is_valid')
-			->from($this->getTableName(), 'p')
-			->where('EXISTS (' . $sub->getSQL() . ')')
+		$qb->select('c.id', 'c.user', 'p.name', 'c.is_visible', 'c.is_valid', 'c.last_generation_time', 'c.linked_user')
+			->from($this->getTableName(), 'c')
+			->innerJoin('c', 'facerecog_cluster_faces' ,'cf', $qb->expr()->eq('cf.cluster_id', 'c.id'))
+			->innerJoin('c', 'facerecog_faces' ,'f', $qb->expr()->eq('cf.face_id', 'f.id'))
+			->innerJoin('c', 'facerecog_images' ,'i', $qb->expr()->eq('f.image_id', 'i.id'))
+			->innerJoin('c', 'facerecog_user_images' ,'ui', $qb->expr()->eq('i.id', 'ui.image_id'))
+			->leftJoin('c', 'facerecog_person_clusters' ,'pc', $qb->expr()->eq('pc.cluster_id', 'c.id'))
+			->leftJoin('c', 'facerecog_persons' ,'p', $qb->expr()->eq('pc.person_id', 'p.id'))
+			->Where($qb->expr()->eq('c.user', $qb->createParameter('user_id')))
+			->andWhere($qb->expr()->eq('i.model', $qb->createParameter('model_id')))
+			->groupBy('c.id')
 			->setParameter('user_id', $userId)
 			->setParameter('model_id', $modelId);
 

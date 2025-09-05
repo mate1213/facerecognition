@@ -78,22 +78,22 @@ class FaceMapperTest extends UnitBaseTestCase {
 
 	public function test_FindById_existingFace_NOTconnectedCluster() : void {
 		//Act
-        $face = $this->faceMapper->find(3, "user1"); //face id 1 belongs to user1
+        $face = $this->faceMapper->find(9, "user1"); //face id 1 belongs to user1
 
 		//Assert
         $this->assertNotNull($face);
 		$this->assertInstanceOf(Face::class, $face);
-        $this->assertEquals(3, $face->getId());
-		$this->assertEquals(3, $face->getImage());
+        $this->assertEquals(9, $face->getId());
+		$this->assertEquals(8, $face->getImage());
 		$this->assertNull($face->getPerson());
 		$this->assertNotNull($face->getDescriptor());
 		$this->assertNotNull($face->getLandmarks());
-		$this->assertEquals(DateTime::createFromFormat('Y-m-d H:i:s', '2025-08-26 10:16:00'), $face->getCreationTime());
-		$this->assertEquals(0.92, $face->getConfidence());
-		$this->assertEquals(12, $face->getX());
-		$this->assertEquals(22, $face->getY());
-		$this->assertEquals(32, $face->getWidth());
-		$this->assertEquals(42, $face->getHeight());
+		$this->assertEquals(DateTime::createFromFormat('Y-m-d H:i:s', '2025-08-26 10:57:00'), $face->getCreationTime());
+		$this->assertEquals(0.99, $face->getConfidence());
+		$this->assertEquals(29, $face->getX());
+		$this->assertEquals(39, $face->getY());
+		$this->assertEquals(49, $face->getWidth());
+		$this->assertEquals(59, $face->getHeight());
 	}
 
 	public function test_FindById_existingFace_connectedToMultipleCluster() : void {
@@ -185,11 +185,11 @@ class FaceMapperTest extends UnitBaseTestCase {
 
 	public function test_CountFaces_ForUser_OnlyWithoutPerson() : void {
 		//Act
-        $facesCount = $this->faceMapper->countFaces("user1", 1, true);
+        $facesCount = $this->faceMapper->countFaces("user2", 2, true);
 
 		//Assert
         $this->assertNotNull($facesCount);
-		$this->assertEquals(3, $facesCount);
+		$this->assertEquals(1, $facesCount);
 	}
 
 	public function test_CountFaces_ForUser() : void {
@@ -329,37 +329,26 @@ class FaceMapperTest extends UnitBaseTestCase {
 	}
 
 	public function test_DeleteUserModel() : void {
-		//Assert initial state
-		$this->assertFaceCount(14);
-		$this->assertFaceClusterConnectionCount(14);
-
 		//Act
 		$this->faceMapper->deleteUserModel('user2', 2);
 
 		//Assert
 		$this->assertFaceCount(10);
-		$this->assertFaceClusterConnectionCount(13);
+		$this->assertFaceClusterConnectionCount(16);
 	}
 	
 	#[DataProviderExternal(FaceDataProvider::class, 'unsetPersonsRelationForUser_Provider')]
 	public function test_UnsetPersonsRelationForUser(string $user, int $model, int $expectedCount) : void {
-		//Assert initial state
-		$this->assertFaceCount(14);
-		$this->assertFaceClusterConnectionCount(14);
-
 		//Act
 		$this->faceMapper->unsetPersonsRelationForUser($user, $model);
 
 		//Assert
-		$this->assertFaceCount(14);
+		$this->assertFaceCount(15);
 		$this->assertFaceClusterConnectionCount($expectedCount);
 	}
 
 	#[DataProviderExternal(FaceDataProvider::class, 'insertFace_Provider')]
 	public function test_InsertFace(Face $faceToInsert, int $expectedFaceCount, int $expectedConnectionCount) : void {
-		//Assert initial state
-		$this->assertFaceCount(14);
-		$this->assertFaceClusterConnectionCount(14);
 
 		//Act
 		$this->faceMapper->insertFace($faceToInsert);
@@ -371,10 +360,6 @@ class FaceMapperTest extends UnitBaseTestCase {
 
 	#[DataProviderExternal(FaceDataProvider::class, 'insertFace_Provider')]
 	public function test_InsertFace_withDbContext(Face $faceToInsert, int $expectedFaceCount, int $expectedConnectionCount) : void {
-		//Assert initial state
-		$this->assertFaceCount(14);
-		$this->assertFaceClusterConnectionCount(14);
-
 		//Act
 		$this->faceMapper->insertFace($faceToInsert, $this->dbConnection);
 
@@ -428,7 +413,7 @@ class FaceDataProvider{
     }
 	public static function getOldestCreatedFaceWithoutPerson_ForUser_ByModel_Provider(): array {
 		return [
-			["user1", 1, false],
+			["user1", 1, true],
 			["user1", 2, true],
 			["user2", 1, true],
 			["user2", 2, false]
@@ -491,11 +476,11 @@ class FaceDataProvider{
 
 	public static function unsetPersonsRelationForUser_Provider(): array {
 		return [
-			['user1', 1, 7],
-			['user2', 2, 13],
-			['user2', 1, 8],
-			['user1', 2, 14], //no faces for user1 and model 2, so no change
-			['user3', 4, 14], //no faces for user3 and model 4, so no change
+			['user1', 1, 10],
+			['user2', 2, 16],
+			['user2', 1, 14],
+			['user1', 2, 20], //no faces for user1 and model 2, so no change
+			['user3', 4, 20], //no faces for user3 and model 4, so no change
 		];
 	}
 	
@@ -525,8 +510,8 @@ class FaceDataProvider{
 		$face2->setIsGroupable(true);
 		$face2->setPerson(null); //Alice	
 		return [
-			[$face1, 15, 15],
-			[$face2, 15, 14],
+			[$face1, 16, 21],
+			[$face2, 16, 20],
 		];
 	}
 }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @copyright Copyright (c) 2024, Mate Zsolya <zsolyamate@gmail.com>
  *
@@ -20,6 +21,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
+
 namespace OCA\FaceRecognition\Tests\Unit\Mappers;
 
 use DateTime;
@@ -110,8 +112,8 @@ class PersonMapperTest extends UnitBaseTestCase
         $this->assertCount($expectedCount, $people);
         if ($expectedCount > 0) {
             foreach ($people as $person) {
-                $this->assertEquals(expected: $userId, actual: $person->getUser());
-                $this->assertEquals(expected: $personName, actual: $person->getName());
+                $this->assertEquals($userId, $person->getUser());
+                $this->assertEquals($personName, $person->getName());
             }
         }
     }
@@ -135,6 +137,62 @@ class PersonMapperTest extends UnitBaseTestCase
             }
         }
     }
+    #[DataProviderExternal(className: PersonDataProvider::class, methodName: 'findIgnored_Provider')]
+    public function test_findIgnored(string $userId, int $modelId, int $expectedCount): void
+    {
+        //Act
+        $people = $this->personMapper->findIgnored($userId, $modelId);
+
+        //Assert
+        $this->assertNotNull($people);
+        $this->assertIsArray($people);
+        $this->assertContainsOnlyInstancesOf(Person::class, $people);
+        $this->assertCount($expectedCount, $people);
+        if ($expectedCount > 0) {
+            foreach ($people as $person) {
+                $this->assertEquals($userId, $person->getUser());
+                $this->assertEquals(true, $person->getIsValid());
+                $this->assertEquals(false, $person->getIsVisible());
+            }
+        }
+    }
+    #[DataProviderExternal(className: PersonDataProvider::class, methodName: 'findUnassigned_Provider')]
+    public function test_findUnassigned(string $userId, int $modelId, int $expectedCount): void
+    {
+        //Act
+        $people = $this->personMapper->findUnassigned($userId, $modelId);
+
+        //Assert
+        $this->assertNotNull($people);
+        $this->assertIsArray($people);
+        $this->assertContainsOnlyInstancesOf(Person::class, $people);
+        $this->assertCount($expectedCount, $people);
+        if ($expectedCount > 0) {
+            foreach ($people as $person) {
+                $this->assertEquals($userId, $person->getUser());
+                $this->assertEquals(true, $person->getIsValid());
+                $this->assertEquals(true, $person->getIsVisible());
+            }
+        }
+    }
+    #[DataProviderExternal(className: PersonDataProvider::class, methodName: 'findAll_Provider')]
+    public function test_findAll(string $userId, int $modelId, int $expectedCount): void
+    {
+        //Act
+        $people = $this->personMapper->findAll($userId, $modelId);
+
+        //Assert
+        $this->assertNotNull($people);
+        $this->assertIsArray($people);
+        $this->assertContainsOnlyInstancesOf(Person::class, $people);
+        $this->assertCount($expectedCount, $people);
+        if ($expectedCount > 0) {
+            foreach ($people as $person) {
+                $this->assertEquals($userId, $person->getUser());
+            }
+        }
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -146,40 +204,86 @@ class PersonMapperTest extends UnitBaseTestCase
 
 class PersonDataProvider
 {
-    public static function findByName_Provider(): array
-    {
+    public static function findByName_Provider(): array {
         return [
             ['user1', 1, 'Alice', 1],
             ['user1', 3, 'Alice', 0],
             ['user3', 1, 'Alice', 0],
             ['user1', 1, 'Dummy', 0],
             ['user2', 1, 'Alice', 0],
-            ['user2', 2, 'Bob', 1],
+            ['user2', 2, 'Bob', 2],
         ];
     }
-    public static function getPersonsByFlagsWithoutName_Provider(): array
-    {
+
+    public static function getPersonsByFlagsWithoutName_Provider(): array {
         return [
+            //Existing user and model
             ['user1', 1, false, false, 0],
             ['user1', 1, false, true,  0],
-            ['user1', 1, true, false,  12],
-            ['user1', 1, true, true,   0],
+            ['user1', 1, true, false,  5],
+            ['user1', 1, true, true,   1],
+            //nonexisting model
             ['user1', 3, false, false, 0],
             ['user1', 3, false, true,  0],
             ['user1', 3, true, false,  0],
             ['user1', 3, true, true,   0],
+            //nonexisting user
             ['user3', 1, false, false, 0],
             ['user3', 1, false, true,  0],
             ['user3', 1, true, false,  0],
             ['user3', 1, true, true,   0],
+            //User has mixed models
             ['user2', 1, false, false, 0],
             ['user2', 1, false, true,  0],
             ['user2', 1, true, false,  0],
-            ['user2', 1, true, true,   12],
+            ['user2', 1, true, true,   2],
+
             ['user2', 2, false, false, 0],
-            ['user2', 2, false, true,  0],
+            ['user2', 2, false, true,  2],
             ['user2', 2, true, false,  0],
             ['user2', 2, true, true,   0],
+        ];
+    }
+
+    public static function findIgnored_Provider(): array {
+        return [
+            //Existing user and model
+            ['user1', 1, 5],
+            //nonexisting model
+            ['user1', 3, 0],
+            //nonexisting user
+            ['user3', 1, 0],
+            //User has mixed models
+            ['user2', 1, 0],
+            ['user2', 2, 0],
+        ];
+    }
+
+    public static function findUnassigned_Provider(): array {
+        return [
+            //Existing user and model
+            ['user1', 1, 1],
+            //nonexisting model
+            ['user1', 3, 0],
+            //nonexisting user
+            ['user3', 1, 0],
+            //User has mixed models
+            ['user2', 1, 2],
+            ['user2', 2, 0],
+        ];
+    }
+    
+    public static function findAll_Provider(): array {
+        return [
+            //Existing user and model
+            ['user1', 1, 7],
+            //nonexisting model
+            ['user1', 3, 0],
+            //nonexisting user
+            ['user3', 1, 0],
+            //User has mixed models
+            ['user2', 1, 3],
+            ['user2', 2, 4],
         ];
     }
 }

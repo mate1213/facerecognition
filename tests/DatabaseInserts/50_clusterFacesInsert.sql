@@ -1,15 +1,21 @@
 INSERT INTO *PREFIX*facerecog_cluster_faces (cluster_id, face_id) VALUES
   (1, 1),
   (2, 2),
-  (10, 100),
-  (10, 101),
-  (11, 100),
-  (11, 101),
-  (12, 102),
-  (12, 103),
-  (13, 102),
-  (13, 103),
-  (14, 104),
-  (14, 105),
-  (15, 104),
-  (15, 105);
+  (3, 3),
+  (4, 4),
+  (5, 5),
+  (6, 6),
+  (7, 7),
+  (8, 8),
+  (10, 100), /*Shared Face 1*/
+  (11, 100), /*Shared Face 1*/
+  (10, 101), /*Shared Face 2*/
+  (11, 101), /*Shared Face 2*/
+  (12, 102), /*Shared Face 3*/
+  (13, 102), /*Shared Face 3*/
+  (12, 103), /*Shared Face 4*/
+  (13, 103), /*Shared Face 4*/
+  (14, 104), /*Shared Face 5*/
+  (15, 104), /*Shared Face 5*/
+  (14, 105), /*Shared Face 6*/
+  (15, 105); /*Shared Face 6*/

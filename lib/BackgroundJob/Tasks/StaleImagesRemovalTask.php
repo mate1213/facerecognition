@@ -208,7 +208,6 @@ class StaleImagesRemovalTask extends FaceRecognitionBackgroundTask {
 		return $imagesRemoved;
 	}
 	
-	//MTODO: make foreign keys in database therefore this can be simplified
 	private function deleteImage(Image $image, string $userId): void {
 		$this->logInfo(sprintf('Removing stale image %d for user %s', $image->id, $userId));
 		// note that invalidatePersons depends on existence of faces for a given image,
