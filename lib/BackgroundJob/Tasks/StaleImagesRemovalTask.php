@@ -174,6 +174,7 @@ class StaleImagesRemovalTask extends FaceRecognitionBackgroundTask {
 
 			// Delete image doesn't exist anymore in filesystem or it is under .nomedia
 			if ($file === null) {
+				//MTODO: remove this duplication
 				$isSharedFile = $this->imageMapper->otherUserStilHasConnection($image->id);
 				if ($isSharedFile){
 					$this->imageMapper->removeUserImageConnection($image);
@@ -185,9 +186,17 @@ class StaleImagesRemovalTask extends FaceRecognitionBackgroundTask {
 			}
 			else{
 				if (!$this->fileService->isAllowedNode($file) ||
-			    $this->fileService->isUnderNoDetection($file))
+			    	$this->fileService->isUnderNoDetection($file))
 				{
-					 
+					//MTODO: remove this duplication
+					$isSharedFile = $this->imageMapper->otherUserStilHasConnection($image->id);
+					if ($isSharedFile){
+						$this->imageMapper->removeUserImageConnection($image);
+					}
+					else{
+						$this->deleteImage($image, $userId);
+					}
+					$imagesRemoved++;
 				}
 			}
 
