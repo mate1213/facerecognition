@@ -251,7 +251,8 @@ class PersonMapperTest extends UnitBaseTestCase
     }
 
     #[DataProviderExternal(className: PersonDataProvider::class, methodName: 'countPersons_Provider')]
-    public function test_countPersons(string $userId, int $modelId, int $expectedCount): void {
+    public function test_countPersons(string $userId, int $modelId, int $expectedCount): void
+    {
         //Act
         $people = $this->personMapper->countPersons($userId, $modelId);
 
@@ -259,9 +260,10 @@ class PersonMapperTest extends UnitBaseTestCase
         $this->assertNotNull($people);
         $this->assertEquals($expectedCount, $people);
     }
-    
+
     #[DataProviderExternal(className: PersonDataProvider::class, methodName: 'countClusters_Provider')]
-    public function test_countClusters(string $userId, int $modelId, bool $onlyInvalid, int $expectedCount): void {
+    public function test_countClusters(string $userId, int $modelId, bool $onlyInvalid, int $expectedCount): void
+    {
         //Act
         $people = $this->personMapper->countClusters($userId, $modelId, $onlyInvalid);
 
@@ -269,28 +271,141 @@ class PersonMapperTest extends UnitBaseTestCase
         $this->assertNotNull($people);
         $this->assertEquals($expectedCount, $people);
     }
-    
-	//MTODO: extend with userID; 
+
+    //MTODO: extend with userID; 
     #[DataProviderExternal(className: PersonDataProvider::class, methodName: 'invalidatePersons_Provider')]
-    public function test_invalidatePersons(int $imageId): void {
-        $sub = $this->dbConnection->getQueryBuilder();
-		$query = $sub->select('c.id')
-			->from('facerecog_clusters', 'c')
-			->innerJoin('c', 'facerecog_cluster_faces' ,'cf', $sub->expr()->eq('cf.cluster_id', 'c.id'))
-			->innerJoin('c', 'facerecog_faces' ,'f', $sub->expr()->eq('cf.face_id', 'f.id'))
-			->innerJoin('c', 'facerecog_images' ,'i', $sub->expr()->eq('f.image_id', 'i.id'))
-			->Where($sub->expr()->eq('f.image_id', $sub->createParameter('image_id')))
-			->andWhere($sub->expr()->eq('c.is_valid', $sub->createParameter('is_valid')))
-			->setParameter('image_id', $imageId)
-			->setParameter('is_valid', true, IQueryBuilder::PARAM_BOOL);
+    public function test_invalidatePersons(int $imageId): void
+    {
         //Act
         $this->personMapper->invalidatePersons($imageId);
 
         //Assert
-		$sqlResult = $query->executeQuery();
+        $sub = $this->dbConnection->getQueryBuilder();
+        $query = $sub->select('c.id')
+            ->from('facerecog_clusters', 'c')
+            ->innerJoin('c', 'facerecog_cluster_faces', 'cf', $sub->expr()->eq('cf.cluster_id', 'c.id'))
+            ->innerJoin('c', 'facerecog_faces', 'f', $sub->expr()->eq('cf.face_id', 'f.id'))
+            ->innerJoin('c', 'facerecog_images', 'i', $sub->expr()->eq('f.image_id', 'i.id'))
+            ->Where($sub->expr()->eq('f.image_id', $sub->createParameter('image_id')))
+            ->andWhere($sub->expr()->eq('c.is_valid', $sub->createParameter('is_valid')))
+            ->setParameter('image_id', $imageId)
+            ->setParameter('is_valid', true, IQueryBuilder::PARAM_BOOL);
+        $sqlResult = $query->executeQuery();
         $modifiedValidClusters = $sqlResult->fetchAll();
         $sqlResult->closeCursor();
         $this->assertCount(0, $modifiedValidClusters);
+    }
+
+    #[DataProviderExternal(className: PersonDataProvider::class, methodName: 'deleteUserPersons_Provider')]
+    public function test_deleteUserPersons(string $userId): void
+    {
+        //Act
+        $this->personMapper->deleteUserPersons($userId);
+
+        //Assert
+        $sub = $this->dbConnection->getQueryBuilder();
+        $query = $sub->select('c.id')
+            ->from('facerecog_clusters', 'c')
+            ->Where($sub->expr()->eq('c.user', $sub->createParameter('user')))
+            ->setParameter('user', $userId, IQueryBuilder::PARAM_STR);
+        $sqlResult = $query->executeQuery();
+        $modifiedValidClusters = $sqlResult->fetchAll();
+        $sqlResult->closeCursor();
+        $this->assertCount(0, $modifiedValidClusters);
+    }
+
+    #[DataProviderExternal(className: PersonDataProvider::class, methodName: 'deleteUserModel_Provider')]
+    public function test_deleteUserModel(string $userId, int $modelId): void
+    {
+        //Act
+        $this->personMapper->deleteUserModel($userId, $modelId);
+
+        //Assert
+        $sub = $this->dbConnection->getQueryBuilder();
+        $query = $sub->select('c.id')
+            ->from('facerecog_clusters', 'c')
+            ->innerJoin('c', 'facerecog_cluster_faces', 'cf', $sub->expr()->eq('cf.cluster_id', 'c.id'))
+            ->innerJoin('c', 'facerecog_faces', 'f', $sub->expr()->eq('cf.face_id', 'f.id'))
+            ->innerJoin('c', 'facerecog_images', 'i', $sub->expr()->eq('f.image_id', 'i.id'))
+            ->Where($sub->expr()->eq('c.user', $sub->createParameter('user')))
+            ->andWhere($sub->expr()->eq('i.model', $sub->createParameter('model')))
+            ->setParameter('user', $userId, IQueryBuilder::PARAM_STR)
+            ->setParameter('model', $modelId, IQueryBuilder::PARAM_INT);
+        $sqlResult = $query->executeQuery();
+        $modifiedValidClusters = $sqlResult->fetchAll();
+        $sqlResult->closeCursor();
+        $this->assertCount(0, $modifiedValidClusters);
+    }
+
+    #[DataProviderExternal(className: PersonDataProvider::class, methodName: 'removeIfEmpty_Provider')]
+    public function test_removeIfEmpty(int $clusterId, bool $isDeleted): void
+    {
+        //Act
+        $this->personMapper->removeIfEmpty($clusterId);
+
+        //Assert
+        $sub = $this->dbConnection->getQueryBuilder();
+        $query = $sub->select('c.id')
+            ->from('facerecog_clusters', 'c')
+            ->Where($sub->expr()->eq('c.id', $sub->createParameter('id')))
+            ->setParameter('id', $clusterId, IQueryBuilder::PARAM_INT);
+        $sqlResult = $query->executeQuery();
+        $modifiedValidClusters = $sqlResult->fetchAll();
+        $sqlResult->closeCursor();
+        if ($isDeleted) {
+            $this->assertCount(0, $modifiedValidClusters);
+        } else {
+            $this->assertCount(1, $modifiedValidClusters);
+        }
+    }
+
+    #[DataProviderExternal(className: PersonDataProvider::class, methodName: 'deleteOrphaned_Provider')]
+    public function test_deleteOrphaned(string $userId, int $expected): void
+    {
+        //Act
+        $deletedEntries = $this->personMapper->deleteOrphaned($userId);
+
+        //Assert
+        $this->assertEquals($expected, $deletedEntries);
+    }
+
+    #[DataProviderExternal(className: PersonDataProvider::class, methodName: 'deleteOrphaned_Provider')]
+    public function test_deleteOrphaned_withDB(string $userId, int $expected): void
+    {
+        //Act
+        $deletedEntries = $this->personMapper->deleteOrphaned($userId, $this->dbConnection);
+
+        //Assert
+        $this->assertEquals($expected, $deletedEntries);
+    }
+
+    #[DataProviderExternal(className: PersonDataProvider::class, methodName: 'setVisibility_Provider')]
+    public function test_setVisibility(int $clusterId, bool $visible): void
+    {
+        //Act
+        $this->personMapper->setVisibility($clusterId, $visible);
+
+        //Assert
+        $sub = $this->dbConnection->getQueryBuilder();
+        $query = $sub->select('c.id', 'p.name', 'is_visible')
+            ->from('facerecog_clusters', 'c')
+			->leftJoin('c', 'facerecog_person_clusters' ,'pc', $sub->expr()->eq('pc.cluster_id', 'c.id'))
+			->leftJoin('c', 'facerecog_persons', 'p', $sub->expr()->eq('pc.person_id', 'p.id'))
+            ->Where($sub->expr()->eq('c.id', $sub->createParameter('id')))
+            ->setParameter('id', $clusterId, IQueryBuilder::PARAM_INT);
+        $sqlResult = $query->executeQuery();
+        $modifiedValidClusters = $sqlResult->fetch();
+        $sqlResult->closeCursor();
+        if ($visible)
+        {
+            $this->assertEquals($clusterId, $modifiedValidClusters['id']);
+            $this->assertEquals(true, $modifiedValidClusters['is_visible']);
+        } else {
+            $this->assertEquals($clusterId, $modifiedValidClusters['id']);
+            $this->assertEquals(null, $modifiedValidClusters['name']);
+            $this->assertEquals(false, $modifiedValidClusters['is_visible']);
+
+        }
     }
 
     /**
@@ -304,23 +419,25 @@ class PersonMapperTest extends UnitBaseTestCase
 
 class PersonDataProvider
 {
-    public static function findByName_Provider(): array {
+    public static function findByName_Provider(): array
+    {
         return [
-            ['user1', 1, 'Alice', 1],
+            ['user1', 1, 'Alice', 2],
             ['user1', 3, 'Alice', 0],
             ['user3', 1, 'Alice', 0],
             ['user1', 1, 'Dummy', 0],
             ['user2', 1, 'Alice', 0],
-            ['user2', 2, 'Bob', 2],
+            ['user2', 2, 'Bob', 3],
         ];
     }
 
-    public static function getPersonsByFlagsWithoutName_Provider(): array {
+    public static function getPersonsByFlagsWithoutName_Provider(): array
+    {
         return [
             //Existing user and model
             ['user1', 1, false, false, 0],
             ['user1', 1, false, true,  0],
-            ['user1', 1, true, false,  5],
+            ['user1', 1, true, false,  4],
             ['user1', 1, true, true,   1],
             //nonexisting model
             ['user1', 3, false, false, 0],
@@ -339,16 +456,17 @@ class PersonDataProvider
             ['user2', 1, true, true,   2],
 
             ['user2', 2, false, false, 0],
-            ['user2', 2, false, true,  2],
+            ['user2', 2, false, true,  1],
             ['user2', 2, true, false,  0],
             ['user2', 2, true, true,   0],
         ];
     }
 
-    public static function findIgnored_Provider(): array {
+    public static function findIgnored_Provider(): array
+    {
         return [
             //Existing user and model
-            ['user1', 1, 5],
+            ['user1', 1, 4],
             //nonexisting model
             ['user1', 3, 0],
             //nonexisting user
@@ -359,7 +477,8 @@ class PersonDataProvider
         ];
     }
 
-    public static function findUnassigned_Provider(): array {
+    public static function findUnassigned_Provider(): array
+    {
         return [
             //Existing user and model
             ['user1', 1, 1],
@@ -373,21 +492,23 @@ class PersonDataProvider
         ];
     }
 
-    public static function findAll_Provider(): array {
+    public static function findAll_Provider(): array
+    {
         return [
             //Existing user and model
-            ['user1', 1, 7],
+            ['user1', 1, 6],
             //nonexisting model
             ['user1', 3, 0],
             //nonexisting user
             ['user3', 1, 0],
             //User has mixed models
             ['user2', 1, 3],
-            ['user2', 2, 4],
+            ['user2', 2, 3],
         ];
     }
 
-    public static function findDistinctNames_Provider(): array {
+    public static function findDistinctNames_Provider(): array
+    {
         return [
             //Existing user and model
             ['user1', 1, 1],
@@ -401,7 +522,8 @@ class PersonDataProvider
         ];
     }
 
-    public static function findDistinctNamesSelected_Provider(): array {
+    public static function findDistinctNamesSelected_Provider(): array
+    {
         return [
             //Existing user and model
             ['user1', 1, 'Alice', 1],
@@ -416,7 +538,8 @@ class PersonDataProvider
         ];
     }
 
-    public static function findPersonsLike_Provider(): array {
+    public static function findPersonsLike_Provider(): array
+    {
         return [
             //Existing user and model
             ['user1', 1, 'Alice', null, null, 1],
@@ -445,7 +568,8 @@ class PersonDataProvider
         ];
     }
 
-    public static function countPersons_Provider(): array {
+    public static function countPersons_Provider(): array
+    {
         return [
             //Existing user and model
             ['user1', 1, 1],
@@ -459,10 +583,11 @@ class PersonDataProvider
         ];
     }
 
-    public static function countClusters_Provider(): array {
+    public static function countClusters_Provider(): array
+    {
         return [
             //Existing user and model
-            ['user1', 1, false, 1],
+            ['user1', 1, false, 2],
             ['user1', 1, true, 0],
             //nonexisting model
             ['user1', 3, false, 0],
@@ -473,12 +598,13 @@ class PersonDataProvider
             //User has mixed models
             ['user2', 1, false, 4],
             ['user2', 1, true, 0],
-            ['user2', 2, false, 1],
-            ['user2', 2, true, 1],
+            ['user2', 2, false, 2],
+            ['user2', 2, true, 2],
         ];
     }
 
-    public static function invalidatePersons_Provider(): array {
+    public static function invalidatePersons_Provider(): array
+    {
         return [
             //Single File
             [1],
@@ -486,6 +612,75 @@ class PersonDataProvider
             [10],
             //NonexistingFile
             [100],
+        ];
+    }
+
+    public static function deleteUserPersons_Provider(): array
+    {
+        return [
+            //User with single model
+            ['user1'],
+            //User with multiple model
+            ['user2'],
+            //Nonexisting User
+            ['user3'],
+        ];
+    }
+
+    public static function deleteUserModel_Provider(): array
+    {
+        return [
+            //User with single model
+            ['user1', 1],
+            //User with not attached model
+            ['user1', 2],
+            //User with multiple model
+            ['user2', 1],
+            ['user2', 2],
+            //Nonexisting user
+            ['user3', 1],
+            //Nonexisting model
+            ['user2', 3],
+            //Nonexisting user and model
+            ['user3', 3],
+        ];
+    }
+
+    public static function removeIfEmpty_Provider(): array
+    {
+        return [
+            //Multiple face
+            [1, false],
+            //Single face
+            [3, false],
+            //No face
+            [7, true],
+            //Invalid Id
+            [100, true],
+        ];
+    }
+
+    public static function deleteOrphaned_Provider(): array
+    {
+        return [
+            //User with single model
+            ['user1',1],
+            //User with multiple model
+            ['user2',1],
+            //Nonexisting User
+            ['user3',0],
+        ];
+    }
+
+    public static function setVisibility_Provider(): array
+    {
+        return [
+            [1, false],
+            [1, true],
+            [3, false],
+            [3, true],
+            [10, false],
+            [10, true]
         ];
     }
 }

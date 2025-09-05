@@ -213,10 +213,6 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 		if ($orphansDeleted > 0) {
 			$this->logInfo('Deleted ' . $orphansDeleted . ' persons without faces');
 		}
-		$orphansDeleted = $this->personMapper->deleteOrphanedConnections($userId);
-		if ($orphansDeleted > 0) {
-			$this->logInfo('Deleted ' . $orphansDeleted . ' connections from none existing person to faces');
-		}
 		// Prevents not create/recreate the clusters unnecessarily.
 
 		$this->settingsService->setNeedRecreateClusters(false, $userId);

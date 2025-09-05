@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @copyright Copyright (c) 2024, Mate Zsolya <zsolyamate@gmail.com>
  *
@@ -20,23 +21,26 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
+
 namespace OCA\FaceRecognition\Tests\Unit;
 
 use \OC;
 use \OCP\IDBConnection;
 use PHPUnit\Framework\TestCase;
 
-abstract class UnitBaseTestCase extends TestCase {
-    /** @var IDBConnection test instance*/
-    protected $dbConnection;
+abstract class UnitBaseTestCase extends TestCase
+{
+	/** @var IDBConnection test instance*/
+	protected $dbConnection;
 	private $isSetupComplete = false;
-    
-    /**
-	* {@inheritDoc}
-	*/
-	public function setUp(): void {
-        parent::setUp();
-        $this->dbConnection = OC::$server->getDatabaseConnection();
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function setUp(): void
+	{
+		parent::setUp();
+		$this->dbConnection = OC::$server->getDatabaseConnection();
 		$this->dbConnection->beginTransaction();
 
 		if (!$this->isSetupComplete) {
@@ -55,14 +59,16 @@ abstract class UnitBaseTestCase extends TestCase {
 			$this->dbConnection->executeStatement($sql);
 			$sql = file_get_contents("tests/DatabaseInserts/70_personClustersInsert.sql");
 			$this->dbConnection->executeStatement($sql);
+			//$this->dbConnection->commit();
 		}
 	}
 
-    public function tearDown(): void {
-        if ($this->dbConnection != null) {
+	public function tearDown(): void
+	{
+		if ($this->dbConnection != null) {
 			$this->dbConnection->rollBack();
 			return;
-        }
+		}
 		parent::tearDown();
 	}
 }

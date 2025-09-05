@@ -314,7 +314,7 @@ class ImageMapperTest extends UnitBaseTestCase
 	public function test_findFromPerson(string $user, int $model, string $name, ?int $offset, ?int $limit, int $expectedCount): void
 	{
 		//Act
-		$images = $this->imageMapper->findFromPerson($user, $model, $name);
+		$images = $this->imageMapper->findFromPerson($user, $model, $name, $offset, $limit);
 
 		//Assert
 		$this->assertNotNull($images);
@@ -729,7 +729,9 @@ class ImageDataProvider
 			["user1", 1, "al", null, null, 1],
 			["user2", 1, "Al", null, null, 0],
 			["user2", 2, "Al", null, null, 0],
-			["user2", 2, "Bob", null, null, 1],
+			["user2", 2, "Bob", null, null, 2],
+			["user2", 2, "Bob", 1, 1, 1],
+			["user2", 2, "Bob", 0, 1, 1],
 			["user1", 3, "Al", null, null, 0], // non existing model
 			["user3", 1, "Al", null, null, 0], // non existing user
 			["user3", 3, "Al", null, null, 0], // non existing user and model
@@ -743,7 +745,9 @@ class ImageDataProvider
 			["user1", 1, "alice", null, null, 0],
 			["user2", 1, "Alice", null, null, 0],
 			["user2", 2, "Alice", null, null, 0],
-			["user2", 2, "Bob", null, null, 1],
+			["user2", 2, "Bob", null, null, 2],
+			["user2", 2, "Bob", 1, 1, 1],
+			["user2", 2, "Bob", 0, 1, 1],
 			["user1", 3, "Alice", null, null, 0], // non existing model
 			["user3", 1, "Alice", null, null, 0], // non existing user
 			["user3", 3, "Alice", null, null, 0], // non existing user and model
@@ -757,7 +761,7 @@ class ImageDataProvider
 			["user1", 1, "alice", 0],
 			["user2", 1, "Alice", 0],
 			["user2", 2, "Alice", 0],
-			["user2", 2, "Bob", 1],
+			["user2", 2, "Bob", 2],
 			["user1", 3, "Alice", 0], // non existing model
 			["user3", 1, "Alice", 0], // non existing user
 			["user3", 3, "Alice", 0], // non existing user and model
