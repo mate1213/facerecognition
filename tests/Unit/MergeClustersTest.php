@@ -36,6 +36,7 @@ use OCA\FaceRecognition\Service\SettingsService;
 use OCA\FaceRecognition\BackgroundJob\Tasks\CreateClustersTask;
 
 #[CoversClass(CreateClustersTask::class)]
+#[CoversClass(PersonMapper::class)]
 class MergeClustersTest extends TestCase {
 	/** @var CreateClustersTask Create cluster task */
 	private $createClusterTask;

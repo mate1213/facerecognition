@@ -22,8 +22,8 @@
  */
 namespace OCA\FaceRecognition\Tests\Unit;
 
-use OC;
-use OCP\IDBConnection;
+use \OC;
+use \OCP\IDBConnection;
 use PHPUnit\Framework\TestCase;
 
 abstract class UnitBaseTestCase extends TestCase {

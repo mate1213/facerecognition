@@ -33,8 +33,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use OCA\FaceRecognition\Tests\Unit\UnitBaseTestCase;
 use OCA\FaceRecognition\Db\PersonMapper;
 use OCA\FaceRecognition\Db\Person;
-use OC;
-use OCP\IDBConnection;
+use OCP\DB\QueryBuilder\IQueryBuilder;
 
 #[CoversClass(PersonMapper::class)]
 #[UsesClass(Person::class)]
@@ -98,7 +97,6 @@ class PersonMapperTest extends UnitBaseTestCase
         $this->assertNull($person);
     }
 
-
     #[DataProviderExternal(PersonDataProvider::class, 'findByName_Provider')]
     public function test_FindByName(string $userId, int $modelId, string $personName, int $expectedCount): void
     {
@@ -117,7 +115,7 @@ class PersonMapperTest extends UnitBaseTestCase
             }
         }
     }
-    //MTODO: insert more Ignored and unassigned faces
+
     #[DataProviderExternal(className: PersonDataProvider::class, methodName: 'getPersonsByFlagsWithoutName_Provider')]
     public function test_getPersonsByFlagsWithoutName(string $userId, int $modelId, bool $isValid, bool $isVisible, int $expectedCount): void
     {
@@ -137,6 +135,7 @@ class PersonMapperTest extends UnitBaseTestCase
             }
         }
     }
+
     #[DataProviderExternal(className: PersonDataProvider::class, methodName: 'findIgnored_Provider')]
     public function test_findIgnored(string $userId, int $modelId, int $expectedCount): void
     {
@@ -156,6 +155,7 @@ class PersonMapperTest extends UnitBaseTestCase
             }
         }
     }
+
     #[DataProviderExternal(className: PersonDataProvider::class, methodName: 'findUnassigned_Provider')]
     public function test_findUnassigned(string $userId, int $modelId, int $expectedCount): void
     {
@@ -175,6 +175,7 @@ class PersonMapperTest extends UnitBaseTestCase
             }
         }
     }
+
     #[DataProviderExternal(className: PersonDataProvider::class, methodName: 'findAll_Provider')]
     public function test_findAll(string $userId, int $modelId, int $expectedCount): void
     {
@@ -191,6 +192,105 @@ class PersonMapperTest extends UnitBaseTestCase
                 $this->assertEquals($userId, $person->getUser());
             }
         }
+    }
+
+    #[DataProviderExternal(className: PersonDataProvider::class, methodName: 'findDistinctNames_Provider')]
+    public function test_findDistinctNames(string $userId, int $modelId, int $expectedCount): void
+    {
+        //Act
+        $people = $this->personMapper->findDistinctNames($userId, $modelId);
+
+        //Assert
+        $this->assertNotNull($people);
+        $this->assertIsArray($people);
+        $this->assertContainsOnlyInstancesOf(Person::class, $people);
+        $this->assertCount($expectedCount, $people);
+        if ($expectedCount > 0) {
+            foreach ($people as $person) {
+                $this->assertNotNull($person->getName());
+            }
+        }
+    }
+
+    //MTODO: Undestand this function
+    #[DataProviderExternal(className: PersonDataProvider::class, methodName: 'findDistinctNamesSelected_Provider')]
+    public function test_findDistinctNamesSelected(string $userId, int $modelId, string $faceName, int $expectedCount): void
+    {
+        //Act
+        $people = $this->personMapper->findDistinctNamesSelected($userId, $modelId, $faceName);
+
+        //Assert
+        $this->assertNotNull($people);
+        $this->assertIsArray($people);
+        $this->assertContainsOnlyInstancesOf(Person::class, $people);
+        $this->assertCount($expectedCount, $people);
+        if ($expectedCount > 0) {
+            foreach ($people as $person) {
+                $this->assertNotNull($person->getName());
+            }
+        }
+    }
+
+    //MTODO: Undestand this function
+    #[DataProviderExternal(className: PersonDataProvider::class, methodName: 'findPersonsLike_Provider')]
+    public function test_findPersonsLike(string $userId, int $modelId, string $faceName, ?int $offset, ?int $limit, int $expectedCount): void
+    {
+        //Act
+        $people = $this->personMapper->findPersonsLike($userId, $modelId, $faceName, $offset, $limit);
+
+        //Assert
+        $this->assertNotNull($people);
+        $this->assertIsArray($people);
+        $this->assertContainsOnlyInstancesOf(Person::class, $people);
+        $this->assertCount($expectedCount, $people);
+        if ($expectedCount > 0) {
+            foreach ($people as $person) {
+                $this->assertNotNull($person->getName());
+            }
+        }
+    }
+
+    #[DataProviderExternal(className: PersonDataProvider::class, methodName: 'countPersons_Provider')]
+    public function test_countPersons(string $userId, int $modelId, int $expectedCount): void {
+        //Act
+        $people = $this->personMapper->countPersons($userId, $modelId);
+
+        //Assert
+        $this->assertNotNull($people);
+        $this->assertEquals($expectedCount, $people);
+    }
+    
+    #[DataProviderExternal(className: PersonDataProvider::class, methodName: 'countClusters_Provider')]
+    public function test_countClusters(string $userId, int $modelId, bool $onlyInvalid, int $expectedCount): void {
+        //Act
+        $people = $this->personMapper->countClusters($userId, $modelId, $onlyInvalid);
+
+        //Assert
+        $this->assertNotNull($people);
+        $this->assertEquals($expectedCount, $people);
+    }
+    
+	//MTODO: extend with userID; 
+    #[DataProviderExternal(className: PersonDataProvider::class, methodName: 'invalidatePersons_Provider')]
+    public function test_invalidatePersons(int $imageId): void {
+        $sub = $this->dbConnection->getQueryBuilder();
+		$query = $sub->select('c.id')
+			->from('facerecog_clusters', 'c')
+			->innerJoin('c', 'facerecog_cluster_faces' ,'cf', $sub->expr()->eq('cf.cluster_id', 'c.id'))
+			->innerJoin('c', 'facerecog_faces' ,'f', $sub->expr()->eq('cf.face_id', 'f.id'))
+			->innerJoin('c', 'facerecog_images' ,'i', $sub->expr()->eq('f.image_id', 'i.id'))
+			->Where($sub->expr()->eq('f.image_id', $sub->createParameter('image_id')))
+			->andWhere($sub->expr()->eq('c.is_valid', $sub->createParameter('is_valid')))
+			->setParameter('image_id', $imageId)
+			->setParameter('is_valid', true, IQueryBuilder::PARAM_BOOL);
+        //Act
+        $this->personMapper->invalidatePersons($imageId);
+
+        //Assert
+		$sqlResult = $query->executeQuery();
+        $modifiedValidClusters = $sqlResult->fetchAll();
+        $sqlResult->closeCursor();
+        $this->assertCount(0, $modifiedValidClusters);
     }
 
     /**
@@ -272,7 +372,7 @@ class PersonDataProvider
             ['user2', 2, 0],
         ];
     }
-    
+
     public static function findAll_Provider(): array {
         return [
             //Existing user and model
@@ -284,6 +384,108 @@ class PersonDataProvider
             //User has mixed models
             ['user2', 1, 3],
             ['user2', 2, 4],
+        ];
+    }
+
+    public static function findDistinctNames_Provider(): array {
+        return [
+            //Existing user and model
+            ['user1', 1, 1],
+            //nonexisting model
+            ['user1', 3, 0],
+            //nonexisting user
+            ['user3', 1, 0],
+            //User has mixed models
+            ['user2', 1, 1],
+            ['user2', 2, 1],
+        ];
+    }
+
+    public static function findDistinctNamesSelected_Provider(): array {
+        return [
+            //Existing user and model
+            ['user1', 1, 'Alice', 1],
+            ['user1', 1, 'Bob', 0],
+            //nonexisting model
+            ['user1', 3, 'Alice', 0],
+            //nonexisting user
+            ['user3', 1, 'Dummy', 0],
+            //User has mixed models
+            ['user2', 1, 'Alice', 0],
+            ['user2', 2, 'Bob', 1],
+        ];
+    }
+
+    public static function findPersonsLike_Provider(): array {
+        return [
+            //Existing user and model
+            ['user1', 1, 'Alice', null, null, 1],
+            ['user1', 1, 'Alice', 0, 1, 1],
+            ['user1', 1, 'Bob', null, null, 0],
+            ['user1', 1, 'Alice', 1, 1, 0],
+            ['user1', 1, 'Bob', 1, 1, 0],
+            ['user1', 1, 'Al', 1, 1, 0],
+            ['user1', 1, 'Al', 0, 1, 1],
+            ['user1', 1, 'Bo', 1, 1, 0],
+            //nonexisting model
+            ['user1', 3, 'Alice', null, null, 0],
+            ['user1', 3, 'Alice', 1, 1, 0],
+            //nonexisting user
+            ['user3', 1, 'Dummy', null, null,  0],
+            ['user3', 1, 'Dummy', 1, 1,  0],
+            //User has mixed models
+            ['user2', 1, 'Alice', null, null,  0],
+            ['user2', 1, 'Alice', 1, 1,  0],
+            ['user2', 2, 'Bob', null, null,  1],
+            ['user2', 2, 'Bob', 1, 1,  0],
+            ['user2', 2, 'Bob', 0, 1,  1],
+            ['user2', 2, 'Bo', null, null,  1],
+            ['user2', 2, 'Bo', 0, 1,  1],
+            ['user2', 2, 'Bo', 1, 1,  0],
+        ];
+    }
+
+    public static function countPersons_Provider(): array {
+        return [
+            //Existing user and model
+            ['user1', 1, 1],
+            //nonexisting model
+            ['user1', 3, 0],
+            //nonexisting user
+            ['user3', 1, 0],
+            //User has mixed models
+            ['user2', 1, 1],
+            ['user2', 2, 1],
+        ];
+    }
+
+    public static function countClusters_Provider(): array {
+        return [
+            //Existing user and model
+            ['user1', 1, false, 1],
+            ['user1', 1, true, 0],
+            //nonexisting model
+            ['user1', 3, false, 0],
+            ['user1', 3, true, 0],
+            //nonexisting user
+            ['user3', 1, false, 0],
+            ['user3', 1, true, 0],
+            //User has mixed models
+            ['user2', 1, false, 4],
+            ['user2', 1, true, 0],
+            ['user2', 2, false, 1],
+            ['user2', 2, true, 1],
+        ];
+    }
+
+    public static function invalidatePersons_Provider(): array {
+        return [
+            //Single File
+            [1],
+            //SharedFile
+            [10],
+            //NonexistingFile
+            [100],
         ];
     }
 }
