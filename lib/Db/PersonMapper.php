@@ -546,7 +546,6 @@ class PersonMapper extends QBMapper
 				->set('name', $qb->createNamedParameter($name))
 				->where($qb->expr()->eq('id', $qb->createNamedParameter($clusterId)))
 				->executeStatement();
-				
 		} else {
 			// If there are other faces, must create a new person for that face.
 			$qb = $this->db->getQueryBuilder();

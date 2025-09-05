@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @copyright Copyright (c) 2017-2021 Matias De lellis <mati86dl@gmail.com>
  * @copyright Copyright (c) 2018, Branko Kokanovic <branko@kokanovic.org>
@@ -21,6 +22,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
+
 namespace OCA\FaceRecognition\Db;
 
 use JsonSerializable;
@@ -45,7 +47,8 @@ use OCP\AppFramework\Db\Entity;
  * @method void setHeight(int $height)
  * @method void setConfidence(float $confidence)
  */
-class Face extends Entity implements JsonSerializable {
+class Face extends Entity implements JsonSerializable
+{
 
 	/**
 	 * Image from this face originated from.
@@ -124,7 +127,8 @@ class Face extends Entity implements JsonSerializable {
 	 * */
 	public $creationTime;
 
-	public function __construct() {
+	public function __construct()
+	{
 		$this->addType('id', 'integer');
 		$this->addType('image', 'integer');
 		$this->addType('person', 'integer');
@@ -140,7 +144,8 @@ class Face extends Entity implements JsonSerializable {
 	 * @param array $faceFromModel Face obtained from DNN model
 	 * @return Face Created face
 	 */
-	public static function fromModel(int $imageId, array $faceFromModel): Face {
+	public static function fromModel(int $imageId, array $faceFromModel): Face
+	{
 		$face = new Face();
 		$face->image      = $imageId;
 		$face->person     = null;
@@ -155,7 +160,8 @@ class Face extends Entity implements JsonSerializable {
 		return $face;
 	}
 
-	public function jsonSerialize() : mixed {
+	public function jsonSerialize(): mixed
+	{
 		return [
 			'id' => $this->id,
 			'image' => $this->image,
@@ -172,25 +178,30 @@ class Face extends Entity implements JsonSerializable {
 		];
 	}
 
-	public function getLandmarks(): string {
+	public function getLandmarks(): string
+	{
 		return json_encode($this->landmarks);
 	}
 
-	public function setLandmarks($landmarks): void {
+	public function setLandmarks($landmarks): void
+	{
 		$this->landmarks = json_decode($landmarks);
 		$this->markFieldUpdated('landmarks');
 	}
 
-	public function getDescriptor(): string {
+	public function getDescriptor(): string
+	{
 		return json_encode($this->descriptor);
 	}
 
-	public function setDescriptor($descriptor): void {
+	public function setDescriptor($descriptor): void
+	{
 		$this->descriptor = json_decode($descriptor);
 		$this->markFieldUpdated('descriptor');
 	}
 
-	public function setCreationTime($creationTime): void {
+	public function setCreationTime($creationTime): void
+	{
 		if (is_a($creationTime, 'DateTime')) {
 			$this->creationTime = $creationTime;
 		} else {

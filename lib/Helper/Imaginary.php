@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @copyright Copyright (c) 2022-2023, Matias De lellis
  *
@@ -22,14 +23,12 @@
 
 namespace OCA\FaceRecognition\Helper;
 
-use OCP\Files\File;
 use OCP\Http\Client\IClientService;
 use OCP\IConfig;
-use OCP\IImage;
+use \OC;
 
-use OC\StreamImage;
-
-class Imaginary {
+class Imaginary
+{
 
 	/** @var IConfig */
 	private $config;
@@ -37,17 +36,20 @@ class Imaginary {
 	/** @var IClientService */
 	private $service;
 
-	public function __construct() {
-		$this->config = \OC::$server->get(IConfig::class);
-		$this->service = \OC::$server->get(IClientService::class);
+	public function __construct()
+	{
+		$this->config = OC::$server->get(IConfig::class);
+		$this->service = OC::$server->get(IClientService::class);
 	}
 
-	public function isEnabled(): bool {
+	public function isEnabled(): bool
+	{
 		$imaginaryUrl = $this->config->getSystemValueString('preview_imaginary_url', 'invalid');
 		return ($imaginaryUrl !== 'invalid');
 	}
 
-	public function getUrl(): ?string {
+	public function getUrl(): ?string
+	{
 		$imaginaryUrl = $this->config->getSystemValueString('preview_imaginary_url', 'invalid');
 		if ($imaginaryUrl === 'invalid')
 			return null;
@@ -55,23 +57,26 @@ class Imaginary {
 		return rtrim($imaginaryUrl, '/');
 	}
 
-	public function hasKey(): bool {
+	public function hasKey(): bool
+	{
 		$imaginaryKey = $this->config->getSystemValueString('preview_imaginary_key', 'invalid');
 		return ($imaginaryKey !== 'invalid');
 	}
 
-	public function getKey(): ?string {
+	public function getKey(): ?string
+	{
 		$imaginaryKey = $this->config->getSystemValueString('preview_imaginary_key', 'invalid');
 		if ($imaginaryKey === 'invalid')
 			return null;
-               
+
 		return $imaginaryKey;
 	}
 
 	/**
 	 * @return string imaginary version
 	 */
-	public function getVersion(): ?string {
+	public function getVersion(): ?string
+	{
 		$imaginaryUrl = $this->getUrl();
 		if (!$imaginaryUrl) {
 			throw new \RuntimeException('Try to use imaginary without valid url');
@@ -103,7 +108,8 @@ class Imaginary {
 	/**
 	 * @return array Returns the array with the size of image.
 	 */
-	public function getInfo(string $filepath): array {
+	public function getInfo(string $filepath): array
+	{
 		$imaginaryUrl = $this->getUrl();
 		if (!$imaginaryUrl) {
 			throw new \RuntimeException('Try to use imaginary without valid url');
@@ -148,7 +154,8 @@ class Imaginary {
 	/**
 	 * @return string|resource Returns the resized image
 	 */
-	public function getResized(string $filepath, int $width, int $height, bool $autorotate, string $mimeType) {
+	public function getResized(string $filepath, int $width, int $height, bool $autorotate, string $mimeType)
+	{
 
 		$imaginaryUrl = $this->getUrl();
 		if (!$imaginaryUrl) {
@@ -192,11 +199,13 @@ class Imaginary {
 		}
 
 		$response = $httpClient->post(
-			$imaginaryUrl . '/pipeline', [
+			$imaginaryUrl . '/pipeline',
+			[
 				'query' => $query,
 				'body' => file_get_contents($filepath),
 				'nextcloud' => ['allow_local_address' => true],
-			]);
+			]
+		);
 
 		if ($response->getStatusCode() !== 200) {
 			throw new \RuntimeException('Error generating temporary image in Imaginary: ' . json_decode($response->getBody())['message']);
@@ -204,5 +213,4 @@ class Imaginary {
 
 		return $response->getBody();
 	}
-
 }

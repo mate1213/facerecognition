@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @copyright Copyright (c) 2020-2021, Matias De lellis <mati86dl@gmail.com>
  * @copyright Copyright (c) 2018, Branko Kokanovic <branko@kokanovic.org>
@@ -21,6 +22,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
+
 namespace OCA\FaceRecognition\Db;
 
 use JsonSerializable;
@@ -36,7 +38,8 @@ use OCP\DB\Types;
  * @method void setName(string $name)
  * @method bool getIsVisible()
  */
-class Person extends Entity implements JsonSerializable {
+class Person extends Entity implements JsonSerializable
+{
 	/**
 	 * User this person belongs to
 	 *
@@ -77,10 +80,11 @@ class Person extends Entity implements JsonSerializable {
 	 * It is set by owner of this cluster. It is optional.
 	 *
 	 * @var string|null
-	*/
+	 */
 	protected $linkedUser;
 
-	public function __construct() {
+	public function __construct()
+	{
 		$this->addType('id', Types::INTEGER);
 		$this->addType('user', Types::STRING);
 		$this->addType('isVisible', Types::BOOLEAN);
@@ -89,7 +93,8 @@ class Person extends Entity implements JsonSerializable {
 		$this->addType('linkedUser', Types::STRING);
 	}
 
-	public function jsonSerialize() {
+	public function jsonSerialize()
+	{
 		return [
 			'id' => $this->id,
 			'user' => $this->user,
@@ -101,7 +106,8 @@ class Person extends Entity implements JsonSerializable {
 		];
 	}
 
-	public function setIsVisible($isVisible): void {
+	public function setIsVisible($isVisible): void
+	{
 		if (is_bool($isVisible)) {
 			$this->isVisible = $isVisible;
 		} else {
@@ -110,7 +116,8 @@ class Person extends Entity implements JsonSerializable {
 		$this->markFieldUpdated('isVisible');
 	}
 
-	public function setIsValid($isValid): void {
+	public function setIsValid($isValid): void
+	{
 		if (is_bool($isValid)) {
 			$this->isValid = $isValid;
 		} else {

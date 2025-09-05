@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @copyright Copyright (c) 2017-2018, 2020-2021 Matias De lellis <mati86dl@gmail.com>
  * @copyright Copyright (c) 2018, Branko Kokanovic <branko@kokanovic.org>
@@ -21,6 +22,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
+
 namespace OCA\FaceRecognition\Db;
 
 use JsonSerializable;
@@ -51,7 +53,8 @@ use OCP\DB\Types;
  * @method void setProcessingDuration(int $processingDuration)
  *
  */
-class Image extends Entity implements JsonSerializable {
+class Image extends Entity implements JsonSerializable
+{
 
 	/**
 	 * User this image belongs to.
@@ -102,10 +105,11 @@ class Image extends Entity implements JsonSerializable {
 	 * Duration (in ms) it took to completely process this image. Should serve as a way to give estimates to user.
 	 *
 	 * @var integer|null
-	*/
+	 */
 	protected $processingDuration;
 
-	public function __construct() {
+	public function __construct()
+	{
 		$this->addType('id', Types::INTEGER);
 		$this->addType('user', Types::STRING);
 		$this->addType('file', Types::INTEGER);
@@ -114,7 +118,8 @@ class Image extends Entity implements JsonSerializable {
 		$this->addType('lastProcessedTime', Types::DATETIME);
 	}
 
-	public function jsonSerialize() {
+	public function jsonSerialize()
+	{
 		return [
 			'id' => $this->id,
 			'user' => $this->user,
@@ -127,7 +132,8 @@ class Image extends Entity implements JsonSerializable {
 		];
 	}
 
-	public function setIsProcessed($isProcessed): void {
+	public function setIsProcessed($isProcessed): void
+	{
 		if (is_bool($isProcessed)) {
 			$this->isProcessed = $isProcessed;
 		} else {

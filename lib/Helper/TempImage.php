@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 /**
  * @copyright Copyright (c) 2018-2019 Branko Kokanovic <branko@kokanovic.org>
@@ -22,13 +23,15 @@ declare(strict_types=1);
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
+
 namespace OCA\FaceRecognition\Helper;
 
 use OCP\Image;
 use OCP\ITempManager;
 use OCA\FaceRecognition\Helper\Imaginary;
 
-class TempImage extends Image {
+class TempImage extends Image
+{
 
 	/** @var Imaginary */
 	private $imaginary;
@@ -57,11 +60,12 @@ class TempImage extends Image {
 	/** @var bool */
 	private $skipped = false;
 
-	public function __construct(string $imagePath,
-	                            string $preferredMimeType,
-	                            int    $maxImageArea,
-	                            int    $minImageSide)
-	{
+	public function __construct(
+		string $imagePath,
+		string $preferredMimeType,
+		int    $maxImageArea,
+		int    $minImageSide
+	) {
 		parent::__construct();
 
 		$this->imagePath         = $imagePath;
@@ -80,7 +84,8 @@ class TempImage extends Image {
 	 *
 	 * @return string
 	 */
-	public function getTempPath(): string {
+	public function getTempPath(): string
+	{
 		return $this->tempPath;
 	}
 
@@ -89,7 +94,8 @@ class TempImage extends Image {
 	 *
 	 * @return float
 	 */
-	public function getRatio(): float {
+	public function getRatio(): float
+	{
 		return $this->ratio;
 	}
 
@@ -97,14 +103,16 @@ class TempImage extends Image {
 	 *
 	 * @return bool
 	 */
-	public function getSkipped(): bool {
+	public function getSkipped(): bool
+	{
 		return $this->skipped;
 	}
 
 	/**
 	 * Clean temporary files
 	 */
-	public function clean() {
+	public function clean()
+	{
 		$this->tempManager->clean();
 	}
 
@@ -112,7 +120,8 @@ class TempImage extends Image {
 	 * Obtain a temporary image according to the imposed restrictions.
 	 *
 	 */
-	private function prepareImage() {
+	private function prepareImage()
+	{
 
 		if ($this->imaginary->isEnabled()) {
 			$fileInfo = $this->imaginary->getInfo($this->imagePath);
@@ -120,7 +129,8 @@ class TempImage extends Image {
 			$widthOrig = $fileInfo['width'];
 			$heightOrig = $fileInfo['height'];
 			if (($widthOrig < $this->minImageSide) ||
-			    ($heightOrig < $this->minImageSide)) {
+				($heightOrig < $this->minImageSide)
+			) {
 				$this->skipped = true;
 				return;
 			}
@@ -138,8 +148,8 @@ class TempImage extends Image {
 			}
 
 			$this->ratio = 1 / $scaleFactor;
-		}
-		else {
+		} else {
+			//MTODO: deprecated/non existing function
 			$this->loadFromFile($this->imagePath);
 			$this->fixOrientation();
 
@@ -148,7 +158,8 @@ class TempImage extends Image {
 			}
 
 			if ((imagesx($this->resource()) < $this->minImageSide) ||
-			    (imagesy($this->resource()) < $this->minImageSide)) {
+				(imagesy($this->resource()) < $this->minImageSide)
+			) {
 				$this->skipped = true;
 				return;
 			}
@@ -158,7 +169,6 @@ class TempImage extends Image {
 
 		$this->tempPath = $this->tempManager->getTemporaryFile();
 		$this->save($this->tempPath, $this->preferredMimeType);
-
 	}
 
 	/**
@@ -166,7 +176,8 @@ class TempImage extends Image {
 	 *
 	 * @return float Ratio of resize. 1 if there was no resize
 	 */
-	private function resizeOCImage(): float {
+	private function resizeOCImage(): float
+	{
 		$widthOrig = imagesx($this->resource());
 		$heightOrig = imagesy($this->resource());
 
@@ -193,9 +204,9 @@ class TempImage extends Image {
 	 *
 	 * @return float Ratio of resize. 1 if there was no resize
 	 */
-	private function getResizeRatio($widthOrig, $heightOrig): float {
+	private function getResizeRatio($widthOrig, $heightOrig): float
+	{
 		$areaRatio = $this->maxImageArea / ($widthOrig * $heightOrig);
 		return sqrt($areaRatio);
 	}
-
 }
