@@ -408,6 +408,16 @@ class PersonMapperTest extends UnitBaseTestCase
         }
     }
 
+    #[DataProviderExternal(className: PersonDataProvider::class, methodName: 'detachFace_Provider')]
+    public function test_detachFace(int $clusterId, int $faceId, ?string $name): void
+    {
+        //Act
+        $person = $this->personMapper->detachFace($clusterId, $faceId, $name);
+
+        //Assert
+        $this->assertNotNull($person);
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -681,6 +691,21 @@ class PersonDataProvider
             [3, true],
             [10, false],
             [10, true]
+        ];
+    }
+
+    public static function detachFace_Provider(): array
+    {
+        return [
+            //multi face cluster has default name
+            [2, 100, null],
+            [2, 100, 'Dummy'],
+            //Singe face cluster no default name
+            [4, 4, null],
+            [4, 4, 'Dummy1'],
+            //Single face cluster has default name
+            [1, 1, null],
+            [1, 1, 'Dummy2'],
         ];
     }
 }
