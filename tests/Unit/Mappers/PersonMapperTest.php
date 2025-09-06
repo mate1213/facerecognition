@@ -754,6 +754,37 @@ class PersonMapperTest extends UnitBaseTestCase
         $this->assertEquals($initConnectionCount, (int)$dataconnection[0]);
     }
 
+    public function test_mergeClusterToDatabase_withException(): void
+    {
+        $initConnectionCount = 20;
+        $initClusterCount = 14;
+
+        $this->expectException(DbalException::class);
+
+        //Act
+        $countOfActions = $this->personMapper->mergeClusterToDatabase("user1", array(3 => [3]), array(3 => [10000]));
+
+        //Assert
+
+        $qb = $this->dbConnection->getQueryBuilder();
+        $qb->select($qb->createFunction('COUNT(*)'))
+            ->from('facerecog_clusters');
+        $result = $qb->executeQuery();
+        $data = $result->fetch(\PDO::FETCH_NUM);
+        $result->closeCursor();
+
+        $qb = $this->dbConnection->getQueryBuilder();
+        $qb->select($qb->createFunction('COUNT(*)'))
+            ->from('facerecog_cluster_faces');
+        $result = $qb->executeQuery();
+        $dataconnection = $result->fetch(\PDO::FETCH_NUM);
+        $result->closeCursor();
+
+        $this->assertNull($countOfActions);
+        $this->assertEquals($initClusterCount, (int)$data[0]);
+        $this->assertEquals($initConnectionCount, (int)$dataconnection[0]);
+    }
+
     /**
      * {@inheritDoc}
      */
