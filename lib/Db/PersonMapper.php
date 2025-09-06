@@ -30,6 +30,7 @@ use OCP\IDBConnection;
 
 use OCP\AppFramework\Db\QBMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 use OC\DB\QueryBuilder\Literal;
 
@@ -385,7 +386,7 @@ class PersonMapper extends QBMapper
 
 
 				foreach ($newFaces as $newFace) {
-					$this->attachFaceToPerson($newFace, $insertedclusterId);
+					$this->attachFaceToPerson( $insertedclusterId, $newFace);
 				}
 			}
 			/*
@@ -470,13 +471,11 @@ class PersonMapper extends QBMapper
 	 */
 	public function deleteOrphaned(string $userId, ?IDBConnection $db = null): int
 	{
-		if ($db !== null) {
-			$qb = $db->getQueryBuilder();
-		} else {
-			$qb = $this->db->getQueryBuilder();
+		if ($db === null) {
+			$db = $this->db;
 		}
 
-		$qb = $this->db->getQueryBuilder();
+		$qb = $db->getQueryBuilder();
 		$qb->select('c.id')
 			->from($this->getTableName(), 'c')
 			->leftJoin('c', 'facerecog_cluster_faces', 'cf', $qb->expr()->eq('c.id', 'cf.cluster_id'))
@@ -486,7 +485,7 @@ class PersonMapper extends QBMapper
 
 		$orphaned = 0;
 		foreach ($orphanedPersons as $person) {
-			$qb = $this->db->getQueryBuilder();
+			$qb = $db->getQueryBuilder();
 			$orphaned++;
 			$qb->delete($this->getTableName())
 				->where($qb->expr()->eq('id', $qb->createNamedParameter($person->id, IQueryBuilder::PARAM_INT)))
@@ -520,63 +519,86 @@ class PersonMapper extends QBMapper
 	}
 
 	/*
-	 * Remove face from cluster
+	 * insert Person name if not exists
 	 *
-	 * @param int $clusterId ID of the person
-	 * @param int $faceId ID of the FACE
-	 * @param string|null $name optional name to rename them.
+	 * @param string $personName name of the person
+	 * @param IDBConnection|null $db optional dbConnection
 	 *
-	 * @return Person
+	 * @return int id of person
 	 */
-	public function detachFace(int $clusterId, int $faceId, $name = null): Person
+	public function insertPersonIfNotExists(string $personName, ?IDBConnection $db = null): int
 	{
-		// Mark the face as non groupable.
-		$qb = $this->db->getQueryBuilder();
-		$qb->update('facerecog_faces')
-			->set('is_groupable', $qb->createParameter('is_groupable'))
-			->where($qb->expr()->eq('id', $qb->createNamedParameter($faceId)))
-			->setParameter('is_groupable', false, IQueryBuilder::PARAM_BOOL)
-			->executeStatement();
-
-		if ($this->countClusterFaces($clusterId) === 1) {
-			// If cluster is an single face just rename it.
-			$qb = $this->db->getQueryBuilder();
-			$qb->update($this->getTableName())
-				->set('is_visible', $qb->createNamedParameter(true))
-				->set('name', $qb->createNamedParameter($name))
-				->where($qb->expr()->eq('id', $qb->createNamedParameter($clusterId)))
-				->executeStatement();
-		} else {
-			// If there are other faces, must create a new person for that face.
-			$qb = $this->db->getQueryBuilder();
-			$qb->select('user')
-				->from($this->getTableName())
-				->where($qb->expr()->eq('id', $qb->createNamedParameter($clusterId)));
-			$oldPerson = $this->findEntity($qb);
-
-			$qb = $this->db->getQueryBuilder();
-			$qb->insert($this->getTableName())
-				->values([
-					'user' => $qb->createNamedParameter($oldPerson->getUser()),
-					'name' => $qb->createNamedParameter($name),
-					'is_valid' => $qb->createNamedParameter(true),
-					'last_generation_time' => $qb->createNamedParameter(new \DateTime(), IQueryBuilder::PARAM_DATE_MUTABLE),
-					'linked_user' => $qb->createNamedParameter(null),
-					'is_visible' => $qb->createNamedParameter(true)
-				])
-				->executeStatement();
-
-			$newclusterId = $qb->getLastInsertId();
-			$this->updateFace($faceId, $clusterId, $newclusterId);
+		if ($db === null) {
+			$db = $this->db;
 		}
 
-		$qb = $this->db->getQueryBuilder();
-		$qb->select('c.id', 'c.user', 'p.name', 'c.is_visible', 'c.is_valid', 'c.last_generation_time', 'c.linked_user')
-			->from($this->getTableName())
-			->leftJoin('c', 'facerecog_person_clusters', 'pc', $qb->expr()->eq('pc.cluster_id', 'c.id'))
-			->leftJoin('c', 'facerecog_persons', 'p', $qb->expr()->eq('pc.person_id', 'p.id'))
-			->where($qb->expr()->eq('id', $qb->createNamedParameter($clusterId)));
-		return $this->findEntity($qb);
+		$qb = $db->getQueryBuilder();
+		$qb->select('id')
+			->from('facerecog_persons')
+			->where($qb->expr()->eq('name', $qb->createNamedParameter($personName)));
+		$result = $qb->executeQuery();
+
+		$data = $result->fetch();
+		$result->closeCursor();
+		if ($data != false) {
+			return $data['id'];
+		}
+		
+		$qb = $db->getQueryBuilder();
+		$qb->insert('facerecog_persons')
+			->values(
+				[
+					'name' => $qb->createNamedParameter($personName)
+				])
+			->executeStatement();
+		return $qb->getLastInsertId();
+	}
+
+	/*
+	 * handling cluster-Person connection based on name
+	 *
+	 * @param int $clusterId ID of cluster
+	 * @param string $personName name of the person
+	 * @param IDBConnection|null $db optional dbConnection
+	 *
+	 * @return int id of person
+	 */
+	public function updateClusterPersonConnection(int $clusterId, ?string $personName, ?IDBConnection $db = null): void
+	{
+		if ($db === null) {
+			$db = $this->db;
+		}
+		$qb = $db->getQueryBuilder();
+		$qb->select('*')
+			->from('facerecog_person_clusters')
+			->where($qb->expr()->eq('cluster_id', $qb->createNamedParameter($clusterId)));
+		$result = $qb->executeQuery();
+
+		$data = $result->fetchAll();
+		$result->closeCursor();
+		if ($data != false) {
+			if (count($data) > 1)
+			{
+				$msg = 'Did not expect more than one result when executing: query "' . $qb->getSQL() . '"'; 
+				throw new MultipleObjectsReturnedException($msg);
+			}
+			$qb = $db->getQueryBuilder();
+			$qb->delete('facerecog_person_clusters')
+				->where($qb->expr()->eq('cluster_id', $qb->createNamedParameter($clusterId)))
+				->andWhere($qb->expr()->eq('person_id', $qb->createNamedParameter($data[0]['person_id'])))
+				->executeStatement();
+		}
+		if ($personName !== null){
+			$personId = $this->insertPersonIfNotExists($personName, $db);
+			$qb = $db->getQueryBuilder();
+			$qb->insert('facerecog_person_clusters')
+			->values(
+				[
+					'cluster_id' => $qb->createNamedParameter($clusterId),
+					'person_id' =>  $qb->createNamedParameter($personId)
+				])
+				->executeStatement();
+		}
 	}
 
 	public function countClusterFaces(int $clusterId): int
@@ -603,9 +625,22 @@ class PersonMapper extends QBMapper
 	 *
 	 * @return void
 	 */
-	private function updateFace(int $faceId, $oldCluster, $clusterId): void
+	public function updateFace(int $faceId, ?int $oldCluster, ?int $clusterId): void
 	{
-
+		if($oldCluster === null && $clusterId === null)
+		{
+			throw new \InvalidArgumentException('No clusterId was given to face Id:' . $faceId);
+		} 
+		if ($oldCluster === null)
+		{
+			$this->attachFaceToPerson($clusterId, $faceId);
+			return;
+		}
+		if ($clusterId === null)
+		{
+			$this->detachFace($oldCluster, $faceId);
+			return;
+		}
 		$qb = $this->db->getQueryBuilder();
 		$qb->update('facerecog_cluster_faces')
 			->set("cluster_id", $qb->createNamedParameter($clusterId))
@@ -621,9 +656,8 @@ class PersonMapper extends QBMapper
 	 *
 	 * @return void
 	 */
-	private function removeAllFacesFromPerson(int $clusterId): void
+	public function removeAllFacesFromPerson(int $clusterId): void
 	{
-
 		$qb = $this->db->getQueryBuilder();
 		$qb->delete('facerecog_cluster_faces')
 			->where($qb->expr()->eq('cluster_id', $qb->createNamedParameter($clusterId)))
@@ -633,14 +667,13 @@ class PersonMapper extends QBMapper
 	/**
 	 * Attach one face with $faceId to person ID $clusterId.
 	 *
-	 * @param int $faceId ID of the face
 	 * @param int $clusterId ID of the Old cluster if NULL new connection will be create
+	 * @param int $faceId ID of the face
 	 *
 	 * @return void
 	 */
-	private function attachFaceToPerson(int $faceId, int $clusterId): void
+	public function attachFaceToPerson( int $clusterId, int $faceId): void
 	{
-
 		$qb = $this->db->getQueryBuilder();
 		$qb->insert('facerecog_cluster_faces')
 			->values([
@@ -653,4 +686,65 @@ class PersonMapper extends QBMapper
 			])
 			->executeStatement();
 	}
+	
+	/*
+	 * Remove face from cluster
+	 *
+	 * @param int $clusterId ID of the person
+	 * @param int $faceId ID of the FACE
+	 * @param string|null $name optional name to rename them.
+	 *
+	 * @return Person
+	 */
+	public function detachFace(int $clusterId, int $faceId, $name = null): Person
+	{
+		// Mark the face as non groupable.
+		$qb = $this->db->getQueryBuilder();
+		$qb->update('facerecog_faces')
+			->set('is_groupable', $qb->createParameter('is_groupable'))
+			->where($qb->expr()->eq('id', $qb->createNamedParameter($faceId)))
+			->setParameter('is_groupable', false, IQueryBuilder::PARAM_BOOL)
+			->executeStatement();
+
+		if ($this->countClusterFaces($clusterId) === 1) {
+			// If cluster is an single face just rename it.
+			$qb = $this->db->getQueryBuilder();
+			$qb->update($this->getTableName())
+				->set('is_visible', $qb->createNamedParameter(true))
+				->where($qb->expr()->eq('id', $qb->createNamedParameter($clusterId)))
+				->executeStatement();
+			$this->updateClusterPersonConnection($clusterId, $name, $this->db);
+		} else {
+			// If there are other faces, must create a new person for that face.
+			$qb = $this->db->getQueryBuilder();
+			$qb->select('user')
+				->from($this->getTableName())
+				->where($qb->expr()->eq('id', $qb->createNamedParameter($clusterId)));
+			$oldPerson = $this->findEntity($qb);
+
+			$qb = $this->db->getQueryBuilder();
+			$qb->insert($this->getTableName())
+				->values([
+					'user' => $qb->createNamedParameter($oldPerson->getUser()),
+					'is_valid' => $qb->createNamedParameter(true),
+					'last_generation_time' => $qb->createNamedParameter(new \DateTime(), IQueryBuilder::PARAM_DATE_MUTABLE),
+					'linked_user' => $qb->createNamedParameter(null),
+					'is_visible' => $qb->createNamedParameter(true)
+				])
+				->executeStatement();
+
+			$newclusterId = $qb->getLastInsertId();
+			$this->updateFace($faceId, $clusterId, $newclusterId);
+			$this->updateClusterPersonConnection($newclusterId, $name, $this->db);
+		}
+
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('c.id', 'c.user', 'p.name', 'c.is_visible', 'c.is_valid', 'c.last_generation_time', 'c.linked_user')
+			->from($this->getTableName(), 'c')
+			->leftJoin('c', 'facerecog_person_clusters', 'pc', $qb->expr()->eq('pc.cluster_id', 'c.id'))
+			->leftJoin('c', 'facerecog_persons', 'p', $qb->expr()->eq('pc.person_id', 'p.id'))
+			->where($qb->expr()->eq('c.id', $qb->createNamedParameter($clusterId)));
+		return $this->findEntity($qb);
+	}
+
 }

@@ -30,6 +30,9 @@ use PHPUnit\Framework\Attributes\DataProviderExternal;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 
+use OCP\AppFramework\Db\MultipleObjectsReturnedException;
+use OC\DB\Exceptions\DbalException;
+
 use OCA\FaceRecognition\Tests\Unit\UnitBaseTestCase;
 use OCA\FaceRecognition\Db\PersonMapper;
 use OCA\FaceRecognition\Db\Person;
@@ -418,6 +421,307 @@ class PersonMapperTest extends UnitBaseTestCase
         $this->assertNotNull($person);
     }
 
+    #[DataProviderExternal(className: PersonDataProvider::class, methodName: 'insertPersonIfNotExists_Provider')]
+    public function test_insertPersonIfNotExists(string $personName, int $expectedId): void
+    {
+        //Act
+        $personId = $this->personMapper->insertPersonIfNotExists($personName);
+
+        //Assert
+        
+		$qb = $this->dbConnection->getQueryBuilder();
+		$qb->select('*')
+			->from('facerecog_persons')
+			->where($qb->expr()->eq('id', $qb->createNamedParameter($personId)));
+		$result = $qb->executeQuery();
+		$data = $result->fetchAll();
+		$result->closeCursor();
+
+        $this->assertNotNull($personId);
+        $this->assertGreaterThanOrEqual($expectedId, $personId);
+        $this->assertNotFalse($data);
+        $this->assertCount(1, $data);
+        $this->assertGreaterThanOrEqual( $expectedId, $data[0]['id']);
+        $this->assertEquals($personName, $data[0]['name']);
+    }
+
+    #[DataProviderExternal(className: PersonDataProvider::class, methodName: 'insertPersonIfNotExists_Provider')]
+    public function test_insertPersonIfNotExists_withDb(string $personName, int $expectedId): void
+    {
+        //Act
+        $personId = $this->personMapper->insertPersonIfNotExists($personName, $this->dbConnection);
+
+        //Assert
+		$qb = $this->dbConnection->getQueryBuilder();
+		$qb->select('id', 'name')
+			->from('facerecog_persons')
+			->where($qb->expr()->eq('id', $qb->createNamedParameter($personId)));
+		$result = $qb->executeQuery();
+		$data = $result->fetchAll();
+		$result->closeCursor();
+
+        $this->assertNotNull($personId);
+        $this->assertGreaterThanOrEqual($expectedId, $personId);
+        $this->assertNotFalse($data);
+        $this->assertCount(1, $data);
+        $this->assertGreaterThanOrEqual( $expectedId, $data[0]['id']);
+        $this->assertEquals($personName, $data[0]['name']);
+    }
+
+    #[DataProviderExternal(className: PersonDataProvider::class, methodName: 'updateClusterPersonConnection_Provider')]
+    public function test_updateClusterPersonConnections(int $clusterId, ?string $personName, int $expectedId): void
+    {
+        //Act
+        $this->personMapper->updateClusterPersonConnection($clusterId, $personName);
+
+        //Assert
+		$qb = $this->dbConnection->getQueryBuilder();
+		$qb->select('cluster_id', 'person_id')
+			->from('facerecog_person_clusters')
+			->where($qb->expr()->eq('cluster_id', $qb->createNamedParameter($clusterId)));
+		$result = $qb->executeQuery();
+		$data = $result->fetchAll();
+		$result->closeCursor();
+
+        if ($personName !== null)
+        {
+            $this->assertNotFalse($data);
+            $this->assertCount(1, $data);
+            $this->assertGreaterThanOrEqual($expectedId, $data[0]['person_id']);
+            $this->assertEquals($clusterId, $data[0]['cluster_id']);
+            $qb = $this->dbConnection->getQueryBuilder();
+            $qb->select('id', 'name')
+                ->from('facerecog_persons')
+                ->where($qb->expr()->eq('id', $qb->createNamedParameter($data[0]['person_id'])));
+            $result = $qb->executeQuery();
+            $data = $result->fetchAll();
+            $result->closeCursor();
+            $this->assertEquals($personName, $data[0]['name']);
+        } else {
+            $this->assertEmpty($data);
+        }
+
+    }
+
+    #[DataProviderExternal(className: PersonDataProvider::class, methodName: 'updateClusterPersonConnection_Provider')]
+    public function test_updateClusterPersonConnections_withDb(int $clusterId, ?string $personName, int $expectedId): void
+    {
+        //Act
+        $this->personMapper->updateClusterPersonConnection($clusterId, $personName, $this->dbConnection);
+
+        //Assert
+		$qb = $this->dbConnection->getQueryBuilder();
+		$qb->select('cluster_id', 'person_id')
+			->from('facerecog_person_clusters')
+			->where($qb->expr()->eq('cluster_id', $qb->createNamedParameter($clusterId)));
+		$result = $qb->executeQuery();
+		$data = $result->fetchAll();
+		$result->closeCursor();
+
+        if ($personName !== null)
+        {
+            $this->assertNotFalse($data);
+            $this->assertCount(1, $data);
+            $this->assertGreaterThanOrEqual($expectedId, $data[0]['person_id']);
+            $this->assertEquals($clusterId, $data[0]['cluster_id']);
+            $qb = $this->dbConnection->getQueryBuilder();
+            $qb->select('id', 'name')
+                ->from('facerecog_persons')
+                ->where($qb->expr()->eq('id', $qb->createNamedParameter($data[0]['person_id'])));
+            $result = $qb->executeQuery();
+            $data = $result->fetchAll();
+            $result->closeCursor();
+            $this->assertEquals($personName, $data[0]['name']);
+        } else {
+            $this->assertEmpty($data);
+        }
+    }
+    
+    #[DataProviderExternal(className: PersonDataProvider::class, methodName: 'updateClusterPersonConnection_error_Provider')]
+    public function test_updateClusterPersonConnections_error(int $clusterId, ?string $personName, int $expectedId): void
+    {
+		$qb = $this->dbConnection->getQueryBuilder();
+			$qb->insert('facerecog_person_clusters')
+			->values(
+				[
+					'cluster_id' => $qb->createNamedParameter($clusterId),
+					'person_id' =>  $qb->createNamedParameter(2)
+				])
+			->executeStatement();
+
+        $this->expectException(MultipleObjectsReturnedException::class);
+        $this->expectExceptionMessageMatches("/^Did not expect more than one result when executing: query/");
+
+        //Act
+        $this->personMapper->updateClusterPersonConnection($clusterId, $personName);
+
+        //Assert
+		$qb = $this->dbConnection->getQueryBuilder();
+		$qb->select('cluster_id', 'person_id')
+			->from('facerecog_person_clusters')
+			->where($qb->expr()->eq('cluster_id', $qb->createNamedParameter($clusterId)));
+		$result = $qb->executeQuery();
+		$data = $result->fetchAll();
+		$result->closeCursor();
+
+        if ($personName !== null)
+        {
+            $this->assertNotFalse($data);
+            $this->assertCount(1, $data);
+            $this->assertGreaterThanOrEqual($expectedId, $data[0]['person_id']);
+            $this->assertEquals($clusterId, $data[0]['cluster_id']);
+            $qb = $this->dbConnection->getQueryBuilder();
+            $qb->select('id', 'name')
+                ->from('facerecog_persons')
+                ->where($qb->expr()->eq('id', $qb->createNamedParameter($data[0]['person_id'])));
+            $result = $qb->executeQuery();
+            $data = $result->fetchAll();
+            $result->closeCursor();
+            $this->assertEquals($personName, $data[0]['name']);
+        } else {
+            $this->assertEmpty($data);
+        }
+    }
+
+    #[DataProviderExternal(className: PersonDataProvider::class, methodName: 'updateClusterPersonConnection_error_Provider')]
+    public function test_updateClusterPersonConnections_withDb_error(int $clusterId, ?string $personName, int $expectedId): void
+    {
+		$qb = $this->dbConnection->getQueryBuilder();
+			$qb->insert('facerecog_person_clusters')
+			->values(
+				[
+					'cluster_id' => $qb->createNamedParameter($clusterId),
+					'person_id' =>  $qb->createNamedParameter(2)
+				])
+			->executeStatement();
+
+        $this->expectException(MultipleObjectsReturnedException::class);
+        $this->expectExceptionMessageMatches("/^Did not expect more than one result when executing: query/");
+
+        //Act
+        $this->personMapper->updateClusterPersonConnection($clusterId, $personName, $this->dbConnection);
+
+        //Assert
+		$qb = $this->dbConnection->getQueryBuilder();
+		$qb->select('cluster_id', 'person_id')
+			->from('facerecog_person_clusters')
+			->where($qb->expr()->eq('cluster_id', $qb->createNamedParameter($clusterId)));
+		$result = $qb->executeQuery();
+		$data = $result->fetchAll();
+		$result->closeCursor();
+
+        if ($personName !== null)
+        {
+            $this->assertNotFalse($data);
+            $this->assertCount(1, $data);
+            $this->assertGreaterThanOrEqual($expectedId, $data[0]['person_id']);
+            $this->assertEquals($clusterId, $data[0]['cluster_id']);
+            $qb = $this->dbConnection->getQueryBuilder();
+            $qb->select('id', 'name')
+                ->from('facerecog_persons')
+                ->where($qb->expr()->eq('id', $qb->createNamedParameter($data[0]['person_id'])));
+            $result = $qb->executeQuery();
+            $data = $result->fetchAll();
+            $result->closeCursor();
+            $this->assertEquals($personName, $data[0]['name']);
+        } else {
+            $this->assertEmpty($data);
+        }
+    }
+
+    #[DataProviderExternal(className: PersonDataProvider::class, methodName: 'countClusterFaces_Provider')]
+    public function test_countClusterFaces(int $clusterId, int $expectedcount): void
+    {
+        //Act
+        $faceCount = $this->personMapper->countClusterFaces($clusterId);
+
+        //Assert
+        $this->assertNotNull($faceCount);
+        $this->assertEquals($expectedcount, $faceCount);
+    }
+
+    #[DataProviderExternal(className: PersonDataProvider::class, methodName: 'updateFace_Provider')]
+    public function test_updateFace(int $faceId, ?int $oldClusterId, ?int $clusterId, bool $expectedError): void
+    {
+        if ($expectedError)
+        {
+            $this->expectException(\InvalidArgumentException::class);
+            $this->expectExceptionMessageMatches("/^No clusterId was given to face Id:[0-9]+/");
+        }
+        //Act
+        $this->personMapper->updateFace($faceId, $oldClusterId, $clusterId);
+
+        //Assert
+        if ($clusterId !== null)
+        {
+            $qb = $this->dbConnection->getQueryBuilder();
+            $qb->select('cluster_id', 'face_id')
+                ->from('facerecog_cluster_faces')
+                ->where($qb->expr()->eq('cluster_id', $qb->createNamedParameter($clusterId)))
+                ->andwhere($qb->expr()->eq('face_id', $qb->createNamedParameter($faceId)));
+            $result = $qb->executeQuery();
+            $data = $result->fetchAll();
+            $result->closeCursor();
+
+            $this->assertNotFalse($data);
+            $this->assertCount(1, $data);
+        }
+        if ($oldClusterId !== null)
+        {
+            $qb = $this->dbConnection->getQueryBuilder();
+            $qb->select('cluster_id', 'face_id')
+                ->from('facerecog_cluster_faces')
+                ->where($qb->expr()->eq('cluster_id', $qb->createNamedParameter($oldClusterId)))
+                ->andwhere($qb->expr()->eq('face_id', $qb->createNamedParameter($faceId)));
+            $result = $qb->executeQuery();
+            $data = $result->fetchAll();
+            $result->closeCursor();
+
+            $this->assertEmpty($data);
+        }
+    }
+
+    #[DataProviderExternal(className: PersonDataProvider::class, methodName: 'removeAllFacesFromPerson_Provider')]
+    public function test_removeAllFacesFromPersonint(int $clusterId): void
+    {
+        //Act
+        $this->personMapper->removeAllFacesFromPerson($clusterId);
+
+        //Assert
+            $qb = $this->dbConnection->getQueryBuilder();
+            $qb->select('cluster_id', 'face_id')
+                ->from('facerecog_cluster_faces')
+                ->where($qb->expr()->eq('cluster_id', $qb->createNamedParameter($clusterId)));
+            $result = $qb->executeQuery();
+            $data = $result->fetchAll();
+            $result->closeCursor();
+            $this->assertEmpty($data);
+    }
+
+    #[DataProviderExternal(className: PersonDataProvider::class, methodName: 'attachFaceToPerson_Provider')]
+    public function test_attachFaceToPerson(int $clusterId, int $faceId, bool $expectError, ?string $message): void
+    {
+        if ($expectError)
+        {
+            $this->expectException(\OC\DB\Exceptions\DbalException::class);
+            $this->expectExceptionMessage($message);
+        }
+        //Act
+        $this->personMapper->attachFaceToPerson($clusterId, $faceId);
+
+        //Assert
+        $qb = $this->dbConnection->getQueryBuilder();
+        $qb->select('cluster_id', 'face_id')
+            ->from('facerecog_cluster_faces')
+            ->where($qb->expr()->eq('cluster_id', $qb->createNamedParameter($clusterId)))
+            ->where($qb->expr()->eq('face_id', $qb->createNamedParameter($faceId)));
+        $result = $qb->executeQuery();
+        $data = $result->fetchAll();
+        $result->closeCursor();
+        $this->assertIsArray($data);
+        $this->greaterThanOrEqual(1, $data);
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -706,6 +1010,94 @@ class PersonDataProvider
             //Single face cluster has default name
             [1, 1, null],
             [1, 1, 'Dummy2'],
+        ];
+    }
+
+    public static function insertPersonIfNotExists_Provider(): array
+    {
+        return [
+            //Existing name
+            ['Alice', 1],
+            //NonExisting name
+            ['Dummy', 3],
+        ];
+    }
+
+    public static function updateClusterPersonConnection_Provider(): array
+    {
+        return [
+            //remove Existing connection
+            [1, null, 0],
+            //rename Existing connection
+            [1, 'Dummy', 3],
+            //NonExisting connection
+            [3, 'Dummy', 3],
+            //No connection created
+            [3, null, 0],
+        ];
+    }
+
+    public static function updateClusterPersonConnection_error_Provider(): array
+    {
+        return [
+            //remove Existing connection
+            [1, null, 0],
+            //rename Existing connection
+            [1, 'Dummy', 3],
+        ];
+    }
+
+    public static function countClusterFaces_Provider(): array
+    {
+        return [
+            [1, 2],
+            [2, 2],
+            [3, 1],
+            [10, 2]
+        ];
+    }
+
+    public static function updateFace_Provider(): array
+    {
+        return [
+            //invalid reuest
+            [1, null, null, true],
+            //Non attached face
+            [9, null, 4, false],
+            //migrate face
+            [1, 1, 4, false],
+            //detach face
+            [1, 1, null, false],
+        ];
+    }
+
+    public static function removeAllFacesFromPerson_Provider(): array
+    {
+        return [
+            //multiple faces
+            [1],
+            //Single face
+            [3],
+            //no face
+            [7],
+        ];
+    }
+    
+    public static function attachFaceToPerson_Provider(): array
+    {
+        return [
+            //invalid connection
+            [1, 1, true, "An exception occurred while executing a query: SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry '1-1' for key 'PRIMARY'"],
+            //Single face
+            [3, 5, false, null],
+            //to empty cluster
+            [7, 100, false, null],
+            //nonexisting cluster
+            [100, 100, true, "An exception occurred while executing a query: SQLSTATE[23000]: Integrity constraint violation: 1452 Cannot add or update a child row: a foreign key constraint fails (`nextcloud_db`.`oc_facerecog_cluster_faces`, CONSTRAINT `FK_CF21BF85C36A3328` FOREIGN KEY (`cluster_id`) REFERENCES `oc_facerecog_clusters` (`id`) ON DELETE CASCADE)"],
+            //nonexisting face
+            [1, 1000, true, "An exception occurred while executing a query: SQLSTATE[23000]: Integrity constraint violation: 1452 Cannot add or update a child row: a foreign key constraint fails (`nextcloud_db`.`oc_facerecog_cluster_faces`, CONSTRAINT `FK_CF21BF85FDC86CD0` FOREIGN KEY (`face_id`) REFERENCES `oc_facerecog_faces` (`id`) ON DELETE CASCADE)"],
+            //nonexisting cluster and face
+            [100, 1000, true, "An exception occurred while executing a query: SQLSTATE[23000]: Integrity constraint violation: 1452 Cannot add or update a child row: a foreign key constraint fails (`nextcloud_db`.`oc_facerecog_cluster_faces`, CONSTRAINT `FK_CF21BF85C36A3328` FOREIGN KEY (`cluster_id`) REFERENCES `oc_facerecog_clusters` (`id`) ON DELETE CASCADE)"],
         ];
     }
 }
