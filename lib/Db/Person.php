@@ -93,7 +93,7 @@ class Person extends Entity implements JsonSerializable
 		$this->addType('linkedUser', Types::STRING);
 	}
 
-	public function jsonSerialize()
+	public function jsonSerialize() : mixed
 	{
 		return [
 			'id' => $this->id,

@@ -392,22 +392,20 @@ class PersonMapperTest extends UnitBaseTestCase
         $sub = $this->dbConnection->getQueryBuilder();
         $query = $sub->select('c.id', 'p.name', 'is_visible')
             ->from('facerecog_clusters', 'c')
-			->leftJoin('c', 'facerecog_person_clusters' ,'pc', $sub->expr()->eq('pc.cluster_id', 'c.id'))
-			->leftJoin('c', 'facerecog_persons', 'p', $sub->expr()->eq('pc.person_id', 'p.id'))
+            ->leftJoin('c', 'facerecog_person_clusters', 'pc', $sub->expr()->eq('pc.cluster_id', 'c.id'))
+            ->leftJoin('c', 'facerecog_persons', 'p', $sub->expr()->eq('pc.person_id', 'p.id'))
             ->Where($sub->expr()->eq('c.id', $sub->createParameter('id')))
             ->setParameter('id', $clusterId, IQueryBuilder::PARAM_INT);
         $sqlResult = $query->executeQuery();
         $modifiedValidClusters = $sqlResult->fetch();
         $sqlResult->closeCursor();
-        if ($visible)
-        {
+        if ($visible) {
             $this->assertEquals($clusterId, $modifiedValidClusters['id']);
             $this->assertEquals(true, $modifiedValidClusters['is_visible']);
         } else {
             $this->assertEquals($clusterId, $modifiedValidClusters['id']);
             $this->assertEquals(null, $modifiedValidClusters['name']);
             $this->assertEquals(false, $modifiedValidClusters['is_visible']);
-
         }
     }
 
@@ -428,20 +426,20 @@ class PersonMapperTest extends UnitBaseTestCase
         $personId = $this->personMapper->insertPersonIfNotExists($personName);
 
         //Assert
-        
-		$qb = $this->dbConnection->getQueryBuilder();
-		$qb->select('*')
-			->from('facerecog_persons')
-			->where($qb->expr()->eq('id', $qb->createNamedParameter($personId)));
-		$result = $qb->executeQuery();
-		$data = $result->fetchAll();
-		$result->closeCursor();
+
+        $qb = $this->dbConnection->getQueryBuilder();
+        $qb->select('*')
+            ->from('facerecog_persons')
+            ->where($qb->expr()->eq('id', $qb->createNamedParameter($personId)));
+        $result = $qb->executeQuery();
+        $data = $result->fetchAll();
+        $result->closeCursor();
 
         $this->assertNotNull($personId);
         $this->assertGreaterThanOrEqual($expectedId, $personId);
         $this->assertNotFalse($data);
         $this->assertCount(1, $data);
-        $this->assertGreaterThanOrEqual( $expectedId, $data[0]['id']);
+        $this->assertGreaterThanOrEqual($expectedId, $data[0]['id']);
         $this->assertEquals($personName, $data[0]['name']);
     }
 
@@ -452,19 +450,19 @@ class PersonMapperTest extends UnitBaseTestCase
         $personId = $this->personMapper->insertPersonIfNotExists($personName, $this->dbConnection);
 
         //Assert
-		$qb = $this->dbConnection->getQueryBuilder();
-		$qb->select('id', 'name')
-			->from('facerecog_persons')
-			->where($qb->expr()->eq('id', $qb->createNamedParameter($personId)));
-		$result = $qb->executeQuery();
-		$data = $result->fetchAll();
-		$result->closeCursor();
+        $qb = $this->dbConnection->getQueryBuilder();
+        $qb->select('id', 'name')
+            ->from('facerecog_persons')
+            ->where($qb->expr()->eq('id', $qb->createNamedParameter($personId)));
+        $result = $qb->executeQuery();
+        $data = $result->fetchAll();
+        $result->closeCursor();
 
         $this->assertNotNull($personId);
         $this->assertGreaterThanOrEqual($expectedId, $personId);
         $this->assertNotFalse($data);
         $this->assertCount(1, $data);
-        $this->assertGreaterThanOrEqual( $expectedId, $data[0]['id']);
+        $this->assertGreaterThanOrEqual($expectedId, $data[0]['id']);
         $this->assertEquals($personName, $data[0]['name']);
     }
 
@@ -475,16 +473,15 @@ class PersonMapperTest extends UnitBaseTestCase
         $this->personMapper->updateClusterPersonConnection($clusterId, $personName);
 
         //Assert
-		$qb = $this->dbConnection->getQueryBuilder();
-		$qb->select('cluster_id', 'person_id')
-			->from('facerecog_person_clusters')
-			->where($qb->expr()->eq('cluster_id', $qb->createNamedParameter($clusterId)));
-		$result = $qb->executeQuery();
-		$data = $result->fetchAll();
-		$result->closeCursor();
+        $qb = $this->dbConnection->getQueryBuilder();
+        $qb->select('cluster_id', 'person_id')
+            ->from('facerecog_person_clusters')
+            ->where($qb->expr()->eq('cluster_id', $qb->createNamedParameter($clusterId)));
+        $result = $qb->executeQuery();
+        $data = $result->fetchAll();
+        $result->closeCursor();
 
-        if ($personName !== null)
-        {
+        if ($personName !== null) {
             $this->assertNotFalse($data);
             $this->assertCount(1, $data);
             $this->assertGreaterThanOrEqual($expectedId, $data[0]['person_id']);
@@ -500,7 +497,6 @@ class PersonMapperTest extends UnitBaseTestCase
         } else {
             $this->assertEmpty($data);
         }
-
     }
 
     #[DataProviderExternal(className: PersonDataProvider::class, methodName: 'updateClusterPersonConnection_Provider')]
@@ -510,16 +506,15 @@ class PersonMapperTest extends UnitBaseTestCase
         $this->personMapper->updateClusterPersonConnection($clusterId, $personName, $this->dbConnection);
 
         //Assert
-		$qb = $this->dbConnection->getQueryBuilder();
-		$qb->select('cluster_id', 'person_id')
-			->from('facerecog_person_clusters')
-			->where($qb->expr()->eq('cluster_id', $qb->createNamedParameter($clusterId)));
-		$result = $qb->executeQuery();
-		$data = $result->fetchAll();
-		$result->closeCursor();
+        $qb = $this->dbConnection->getQueryBuilder();
+        $qb->select('cluster_id', 'person_id')
+            ->from('facerecog_person_clusters')
+            ->where($qb->expr()->eq('cluster_id', $qb->createNamedParameter($clusterId)));
+        $result = $qb->executeQuery();
+        $data = $result->fetchAll();
+        $result->closeCursor();
 
-        if ($personName !== null)
-        {
+        if ($personName !== null) {
             $this->assertNotFalse($data);
             $this->assertCount(1, $data);
             $this->assertGreaterThanOrEqual($expectedId, $data[0]['person_id']);
@@ -536,18 +531,19 @@ class PersonMapperTest extends UnitBaseTestCase
             $this->assertEmpty($data);
         }
     }
-    
+
     #[DataProviderExternal(className: PersonDataProvider::class, methodName: 'updateClusterPersonConnection_error_Provider')]
     public function test_updateClusterPersonConnections_error(int $clusterId, ?string $personName, int $expectedId): void
     {
-		$qb = $this->dbConnection->getQueryBuilder();
-			$qb->insert('facerecog_person_clusters')
-			->values(
-				[
-					'cluster_id' => $qb->createNamedParameter($clusterId),
-					'person_id' =>  $qb->createNamedParameter(2)
-				])
-			->executeStatement();
+        $qb = $this->dbConnection->getQueryBuilder();
+        $qb->insert('facerecog_person_clusters')
+            ->values(
+                [
+                    'cluster_id' => $qb->createNamedParameter($clusterId),
+                    'person_id' =>  $qb->createNamedParameter(2)
+                ]
+            )
+            ->executeStatement();
 
         $this->expectException(MultipleObjectsReturnedException::class);
         $this->expectExceptionMessageMatches("/^Did not expect more than one result when executing: query/");
@@ -556,16 +552,15 @@ class PersonMapperTest extends UnitBaseTestCase
         $this->personMapper->updateClusterPersonConnection($clusterId, $personName);
 
         //Assert
-		$qb = $this->dbConnection->getQueryBuilder();
-		$qb->select('cluster_id', 'person_id')
-			->from('facerecog_person_clusters')
-			->where($qb->expr()->eq('cluster_id', $qb->createNamedParameter($clusterId)));
-		$result = $qb->executeQuery();
-		$data = $result->fetchAll();
-		$result->closeCursor();
+        $qb = $this->dbConnection->getQueryBuilder();
+        $qb->select('cluster_id', 'person_id')
+            ->from('facerecog_person_clusters')
+            ->where($qb->expr()->eq('cluster_id', $qb->createNamedParameter($clusterId)));
+        $result = $qb->executeQuery();
+        $data = $result->fetchAll();
+        $result->closeCursor();
 
-        if ($personName !== null)
-        {
+        if ($personName !== null) {
             $this->assertNotFalse($data);
             $this->assertCount(1, $data);
             $this->assertGreaterThanOrEqual($expectedId, $data[0]['person_id']);
@@ -586,14 +581,15 @@ class PersonMapperTest extends UnitBaseTestCase
     #[DataProviderExternal(className: PersonDataProvider::class, methodName: 'updateClusterPersonConnection_error_Provider')]
     public function test_updateClusterPersonConnections_withDb_error(int $clusterId, ?string $personName, int $expectedId): void
     {
-		$qb = $this->dbConnection->getQueryBuilder();
-			$qb->insert('facerecog_person_clusters')
-			->values(
-				[
-					'cluster_id' => $qb->createNamedParameter($clusterId),
-					'person_id' =>  $qb->createNamedParameter(2)
-				])
-			->executeStatement();
+        $qb = $this->dbConnection->getQueryBuilder();
+        $qb->insert('facerecog_person_clusters')
+            ->values(
+                [
+                    'cluster_id' => $qb->createNamedParameter($clusterId),
+                    'person_id' =>  $qb->createNamedParameter(2)
+                ]
+            )
+            ->executeStatement();
 
         $this->expectException(MultipleObjectsReturnedException::class);
         $this->expectExceptionMessageMatches("/^Did not expect more than one result when executing: query/");
@@ -602,16 +598,15 @@ class PersonMapperTest extends UnitBaseTestCase
         $this->personMapper->updateClusterPersonConnection($clusterId, $personName, $this->dbConnection);
 
         //Assert
-		$qb = $this->dbConnection->getQueryBuilder();
-		$qb->select('cluster_id', 'person_id')
-			->from('facerecog_person_clusters')
-			->where($qb->expr()->eq('cluster_id', $qb->createNamedParameter($clusterId)));
-		$result = $qb->executeQuery();
-		$data = $result->fetchAll();
-		$result->closeCursor();
+        $qb = $this->dbConnection->getQueryBuilder();
+        $qb->select('cluster_id', 'person_id')
+            ->from('facerecog_person_clusters')
+            ->where($qb->expr()->eq('cluster_id', $qb->createNamedParameter($clusterId)));
+        $result = $qb->executeQuery();
+        $data = $result->fetchAll();
+        $result->closeCursor();
 
-        if ($personName !== null)
-        {
+        if ($personName !== null) {
             $this->assertNotFalse($data);
             $this->assertCount(1, $data);
             $this->assertGreaterThanOrEqual($expectedId, $data[0]['person_id']);
@@ -643,8 +638,7 @@ class PersonMapperTest extends UnitBaseTestCase
     #[DataProviderExternal(className: PersonDataProvider::class, methodName: 'updateFace_Provider')]
     public function test_updateFace(int $faceId, ?int $oldClusterId, ?int $clusterId, bool $expectedError): void
     {
-        if ($expectedError)
-        {
+        if ($expectedError) {
             $this->expectException(\InvalidArgumentException::class);
             $this->expectExceptionMessageMatches("/^No clusterId was given to face Id:[0-9]+/");
         }
@@ -652,8 +646,7 @@ class PersonMapperTest extends UnitBaseTestCase
         $this->personMapper->updateFace($faceId, $oldClusterId, $clusterId);
 
         //Assert
-        if ($clusterId !== null)
-        {
+        if ($clusterId !== null) {
             $qb = $this->dbConnection->getQueryBuilder();
             $qb->select('cluster_id', 'face_id')
                 ->from('facerecog_cluster_faces')
@@ -666,8 +659,7 @@ class PersonMapperTest extends UnitBaseTestCase
             $this->assertNotFalse($data);
             $this->assertCount(1, $data);
         }
-        if ($oldClusterId !== null)
-        {
+        if ($oldClusterId !== null) {
             $qb = $this->dbConnection->getQueryBuilder();
             $qb->select('cluster_id', 'face_id')
                 ->from('facerecog_cluster_faces')
@@ -688,21 +680,20 @@ class PersonMapperTest extends UnitBaseTestCase
         $this->personMapper->removeAllFacesFromPerson($clusterId);
 
         //Assert
-            $qb = $this->dbConnection->getQueryBuilder();
-            $qb->select('cluster_id', 'face_id')
-                ->from('facerecog_cluster_faces')
-                ->where($qb->expr()->eq('cluster_id', $qb->createNamedParameter($clusterId)));
-            $result = $qb->executeQuery();
-            $data = $result->fetchAll();
-            $result->closeCursor();
-            $this->assertEmpty($data);
+        $qb = $this->dbConnection->getQueryBuilder();
+        $qb->select('cluster_id', 'face_id')
+            ->from('facerecog_cluster_faces')
+            ->where($qb->expr()->eq('cluster_id', $qb->createNamedParameter($clusterId)));
+        $result = $qb->executeQuery();
+        $data = $result->fetchAll();
+        $result->closeCursor();
+        $this->assertEmpty($data);
     }
 
     #[DataProviderExternal(className: PersonDataProvider::class, methodName: 'attachFaceToPerson_Provider')]
     public function test_attachFaceToPerson(int $clusterId, int $faceId, bool $expectError, ?string $message): void
     {
-        if ($expectError)
-        {
+        if ($expectError) {
             $this->expectException(\OC\DB\Exceptions\DbalException::class);
             $this->expectExceptionMessage($message);
         }
@@ -714,12 +705,55 @@ class PersonMapperTest extends UnitBaseTestCase
         $qb->select('cluster_id', 'face_id')
             ->from('facerecog_cluster_faces')
             ->where($qb->expr()->eq('cluster_id', $qb->createNamedParameter($clusterId)))
-            ->where($qb->expr()->eq('face_id', $qb->createNamedParameter($faceId)));
+            ->andwhere($qb->expr()->eq('face_id', $qb->createNamedParameter($faceId)));
         $result = $qb->executeQuery();
         $data = $result->fetchAll();
         $result->closeCursor();
         $this->assertIsArray($data);
         $this->greaterThanOrEqual(1, $data);
+    }
+
+    #[DataProviderExternal(className: PersonDataProvider::class, methodName: 'mergeClusterToDatabase_Provider')]
+    public function test_mergeClusterToDatabase(string $userId, array $currentClusters, array $newClusters, int $modifiedCount, int $addedCount, int $deletedCount): void
+    {
+        $initialOrphandClusters = 1;
+        $addedConnection = 0;
+        foreach ($newClusters as $newCluster) {
+            $addedConnection += count($newCluster);
+            foreach ($currentClusters as $currentCluster) {
+                if ($currentCluster === $newCluster) {
+                    $addedConnection -= count($currentCluster);
+                }
+            }
+        }
+        $initConnectionCount = 20 + $addedConnection;
+        $initClusterCount = 14  - $initialOrphandClusters - $deletedCount + $addedCount;
+        $deletedCount += $initialOrphandClusters;
+
+        //Act
+        $countOfActions = $this->personMapper->mergeClusterToDatabase($userId, $currentClusters, $newClusters);
+
+        //Assert
+
+        $qb = $this->dbConnection->getQueryBuilder();
+        $qb->select($qb->createFunction('COUNT(*)'))
+            ->from('facerecog_clusters');
+        $result = $qb->executeQuery();
+        $data = $result->fetch(\PDO::FETCH_NUM);
+        $result->closeCursor();
+
+        $qb = $this->dbConnection->getQueryBuilder();
+        $qb->select($qb->createFunction('COUNT(*)'))
+            ->from('facerecog_cluster_faces');
+        $result = $qb->executeQuery();
+        $dataconnection = $result->fetch(\PDO::FETCH_NUM);
+        $result->closeCursor();
+
+        $this->assertEquals($modifiedCount, count($countOfActions["modified"]));
+        $this->assertEquals($addedCount, count($countOfActions["added"]));
+        $this->assertEquals($deletedCount, count($countOfActions["deleted"]));
+        $this->assertEquals($initClusterCount, (int)$data[0]);
+        $this->assertEquals($initConnectionCount, (int)$dataconnection[0]);
     }
 
     /**
@@ -978,11 +1012,11 @@ class PersonDataProvider
     {
         return [
             //User with single model
-            ['user1',1],
+            ['user1', 1],
             //User with multiple model
-            ['user2',1],
+            ['user2', 1],
             //Nonexisting User
-            ['user3',0],
+            ['user3', 0],
         ];
     }
 
@@ -1082,7 +1116,7 @@ class PersonDataProvider
             [7],
         ];
     }
-    
+
     public static function attachFaceToPerson_Provider(): array
     {
         return [
@@ -1098,6 +1132,21 @@ class PersonDataProvider
             [1, 1000, true, "An exception occurred while executing a query: SQLSTATE[23000]: Integrity constraint violation: 1452 Cannot add or update a child row: a foreign key constraint fails (`nextcloud_db`.`oc_facerecog_cluster_faces`, CONSTRAINT `FK_CF21BF85FDC86CD0` FOREIGN KEY (`face_id`) REFERENCES `oc_facerecog_faces` (`id`) ON DELETE CASCADE)"],
             //nonexisting cluster and face
             [100, 1000, true, "An exception occurred while executing a query: SQLSTATE[23000]: Integrity constraint violation: 1452 Cannot add or update a child row: a foreign key constraint fails (`nextcloud_db`.`oc_facerecog_cluster_faces`, CONSTRAINT `FK_CF21BF85C36A3328` FOREIGN KEY (`cluster_id`) REFERENCES `oc_facerecog_clusters` (`id`) ON DELETE CASCADE)"],
+        ];
+    }
+
+    public static function mergeClusterToDatabase_Provider(): array
+    {
+        //string $userId, array $currentClusters, array $newClusters, int $modifiedCount, int $addedCount, int $deletedCount
+        return [
+            //Create new clusters
+            ["user1", array(), array(100 => [1]), 0, 1, 0],
+            ["user1", array(), array(100 => [1, 3, 5, 7]), 0, 1, 0],
+            ["user1", array(), array(100 => [1, 3], 101 => [5,7]), 0, 2, 0],
+            //Update existing cluster
+            ["user1", array(1 => [1]), array(1 => [1, 3]), 1, 0, 0],
+            ["user1", array(1 => [1]), array(1 => [1, 3, 5, 7]), 1, 0, 0],
+            ["user1", array(1 => [1]), array(1 => [1, 3], 101 => [5,7]), 1, 1, 0],
         ];
     }
 }

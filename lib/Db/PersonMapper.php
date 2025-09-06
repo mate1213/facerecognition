@@ -343,11 +343,16 @@ class PersonMapper extends QBMapper
 	 *
 	 * @return void
 	 */
-	public function mergeClusterToDatabase(string $userId, $currentClusters, $newClusters): void
+	public function mergeClusterToDatabase(string $userId, $currentClusters, $newClusters): array
 	{
 		$this->db->beginTransaction();
 		$currentDateTime = new \DateTime();
 
+		$countOfClusters =[
+			"deleted" => [],
+			"added" => [],
+			"modified" => []
+		];
 		try {
 			// First remove all old faces from any user cluster (remove them from connection table)
 			foreach ($currentClusters as $oldPerson => $oldFaces) {
@@ -368,12 +373,12 @@ class PersonMapper extends QBMapper
 							->setParameter('is_valid', true, IQueryBuilder::PARAM_BOOL)
 							->executeStatement();
 					}
-					$insertedclusterId = $newPerson;
+					$insertedClusterId = $newPerson;
+					$countOfClusters["modified"][] = $insertedClusterId;
 				} else {
 					// Create new cluster and add all faces to it
 					$qb = $this->db->getQueryBuilder();
-					$qb
-						->insert($this->getTableName())
+					$qb->insert($this->getTableName())
 						->values([
 							'user' => $qb->createNamedParameter($userId, IQueryBuilder::PARAM_STR),
 							'is_valid' => $qb->createNamedParameter(true, IQueryBuilder::PARAM_BOOL),
@@ -381,24 +386,26 @@ class PersonMapper extends QBMapper
 							'linked_user' => $qb->createNamedParameter(null, IQueryBuilder::PARAM_NULL)
 						])
 						->executeStatement();
-					$insertedclusterId = $qb->getLastInsertId();
+					$insertedClusterId = $qb->getLastInsertId();
+					$countOfClusters["added"][] = $insertedClusterId;
 				}
 
 
 				foreach ($newFaces as $newFace) {
-					$this->attachFaceToPerson( $insertedclusterId, $newFace);
+					$this->attachFaceToPerson($insertedClusterId, $newFace);
 				}
 			}
 			/*
 			*  $this->db should be the same as not passed since then we use the local instance, 
 			*  but I have no idea how the LifeCycle is managed so just to be safe passing thrue
 			*/
-			$this->deleteOrphaned($userId, $this->db);
+			$countOfClusters["deleted"] = $this->deleteOrphaned($userId, $this->db);
 			$this->db->commit();
 		} catch (\Exception $e) {
 			$this->db->rollBack();
 			throw $e;
 		}
+		return $countOfClusters;
 	}
 
 	/**
@@ -469,7 +476,7 @@ class PersonMapper extends QBMapper
 	 *
 	 * @param string $userId ID of user for which we are deleting orphaned persons
 	 */
-	public function deleteOrphaned(string $userId, ?IDBConnection $db = null): int
+	public function deleteOrphaned(string $userId, ?IDBConnection $db = null): array
 	{
 		if ($db === null) {
 			$db = $this->db;
@@ -483,12 +490,12 @@ class PersonMapper extends QBMapper
 			->andWhere($qb->expr()->isNull('cf.face_id'));
 		$orphanedPersons = $this->findEntities($qb);
 
-		$orphaned = 0;
+		$orphaned = [];
 		foreach ($orphanedPersons as $person) {
 			$qb = $db->getQueryBuilder();
-			$orphaned++;
+			$orphaned[] = $person->getId();
 			$qb->delete($this->getTableName())
-				->where($qb->expr()->eq('id', $qb->createNamedParameter($person->id, IQueryBuilder::PARAM_INT)))
+				->where($qb->expr()->eq('id', $qb->createNamedParameter($person->getId(), IQueryBuilder::PARAM_INT)))
 				->executeStatement();
 		}
 		return $orphaned;
