@@ -720,11 +720,9 @@ class PersonMapperTest extends UnitBaseTestCase
         $addedConnection = 0;
         foreach ($newClusters as $newCluster) {
             $addedConnection += count($newCluster);
-            foreach ($currentClusters as $currentCluster) {
-                if ($currentCluster === $newCluster) {
-                    $addedConnection -= count($currentCluster);
-                }
-            }
+        }
+        foreach ($currentClusters as $currentCluster) {
+            $addedConnection -= count($currentCluster);
         }
         $initConnectionCount = 20 + $addedConnection;
         $initClusterCount = 14  - $initialOrphandClusters - $deletedCount + $addedCount;
@@ -749,9 +747,9 @@ class PersonMapperTest extends UnitBaseTestCase
         $dataconnection = $result->fetch(\PDO::FETCH_NUM);
         $result->closeCursor();
 
-        $this->assertEquals($modifiedCount, count($countOfActions["modified"]));
-        $this->assertEquals($addedCount, count($countOfActions["added"]));
-        $this->assertEquals($deletedCount, count($countOfActions["deleted"]));
+        $this->assertEquals($modifiedCount, count($countOfActions["modified"]), "Modification");
+        $this->assertEquals($addedCount, count($countOfActions["added"]), "Creation");
+        $this->assertEquals($deletedCount, count($countOfActions["deleted"]), "Deletion");
         $this->assertEquals($initClusterCount, (int)$data[0]);
         $this->assertEquals($initConnectionCount, (int)$dataconnection[0]);
     }
@@ -1142,11 +1140,24 @@ class PersonDataProvider
             //Create new clusters
             ["user1", array(), array(100 => [1]), 0, 1, 0],
             ["user1", array(), array(100 => [1, 3, 5, 7]), 0, 1, 0],
-            ["user1", array(), array(100 => [1, 3], 101 => [5,7]), 0, 2, 0],
+            ["user1", array(), array(100 => [1, 3], 101 => [5, 7]), 0, 2, 0],
             //Update existing cluster
-            ["user1", array(1 => [1]), array(1 => [1, 3]), 1, 0, 0],
-            ["user1", array(1 => [1]), array(1 => [1, 3, 5, 7]), 1, 0, 0],
-            ["user1", array(1 => [1]), array(1 => [1, 3], 101 => [5,7]), 1, 1, 0],
+            ["user1", array(3 => [3]), array(3 => [3]), 1, 0, 0],
+            ["user1", array(1 => [1, 7]), array(1 => [1]), 1, 0, 0],
+            ["user1", array(3 => [3]), array(3 => [1, 3]), 1, 0, 0],
+            ["user1", array(3 => [3]), array(3 => [1, 3, 5, 7]), 1, 0, 0],
+            ["user1", array(3 => [3]), array(3 => [1, 3], 101 => [5, 7]), 1, 1, 0],
+            ["user1", array(1 => [1, 7], 3 => [3]), array(1 => [1], 3 => [1, 3]), 2, 0, 0],
+            //remove new clusters
+            ["user1", array(3 => [3]), array(), 0, 0, 1],
+            ["user1", array(1 => [1, 7]), array(), 0, 0, 1],
+            ["user1", array(1 => [1, 7], 3 => [3]), array(), 0, 0, 2],
+            //recreated clusters
+            ["user1", array(1 => [1, 7], 3 => [3]), array(100 => [1, 7], 101 => [3]), 0, 2, 2],
+            //Complex clusters
+            ["user1",
+                array(1 => [1, 7], 3 => [3], 10 => [100, 101], 12 => [102, 103], 14 => [104, 105]),
+                array(1 => [1, 7], 10 => [3, 100, 101], 12 => [102, 103, 104], 100 => [105]), 3, 1, 2],
         ];
     }
 }
