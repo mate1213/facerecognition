@@ -369,7 +369,7 @@ class PersonMapperTest extends UnitBaseTestCase
         $deletedEntries = $this->personMapper->deleteOrphaned($userId);
 
         //Assert
-        $this->assertEquals($expected, $deletedEntries);
+        $this->assertEquals($expected, count($deletedEntries));
     }
 
     #[DataProviderExternal(className: PersonDataProvider::class, methodName: 'deleteOrphaned_Provider')]
@@ -379,7 +379,7 @@ class PersonMapperTest extends UnitBaseTestCase
         $deletedEntries = $this->personMapper->deleteOrphaned($userId, $this->dbConnection);
 
         //Assert
-        $this->assertEquals($expected, $deletedEntries);
+        $this->assertEquals($expected, count($deletedEntries));
     }
 
     #[DataProviderExternal(className: PersonDataProvider::class, methodName: 'setVisibility_Provider')]
