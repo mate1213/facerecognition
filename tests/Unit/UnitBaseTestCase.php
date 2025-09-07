@@ -45,6 +45,8 @@ abstract class UnitBaseTestCase extends TestCase
 
 		if (!$this->isSetupComplete) {
 			$this->isSetupComplete = true;
+			$sql = file_get_contents("tests/DatabaseInserts/00_emptyDatabase.sql");
+			$this->dbConnection->executeStatement($sql);
 			$sql = file_get_contents("tests/DatabaseInserts/10_imageInsert.sql");
 			$this->dbConnection->executeStatement($sql);
 			$sql = file_get_contents("tests/DatabaseInserts/20_userImagesInsert.sql");
