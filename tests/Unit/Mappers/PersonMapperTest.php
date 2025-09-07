@@ -636,22 +636,23 @@ class PersonMapperTest extends UnitBaseTestCase
     }
 
     #[DataProviderExternal(className: PersonDataProvider::class, methodName: 'updateFace_Provider')]
-    public function test_updateFace(int $faceId, ?int $oldClusterId, ?int $clusterId, bool $expectedError): void
+    public function test_updateFace(int $faceId, ?int $oldClusterId, ?int $clusterId, bool $isGroupable, bool $expectedError): void
     {
         if ($expectedError) {
             $this->expectException(\InvalidArgumentException::class);
             $this->expectExceptionMessageMatches("/^No clusterId was given to face Id:[0-9]+/");
         }
         //Act
-        $this->personMapper->updateFace($faceId, $oldClusterId, $clusterId);
+        $this->personMapper->updateFace($faceId, $oldClusterId, $clusterId, $isGroupable);
 
         //Assert
+        $qb = $this->dbConnection->getQueryBuilder();
+        $qb->select('cluster_id', 'face_id', 'is_groupable')
+            ->from('facerecog_cluster_faces')
+            ->where($qb->expr()->eq('face_id', $qb->createNamedParameter($faceId)))
+            ->andWhere($qb->expr()->eq('is_groupable', $qb->createNamedParameter($isGroupable)));
         if ($clusterId !== null) {
-            $qb = $this->dbConnection->getQueryBuilder();
-            $qb->select('cluster_id', 'face_id')
-                ->from('facerecog_cluster_faces')
-                ->where($qb->expr()->eq('cluster_id', $qb->createNamedParameter($clusterId)))
-                ->andwhere($qb->expr()->eq('face_id', $qb->createNamedParameter($faceId)));
+            $qb->andwhere($qb->expr()->eq('cluster_id', $qb->createNamedParameter($clusterId)));
             $result = $qb->executeQuery();
             $data = $result->fetchAll();
             $result->closeCursor();
@@ -660,11 +661,7 @@ class PersonMapperTest extends UnitBaseTestCase
             $this->assertCount(1, $data);
         }
         if ($oldClusterId !== null) {
-            $qb = $this->dbConnection->getQueryBuilder();
-            $qb->select('cluster_id', 'face_id')
-                ->from('facerecog_cluster_faces')
-                ->where($qb->expr()->eq('cluster_id', $qb->createNamedParameter($oldClusterId)))
-                ->andwhere($qb->expr()->eq('face_id', $qb->createNamedParameter($faceId)));
+            $qb->andwhere($qb->expr()->eq('cluster_id', $qb->createNamedParameter($oldClusterId)));
             $result = $qb->executeQuery();
             $data = $result->fetchAll();
             $result->closeCursor();
@@ -1122,15 +1119,20 @@ class PersonDataProvider
 
     public static function updateFace_Provider(): array
     {
+        //int $faceId, ?int $oldClusterId, ?int $clusterId, bool $isGroupable, bool $expectedError
         return [
             //invalid reuest
-            [1, null, null, true],
+            [1, null, null, true, true],
+            [1, null, null, false, true],
             //Non attached face
-            [9, null, 4, false],
+            [9, null, 4, true, false],
+            [9, null, 4, false, false],
             //migrate face
-            [1, 1, 4, false],
+            [1, 1, 4, true, false],
+            [1, 1, 4, false, false],
             //detach face
-            [1, 1, null, false],
+            [1, 1, null, true, false],
+            [1, 1, null, false, false],
         ];
     }
 

@@ -632,7 +632,7 @@ class PersonMapper extends QBMapper
 	 *
 	 * @return void
 	 */
-	public function updateFace(int $faceId, ?int $oldCluster, ?int $clusterId): void
+	public function updateFace(int $faceId, ?int $oldCluster, ?int $clusterId, bool $isGroupable): void
 	{
 		if($oldCluster === null && $clusterId === null)
 		{
@@ -640,7 +640,7 @@ class PersonMapper extends QBMapper
 		} 
 		if ($oldCluster === null)
 		{
-			$this->attachFaceToPerson($clusterId, $faceId);
+			$this->attachFaceToPerson($clusterId, $faceId, $isGroupable);
 			return;
 		}
 		if ($clusterId === null)
@@ -650,9 +650,10 @@ class PersonMapper extends QBMapper
 		}
 		$qb = $this->db->getQueryBuilder();
 		$qb->update('facerecog_cluster_faces')
-			->set("cluster_id", $qb->createNamedParameter($clusterId))
-			->where($qb->expr()->eq('face_id', $qb->createNamedParameter($faceId)))
-			->andWhere($qb->expr()->eq('cluster_id', $qb->createNamedParameter($oldCluster)))
+			->set("cluster_id", $qb->createNamedParameter($clusterId, IQueryBuilder::PARAM_INT))
+			->set("is_groupable", $qb->createNamedParameter($isGroupable, IQueryBuilder::PARAM_BOOL))
+			->where($qb->expr()->eq('face_id', $qb->createNamedParameter($faceId, IQueryBuilder::PARAM_INT)))
+			->andWhere($qb->expr()->eq('cluster_id', $qb->createNamedParameter($oldCluster, IQueryBuilder::PARAM_INT)))
 			->executeStatement();
 	}
 
@@ -676,20 +677,18 @@ class PersonMapper extends QBMapper
 	 *
 	 * @param int $clusterId ID of the Old cluster if NULL new connection will be create
 	 * @param int $faceId ID of the face
+	 * @param bool $isGroupable face can be grouped
 	 *
 	 * @return void
 	 */
-	public function attachFaceToPerson( int $clusterId, int $faceId): void
+	public function attachFaceToPerson( int $clusterId, int $faceId, bool $isGroupable = true): void
 	{
 		$qb = $this->db->getQueryBuilder();
 		$qb->insert('facerecog_cluster_faces')
 			->values([
-				'face_id' => '?',
-				'cluster_id' => '?'
-			])
-			->setParameters([
-				$faceId,
-				$clusterId
+				'face_id' => $qb->createNamedParameter($faceId, IQueryBuilder::PARAM_INT),
+				'cluster_id' => $qb->createNamedParameter($clusterId, IQueryBuilder::PARAM_INT),
+				'is_groupable' => $qb->createNamedParameter($isGroupable, IQueryBuilder::PARAM_BOOL),
 			])
 			->executeStatement();
 	}
@@ -703,16 +702,8 @@ class PersonMapper extends QBMapper
 	 *
 	 * @return Person
 	 */
-	public function detachFace(int $clusterId, int $faceId, $name = null): Person
+	public function detachFace(int $clusterId, int $faceId, ?string $name = null): Person
 	{
-		// Mark the face as non groupable.
-		$qb = $this->db->getQueryBuilder();
-		$qb->update('facerecog_faces')
-			->set('is_groupable', $qb->createParameter('is_groupable'))
-			->where($qb->expr()->eq('id', $qb->createNamedParameter($faceId)))
-			->setParameter('is_groupable', false, IQueryBuilder::PARAM_BOOL)
-			->executeStatement();
-
 		if ($this->countClusterFaces($clusterId) === 1) {
 			// If cluster is an single face just rename it.
 			$qb = $this->db->getQueryBuilder();
@@ -732,16 +723,17 @@ class PersonMapper extends QBMapper
 			$qb = $this->db->getQueryBuilder();
 			$qb->insert($this->getTableName())
 				->values([
-					'user' => $qb->createNamedParameter($oldPerson->getUser()),
-					'is_valid' => $qb->createNamedParameter(true),
+					'user' => $qb->createNamedParameter($oldPerson->getUser(), IQueryBuilder::PARAM_STR),
+					'is_valid' => $qb->createNamedParameter(true, IQueryBuilder::PARAM_BOOL),
 					'last_generation_time' => $qb->createNamedParameter(new \DateTime(), IQueryBuilder::PARAM_DATE_MUTABLE),
-					'linked_user' => $qb->createNamedParameter(null),
-					'is_visible' => $qb->createNamedParameter(true)
+					'linked_user' => $qb->createNamedParameter(null, IQueryBuilder::PARAM_NULL),
+					'is_visible' => $qb->createNamedParameter(true, IQueryBuilder::PARAM_BOOL)
 				])
 				->executeStatement();
 
 			$newclusterId = $qb->getLastInsertId();
-			$this->updateFace($faceId, $clusterId, $newclusterId);
+			// Mark the face as non groupable.
+			$this->updateFace($faceId, $clusterId, $newclusterId, false);
 			$this->updateClusterPersonConnection($newclusterId, $name, $this->db);
 		}
 
