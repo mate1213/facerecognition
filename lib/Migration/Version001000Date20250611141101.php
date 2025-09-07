@@ -86,7 +86,7 @@ class Version001000Date20250611141101 extends SimpleMigrationStep {
 			$table = $schema->getTable('facerecog_faces');
 			if ($table->hasColumn('person'))
 				$table->dropColumn('person');
-				$table->dropColumn('is_goupable');
+				$table->dropColumn('is_groupable');
         }
 		
 		if ($schema->hasTable('facerecog_clusters')) {

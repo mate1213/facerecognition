@@ -51,7 +51,7 @@ entity facerecog_faces {
 entity facerecog_cluster_faces {
   *cluster_id : int <<PK,FK>>
   *face_id : int <<PK,FK>>
-  is_goupable : bool
+  is_groupable : bool
 }
 
 entity facerecog_models {

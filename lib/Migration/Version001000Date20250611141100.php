@@ -70,7 +70,7 @@ class Version001000Date20250611141100 extends SimpleMigrationStep {
 		$faceIdOptions = $faceTable->getColumn('id')->toArray();
 		unset($faceIdOptions['name']);
 		unset($faceIdOptions['autoincrement']);
-		$faceGroupableOptions = $faceTable->getColumn('is_goupable')->toArray();
+		$faceGroupableOptions = $faceTable->getColumn('is_groupable')->toArray();
 		unset($faceGroupableOptions['name']);
 		unset($faceGroupableOptions['autoincrement']);
 
@@ -108,7 +108,7 @@ class Version001000Date20250611141100 extends SimpleMigrationStep {
 			$table = $schema->createTable('facerecog_cluster_faces');
 			$table->addColumn('cluster_id', $clustersIdOptions['type']->getName(), $clustersIdOptions);
 			$table->addColumn('face_id', $faceIdOptions['type']->getName(), $faceIdOptions);
-			$table->addColumn('is_goupable', $faceGroupableOptions['type']->getName(), $faceGroupableOptions);
+			$table->addColumn('is_groupable', $faceGroupableOptions['type']->getName(), $faceGroupableOptions);
 			$table->setPrimaryKey(['cluster_id', 'face_id'], "primaryKeys");
 
 			//Set Foreign keys
@@ -286,18 +286,18 @@ class Version001000Date20250611141100 extends SimpleMigrationStep {
 			->values([
 				'cluster_id' => '?',
 				'face_id' => '?',
-				'is_goupable' => '?'
+				'is_groupable' => '?'
 			]);
 
 		$queryFaces = $this->connection->getQueryBuilder();
-		$queryFaces->select('person','id', 'is_goupable')->from('facerecog_faces');
+		$queryFaces->select('person','id', 'is_groupable')->from('facerecog_faces');
 
 		$resultFaces = $queryFaces->executeQuery();
 		while ($row = $resultFaces->fetch()) {
 			$insertPersonFace->setParameters([
 				$row['person'],
 				$row['id'],
-				$row['is_goupable'],
+				$row['is_groupable'],
 			]);
 			$insertPersonFace->executeStatement();
 		}
