@@ -70,6 +70,9 @@ class Version001000Date20250611141100 extends SimpleMigrationStep {
 		$faceIdOptions = $faceTable->getColumn('id')->toArray();
 		unset($faceIdOptions['name']);
 		unset($faceIdOptions['autoincrement']);
+		$faceGroupableOptions = $faceTable->getColumn('is_goupable')->toArray();
+		unset($faceGroupableOptions['name']);
+		unset($faceGroupableOptions['autoincrement']);
 
 		$clusterTable = $schema->getTable('facerecog_clusters');
 		$clustersIdOptions = $clusterTable->getColumn('id')->toArray();
@@ -101,11 +104,11 @@ class Version001000Date20250611141100 extends SimpleMigrationStep {
 				]
 			);
         }
-
         if (!$schema->hasTable('facerecog_cluster_faces')) {
 			$table = $schema->createTable('facerecog_cluster_faces');
 			$table->addColumn('cluster_id', $clustersIdOptions['type']->getName(), $clustersIdOptions);
 			$table->addColumn('face_id', $faceIdOptions['type']->getName(), $faceIdOptions);
+			$table->addColumn('is_goupable', $faceGroupableOptions['type']->getName(), $faceGroupableOptions);
 			$table->setPrimaryKey(['cluster_id', 'face_id'], "primaryKeys");
 
 			//Set Foreign keys
@@ -204,8 +207,8 @@ class Version001000Date20250611141100 extends SimpleMigrationStep {
 		$output->warning("Connecting images with users, persons with faces and persons with persons");
 		$this->migratePersons();
 		$this->connectImagesWithUsers();
-		$this->connectPersonWithFaces();
-		$this->connectPersonWithPersons();
+		$this->connectClustersWithFaces();
+		$this->connectClusterWithPersons();
 	}
 
 	private function migratePersons() {
@@ -234,7 +237,7 @@ class Version001000Date20250611141100 extends SimpleMigrationStep {
 		$resultClusters->closeCursor();
 	}
 
-	private function connectPersonWithPersons() {
+	private function connectClusterWithPersons() {
 		//Migrate persons - Person connection
 		//Needs to support the shared persons
 		$insertPersons = $this->connection->getQueryBuilder();
@@ -274,7 +277,7 @@ class Version001000Date20250611141100 extends SimpleMigrationStep {
 		$resultQueryClusters->closeCursor();
 	}
 	
-	private function connectPersonWithFaces(){
+	private function connectClustersWithFaces(){
 		//Migrate to personsFaces N2N connection
 		//Needs to support the shared files, record but different person groups
 		$insertPersonFace = $this->connection->getQueryBuilder();
@@ -283,16 +286,18 @@ class Version001000Date20250611141100 extends SimpleMigrationStep {
 			->values([
 				'cluster_id' => '?',
 				'face_id' => '?',
+				'is_goupable' => '?'
 			]);
 
 		$queryFaces = $this->connection->getQueryBuilder();
-		$queryFaces->select('person','id')->from('facerecog_faces');
+		$queryFaces->select('person','id', 'is_goupable')->from('facerecog_faces');
 
 		$resultFaces = $queryFaces->executeQuery();
 		while ($row = $resultFaces->fetch()) {
 			$insertPersonFace->setParameters([
 				$row['person'],
 				$row['id'],
+				$row['is_goupable'],
 			]);
 			$insertPersonFace->executeStatement();
 		}
