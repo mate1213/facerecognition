@@ -118,7 +118,7 @@ class Image extends Entity implements JsonSerializable
 		$this->addType('lastProcessedTime', Types::DATETIME);
 	}
 
-	public function jsonSerialize()
+	public function jsonSerialize() : mixed
 	{
 		return [
 			'id' => $this->id,

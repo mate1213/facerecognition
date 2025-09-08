@@ -324,7 +324,7 @@ class ImageMapper extends QBMapper
 	 * @param IUser|null $user User for which to get images for. If not given, all images from instance are returned.
 	 * @param int $modelId Model Id to get images for.
 	 */
-	public function findImagesWithoutFaces(?string $user = null, int $modelId): array
+	public function findImagesWithoutFaces(?string $user, int $modelId): array
 	{
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('i.id', 'ui.user', 'i.model', 'i.nc_file_id as file', 'i.is_processed', 'i.error', 'i.last_processed_time', 'i.processing_duration')

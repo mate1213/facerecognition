@@ -155,6 +155,46 @@ class FaceMapperTest extends UnitBaseTestCase
 		$this->assertEquals(2, $secondDescriptor['id']);
 	}
 
+	
+
+	public function test_FindDescriptorsBathed_moreThan1000Entry(): void
+	{
+		$sql = file_get_contents("tests/DatabaseInserts/31_1005FacesInsert.sql");
+		$this->dbConnection->executeStatement($sql);
+		$faceIds = [];
+		for ($i = 1001; $i < 2006; $i++)
+		{
+			$faceIds[] = $i;
+		}
+		$faceIds[] = 1;
+		$faceIds[] = 2;
+		$faceIds[] = 3;
+		$faceIds[] = 4;
+		$faceIds[] = 5;
+
+		//Act
+		$descriptors = $this->faceMapper->findDescriptorsBathed($faceIds);
+
+		//Assert
+		$this->assertCount(1010, $faceIds);
+		$this->assertNotNull($descriptors);
+		$this->assertIsArray($descriptors);
+		$this->assertCount(1010, $descriptors);
+
+		foreach ($descriptors as $currentDescriptor)
+		{
+			$this->assertIsArray($currentDescriptor['descriptor']);
+			$this->assertCount(128, $currentDescriptor['descriptor'], 'Error with faceId: '.$currentDescriptor['id']);
+			$this->assertContains($currentDescriptor['id'], $faceIds);
+		}
+		$descriptorIds = array_column($descriptors, 'id');
+		foreach ($faceIds as $id)
+		{
+
+			$this->assertContains($id, $descriptorIds,'Error with faceId: '.$currentDescriptor['id']);
+		}
+	}
+
 	public function test_FindDescriptorsBathed_singleEntry(): void
 	{
 		//Act
@@ -370,6 +410,21 @@ class FaceMapperTest extends UnitBaseTestCase
 		//Assert
 		$this->assertFaceCount(15);
 		$this->assertFaceClusterConnectionCount($expectedCount);
+	}
+
+	public function test_UnsetPersonsRelationForUser_with1000Faces(): void
+	{
+		$sql = file_get_contents("tests/DatabaseInserts/31_1005FacesInsert.sql");
+		$this->dbConnection->executeStatement($sql);
+		$sql = file_get_contents("tests/DatabaseInserts/51_1005FaceClusterConnection.sql");
+		$this->dbConnection->executeStatement($sql);
+
+		//Act
+		$this->faceMapper->unsetPersonsRelationForUser('user1', 1);
+
+		//Assert
+		$this->assertFaceCount(1020);
+		$this->assertFaceClusterConnectionCount(10);
 	}
 
 	#[DataProviderExternal(FaceDataProvider::class, 'insertFace_Provider')]

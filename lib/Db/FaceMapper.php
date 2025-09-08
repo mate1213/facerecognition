@@ -60,20 +60,23 @@ class FaceMapper extends QBMapper
 
 	public function findDescriptorsBathed(array $faceIds): array
 	{
-		$qb = $this->db->getQueryBuilder();
-		$qb->select('id', 'descriptor')
-			->from($this->getTableName(), 'f')
-			->where($qb->expr()->in('id', $qb->createParameter('face_ids')));
-
-		$qb->setParameter('face_ids', $faceIds, IQueryBuilder::PARAM_INT_ARRAY);
-
-		$faces = $this->findEntities($qb);
 		$descriptors = [];
-		foreach ($faces as $face) {
-			$descriptors[] = [
-				'id' => $face->getId(),
-				'descriptor' => json_decode($face->getDescriptor())
-			];
+		for ($i = 0; $i < count($faceIds); $i= $i+1000)
+		{
+			$sliced = array_slice($faceIds, $i, 1000, true);
+			$qb = $this->db->getQueryBuilder();
+			$qb->select('id', 'descriptor')
+				->from($this->getTableName(), 'f')
+				->where($qb->expr()->in('id', $qb->createParameter('face_ids')));
+			$qb->setParameter('face_ids', $sliced, IQueryBuilder::PARAM_INT_ARRAY);
+
+			$faces = $this->findEntities($qb);
+			foreach ($faces as $face) {
+				$descriptors[] = [
+					'id' => $face->getId(),
+					'descriptor' => json_decode($face->getDescriptor())
+				];
+			}
 		}
 
 		return $descriptors;

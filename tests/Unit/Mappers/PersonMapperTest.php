@@ -276,6 +276,7 @@ class PersonMapperTest extends UnitBaseTestCase
     }
 
     //MTODO: extend with userID; 
+    //not possible to have more than 1000 face on one picture therefore not needed to test for 
     #[DataProviderExternal(className: PersonDataProvider::class, methodName: 'invalidatePersons_Provider')]
     public function test_invalidatePersons(int $imageId): void
     {

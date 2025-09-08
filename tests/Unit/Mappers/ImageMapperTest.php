@@ -183,9 +183,6 @@ class ImageMapperTest extends UnitBaseTestCase
 	#[DataProviderExternal(ImageDataProvider::class, 'removeUserImageConnection_Provider')]
 	public function test_removeUserImageConnection(string $user, int $imageId, int $expectedConnections): void
 	{
-		//Assert initial state
-		$this->assertInitialDBstate();
-
 		$image = new Image();
 		$image->id = $imageId;
 		$image->user = $user;
@@ -386,10 +383,45 @@ class ImageMapperTest extends UnitBaseTestCase
 		}
 	}
 
+	public function test_resetErrors_moreThan1000Entries(): void
+	{
+		$sql = file_get_contents("tests/DatabaseInserts/11_1005ImageWithErrorModel2.sql");
+		$this->dbConnection->executeStatement($sql);
+		$sql = file_get_contents("tests/DatabaseInserts/21_1005userImageConnectionForUser1.sql");
+		$this->dbConnection->executeStatement($sql);
+
+		//Act
+		$this->imageMapper->resetErrors('user1');
+
+		//Assert
+		$images = $this->imageMapper->findAll('user1', 2);
+		$this->assertNotNull($images);
+		foreach ($images as $image) {
+			if ($image->getId() > 1000)
+			{
+				$this->assertEquals(false, $image->getIsProcessed(), "Image id: " . $image->getId() . " is_processed set true, but it should be false");
+				$this->assertNull($image->getError(), "Image id: " . $image->getId() . " error not null, but it should be null");
+				$this->assertNull($image->getLastProcessedTime(), "Image id: " . $image->getId() . " last_processed_time not null, but it should be null");
+			}
+		}
+	}
+
 	public function test_deleteUserImages(): void
 	{
-		//Assert initial state
-		$this->assertInitialDBstate();
+		//Act
+		$this->imageMapper->deleteUserImages("user1");
+
+		//Assert
+		$this->assertRowCountUserImages(5);
+		$this->assertRowCountImages(5);
+	}
+
+	public function test_deleteUserImages_moreThan1000Entries(): void
+	{
+		$sql = file_get_contents("tests/DatabaseInserts/11_1005ImageWithErrorModel2.sql");
+		$this->dbConnection->executeStatement($sql);
+		$sql = file_get_contents("tests/DatabaseInserts/21_1005userImageConnectionForUser1.sql");
+		$this->dbConnection->executeStatement($sql);
 
 		//Act
 		$this->imageMapper->deleteUserImages("user1");
@@ -402,15 +434,27 @@ class ImageMapperTest extends UnitBaseTestCase
 	#[DataProviderExternal(ImageDataProvider::class, 'deleteUserModel_Provider')]
 	public function test_deleteUserModel(string $userId, int $modelId, int $expectedConnections, int $expectedImages): void
 	{
-		//Initial face count
-		$this->assertInitialDBstate();
-
 		//Act
 		$this->imageMapper->deleteUserModel($userId, $modelId);
 
 		//Assert
 		$this->assertRowCountImages($expectedImages);
 		$this->assertRowCountUserImages($expectedConnections);
+	}
+
+	public function test_deleteUserModel_moreThan1000Entries(): void
+	{
+		$sql = file_get_contents("tests/DatabaseInserts/11_1005ImageWithErrorModel2.sql");
+		$this->dbConnection->executeStatement($sql);
+		$sql = file_get_contents("tests/DatabaseInserts/21_1005userImageConnectionForUser1.sql");
+		$this->dbConnection->executeStatement($sql);
+
+		//Act
+		$this->imageMapper->deleteUserModel("user1", 2);
+
+		//Assert
+		$this->assertRowCountUserImages(10);
+		$this->assertRowCountImages(9);
 	}
 
 	#[DataProviderExternal(ImageDataProvider::class, 'insert_Provider')]
@@ -423,9 +467,6 @@ class ImageMapperTest extends UnitBaseTestCase
 		bool $exceptionExpected,
 		?string $expectedErrorMessage
 	): void {
-		//Assert initial state
-		$this->assertInitialDBstate();
-
 		$image = new Image();
 		$image->user = $user;
 		$image->setModel($model);
@@ -446,9 +487,6 @@ class ImageMapperTest extends UnitBaseTestCase
 	#[DataProviderExternal(ImageDataProvider::class, 'update_Provider')]
 	public function test_update(int $imageId, ?string $user, int $model, int $nc_file_id): void
 	{
-		//Assert initial state
-		$this->assertInitialDBstate();
-
 		$image = new Image();
 		$image->id = 1;
 		$image->user = "user1";
@@ -458,6 +496,7 @@ class ImageMapperTest extends UnitBaseTestCase
 		$image->setUser($user);
 		$image->setFile($nc_file_id);
 		$image->setModel($model);
+
 		//Act
 		$image = $this->imageMapper->update($image);
 
@@ -473,9 +512,6 @@ class ImageMapperTest extends UnitBaseTestCase
 
 	public function test_update_nochange(): void
 	{
-		//Assert initial state
-		$this->assertInitialDBstate();
-
 		$image = new Image();
 		$image->id = 1;
 		$image->user = "user1";
@@ -507,9 +543,6 @@ class ImageMapperTest extends UnitBaseTestCase
 	#[DataProviderExternal(ImageDataProvider::class, 'delete_Provider')]
 	public function test_delete(int $imageId, ?string $user, int $model, int $nc_file_id, int $imageCount, int $connectionCount): void
 	{
-		//Assert initial state
-		$this->assertInitialDBstate();
-
 		$image = new Image();
 		$image->id = $imageId;
 		$image->user = $user;
