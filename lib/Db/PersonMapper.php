@@ -29,6 +29,7 @@ namespace OCA\FaceRecognition\Db;
 use OCP\IDBConnection;
 
 use OCP\AppFramework\Db\QBMapper;
+use OCP\AppFramework\Db\Entity;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\DB\QueryBuilder\IQueryBuilder;
@@ -40,6 +41,58 @@ class PersonMapper extends QBMapper
 	public function __construct(IDBConnection $db)
 	{
 		parent::__construct($db, 'facerecog_clusters', '\OCA\FaceRecognition\Db\Person');
+	}
+
+	#[\Override]
+	public function update(Entity $entity): Entity
+	{
+		// if entity wasn't changed it makes no sense to run a db query
+		$properties = $entity->getUpdatedFields();
+		if (count($properties) === 0)
+			return $entity;
+		// entity needs an id
+		$id = $entity->getId();
+		if ($id === null) {
+			throw new \InvalidArgumentException(
+				'Entity which should be updated has no id'
+			);
+		}
+
+		// get updated fields to save, fields have to be set using a setter to
+		// be saved
+		// do not update the id field
+		unset($properties['id']);
+
+		$qb = $this->db->getQueryBuilder();
+		$qb->update($this->tableName);
+		$isExecutable = false;
+
+		// build the fields
+		foreach ($properties as $property => $updated) {
+			$column = $entity->propertyToColumn($property);
+			$getter = 'get' . ucfirst($property);
+			$value = $entity->$getter();
+			if ($column === "name") {
+				$this->updateClusterPersonConnection($id, $value);
+				continue;
+			}
+
+			$type = $this->getParameterTypeForProperty($entity, $property);
+			$qb->set($column, $qb->createNamedParameter($value, $type));
+			$isExecutable = true;
+		}
+
+		$idType = $this->getParameterTypeForProperty($entity, 'id');
+
+		$qb->where(
+			$qb->expr()->eq('id', $qb->createNamedParameter($id, $idType))
+		);
+		if ($isExecutable)
+		{
+			$qb->executeStatement();
+		}
+
+		return $entity;
 	}
 
 	/**
@@ -81,6 +134,7 @@ class PersonMapper extends QBMapper
 			->andWhere($qb->expr()->eq('ui.user', $qb->createParameter('user_id')))
 			->andWhere($qb->expr()->eq('c.user', $qb->createParameter('user_id')))
 			->andWhere($qb->expr()->eq('i.model', $qb->createParameter('model_id')))
+			->groupBy('c.id')
 			->setParameter('user_id', $userId)
 			->setParameter('model_id', $modelId)
 			->setParameter('person_name', $personName);

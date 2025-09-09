@@ -797,12 +797,12 @@ class PersonDataProvider
     public static function findByName_Provider(): array
     {
         return [
-            ['user1', 1, 'Alice', 2],
+            ['user1', 1, 'Alice', 1],
             ['user1', 3, 'Alice', 0],
             ['user3', 1, 'Alice', 0],
             ['user1', 1, 'Dummy', 0],
             ['user2', 1, 'Alice', 0],
-            ['user2', 2, 'Bob', 3],
+            ['user2', 2, 'Bob', 2],
         ];
     }
 
