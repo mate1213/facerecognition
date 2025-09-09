@@ -100,11 +100,12 @@ class FaceMapper extends QBMapper
 			->innerJoin('f', 'facerecog_images', 'i', $qb->expr()->eq('f.image_id', 'i.id'))
 			->innerJoin('f', 'facerecog_user_images', 'ui', $qb->expr()->eq('ui.image_id', 'i.id'))
 			->leftJoin('f', 'facerecog_cluster_faces', 'cf', $qb->expr()->eq('cf.face_id', 'f.id')) //needed for personID
+			->leftJoin('f', 'facerecog_clusters', 'c', $qb->expr()->eq('cf.cluster_id', 'c.id')) //needed for personID
 			->where($qb->expr()->eq('ui.user', $qb->createParameter('user_id')))
+			->andWhere($qb->expr()->eq('c.user', $qb->createParameter('user_id')))
 			->andWhere($qb->expr()->eq('i.model', $qb->createParameter('model_id')))
 			->andWhere($qb->expr()->eq('i.nc_file_id', $qb->createParameter('nc_file_id')))
 			->setParameter('user_id', $userId)
-			->groupBy('f.id')
 			->orderBy('f.confidence', 'DESC')
 			->setParameter('model_id', $modelId)
 			->setParameter('nc_file_id', $fileId);
