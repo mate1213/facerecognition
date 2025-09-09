@@ -27,7 +27,6 @@ use OCP\IUser;
 
 use OCP\Files\File;
 use OCP\Files\Folder;
-use OCP\Encryption\IFile;
 
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionBackgroundTask;
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
@@ -54,8 +53,6 @@ class AddMissingImagesTask extends FaceRecognitionBackgroundTask {
 	/** @var SettingsService Settings service */
 	private $settingsService;
 
-	/** @var IFile Settings service */
-	private $encryptionService;
 	/**
 	 * @param ImageMapper $imageMapper Image mapper
 	 * @param FileService $fileService File Service
@@ -63,15 +60,13 @@ class AddMissingImagesTask extends FaceRecognitionBackgroundTask {
 	 */
 	public function __construct(ImageMapper     $imageMapper,
 	                            FileService     $fileService,
-	                            SettingsService $settingsService,
-								IFile $encryptionService)
+	                            SettingsService $settingsService)
 	{
 		parent::__construct();
 
 		$this->imageMapper       = $imageMapper;
 		$this->fileService       = $fileService;
 		$this->settingsService   = $settingsService;
-		$this->encryptionService = $encryptionService;
 	}
 
 	/**
@@ -145,7 +140,6 @@ class AddMissingImagesTask extends FaceRecognitionBackgroundTask {
 			$image->setUser($userId);
 			$image->setFile($file->getId());
 			$image->setModel($model);
-			$listOfUsers = $this->encryptionService->GetAccessList($file->getPath());
 			// todo: this check/insert logic for each image is so inefficient it hurts my mind
 			if ($this->imageMapper->imageExists($image) === null) {
 				// todo: can we have larger transaction with bulk insert?
