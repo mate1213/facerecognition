@@ -149,7 +149,6 @@ class TempImage extends Image
 
 			$this->ratio = 1 / $scaleFactor;
 		} else {
-			//MTODO: deprecated/non existing function
 			$this->loadFromFile($this->imagePath);
 			$this->fixOrientation();
 

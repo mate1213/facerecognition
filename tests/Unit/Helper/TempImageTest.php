@@ -35,7 +35,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(Imaginary::class)]
 class TempImageTest extends TestCase {
 
-	private $testImage = null;
+	private $testFile = null;
 
 	/**
 	 * {@inheritDoc}

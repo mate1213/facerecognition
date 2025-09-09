@@ -298,8 +298,10 @@ class PersonMapper extends QBMapper
 		$resultStatement = $qb->executeQuery();
 		$data = $resultStatement->fetch(\PDO::FETCH_NUM);
 		$resultStatement->closeCursor();
-
-		return (int)$data[0];
+		if ($data !== false)
+			return (int)$data[0];
+		else
+			return 0;
 	}
 
 	/**
@@ -322,7 +324,7 @@ class PersonMapper extends QBMapper
 			->Where($sub->expr()->eq('f.image_id', $sub->createParameter('image_id')));
 
 		$qb = $this->db->getQueryBuilder();
-		$qb->update($this->getTableName(), 'c')
+		$qb->update($this->getTableName())
 			->set("is_valid", $qb->createParameter('is_valid'))
 			->where('id IN (' . $sub->getSQL() . ')')
 			->setParameter('image_id', $imageId)
