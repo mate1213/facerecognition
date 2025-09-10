@@ -74,7 +74,8 @@ class PostWriteListener implements IEventListener {
 	                            ImageMapper           $imageMapper,
 	                            PersonMapper          $personMapper,
 	                            SettingsService       $settingsService,
-	                            FileService           $fileService){
+	                            FileService           $fileService)
+	{
 		$this->logger                = $logger;
 		$this->userManager           = $userManager;
 		$this->faceMapper            = $faceMapper;

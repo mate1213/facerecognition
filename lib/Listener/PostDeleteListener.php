@@ -68,7 +68,8 @@ class PostDeleteListener implements IEventListener {
 	                            ImageMapper           $imageMapper,
 	                            PersonMapper          $personMapper,
 	                            SettingsService       $settingsService,
-	                            FileService           $fileService){
+	                            FileService           $fileService)
+	{
 		$this->logger                = $logger;
 		$this->faceMapper            = $faceMapper;
 		$this->imageMapper           = $imageMapper;

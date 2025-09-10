@@ -42,7 +42,8 @@ class UserDeletedListener implements IEventListener {
 	private $service;
 
 	public function __construct(LoggerInterface       $logger,
-	                            FaceManagementService $service){
+	                            FaceManagementService $service)
+	{
 		$this->logger  = $logger;
 		$this->service = $service;
 	}
