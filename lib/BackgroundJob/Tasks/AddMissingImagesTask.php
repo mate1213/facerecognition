@@ -64,9 +64,9 @@ class AddMissingImagesTask extends FaceRecognitionBackgroundTask {
 	{
 		parent::__construct();
 
-		$this->imageMapper       = $imageMapper;
-		$this->fileService       = $fileService;
-		$this->settingsService   = $settingsService;
+		$this->imageMapper     = $imageMapper;
+		$this->fileService     = $fileService;
+		$this->settingsService = $settingsService;
 	}
 
 	/**
