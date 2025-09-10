@@ -34,6 +34,7 @@ use OCP\AppFramework\IAppContainer;
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionLogger;
 use OCA\FaceRecognition\BackgroundJob\Tasks\AddMissingImagesTask;
+use OCP\IDBConnection;
 
 use \phpunit\Framework\TestCase;
 
@@ -53,6 +54,9 @@ abstract class IntegrationTestCase extends TestCase {
 	/** @var IConfig Config */
 	protected $config;
 
+	/** @var IDBConnection test instance*/
+	protected $dbConnection;
+	
 	public function setUp(): void {
 		parent::setUp();
 		// Better safe than sorry. Warn user that database will be changed in chaotic manner:)
@@ -60,20 +64,25 @@ abstract class IntegrationTestCase extends TestCase {
 			$this->fail("This test touches database. Add \"TRAVIS\" env variable if you want to run these test on your local instance.");
 		}
 
+		$this->dbConnection = OC::$server->getDatabaseConnection();
+		
+		$sql = file_get_contents("tests/DatabaseInserts/00_emptyDatabase.sql");
+		$this->dbConnection->executeStatement($sql);
+
 		// Create user on which we will upload images and do testing
 		$userManager = OC::$server->getUserManager();
 		$username = 'testuser' . rand(0, PHP_INT_MAX);
 		$this->user = $userManager->createUser($username, 'YVvV4huLVUNR#UgJC*bBGXzHR4uW24$kB#dRTX*9');
-		$this->loginAsUser($username);
+		// $this->loginAsUser($username);
 		// Get container to get classes using DI
 		$app = new App('facerecognition');
 		$this->container = $app->getContainer();
 
 		// Insantiate our context, that all tasks need
-		$userManager = $this->container->query('OCP\IUserManager');
-		$this->config = $this->container->query('OCP\IConfig');
+		$userManager = $this->container->get('OCP\IUserManager');
+		$this->config = $this->container->get('OCP\IConfig');
 		$this->context = new FaceRecognitionContext($userManager, $this->config);
-		$logger = $this->container->query('Psr\Log\LoggerInterface');
+		$logger = $this->container->get('Psr\Log\LoggerInterface');
 		$this->context->logger = new FaceRecognitionLogger($logger);
 
 		// The tests, by default, are with the analysis activated.
@@ -81,7 +90,7 @@ abstract class IntegrationTestCase extends TestCase {
 	}
 
 	public function tearDown(): void {
-		$faceMgmtService = $this->container->query('OCA\FaceRecognition\Service\FaceManagementService');
+		$faceMgmtService = $this->container->get('OCA\FaceRecognition\Service\FaceManagementService');
 		$faceMgmtService->resetAllForUser($this->user->getUID());
 
 		$this->user->delete();

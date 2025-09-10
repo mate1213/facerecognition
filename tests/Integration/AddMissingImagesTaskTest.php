@@ -56,8 +56,6 @@ class AddMissingImagesTaskTest extends IntegrationTestCase {
 	 * Test that, after one scan is done, next scan will not find any new images
 	 */
 	public function testNewScanIsEmpty() {
-		$imageMapper = $this->container->query('OCA\FaceRecognition\Db\ImageMapper');
-
 		// Do it once, to make sure all images are inserted
 		$this->doMissingImageScan();
 		$fullImageScanDone = $this->config->getUserValue($this->user->getUID(), 'facerecognition', AddMissingImagesTask::FULL_IMAGE_SCAN_DONE_KEY, 'false');
@@ -66,6 +64,7 @@ class AddMissingImagesTaskTest extends IntegrationTestCase {
 		// Second time, there should be no newly inserted images
 		$this->doMissingImageScan();
 
+		$imageMapper = $this->container->get('OCA\FaceRecognition\Db\ImageMapper');
 		$this->assertEquals(0, $this->context->propertyBag['AddMissingImagesTask_insertedImages']);
 		$this->assertEquals(0, count($imageMapper->findImagesWithoutFaces($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID)));
 	}
@@ -74,13 +73,13 @@ class AddMissingImagesTaskTest extends IntegrationTestCase {
 	 * Test that empty crawling will do nothing
 	 */
 	public function testCrawlNoImages() {
-		$this->loginAsUser($this->user->getUID());
+		// $this->loginAsUser($this->user->getUID());
 		$view = new View('/' . $this->user->getUID() . '/files');
 		$view->file_put_contents("foo.txt", "content");
 
 		$this->doMissingImageScan($this->user);
 
-		$imageMapper = $this->container->query('OCA\FaceRecognition\Db\ImageMapper');
+		$imageMapper = $this->container->get('OCA\FaceRecognition\Db\ImageMapper');
 		$this->assertEquals(0, count($imageMapper->findImagesWithoutFaces($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID)));
 		$this->assertEquals(0, $this->context->propertyBag['AddMissingImagesTask_insertedImages']);
 	}
@@ -89,7 +88,7 @@ class AddMissingImagesTaskTest extends IntegrationTestCase {
 	 * Test that crawling with some images will actually find them and add them to database
 	 */
 	public function testCrawl() {
-		$this->loginAsUser($this->user->getUID());
+		// $this->loginAsUser($this->user->getUID());
 		$view = new View('/' . $this->user->getUID() . '/files');
 		$view->file_put_contents("foo1.txt", "content");
 		$view->file_put_contents("foo2.jpg", "content");
@@ -105,7 +104,7 @@ class AddMissingImagesTaskTest extends IntegrationTestCase {
 		$this->doMissingImageScan($this->user);
 
 		// We should find 3 images only - foo2.jpg, foo3.png and dir/foo6.png. BMP mimetype (foo5.bmp) is not enabled by default.
-		$imageMapper = $this->container->query('OCA\FaceRecognition\Db\ImageMapper');
+		$imageMapper = $this->container->get('OCA\FaceRecognition\Db\ImageMapper');
 		$this->assertEquals(3, count($imageMapper->findImagesWithoutFaces($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID)));
 		$this->assertEquals(3, $this->context->propertyBag['AddMissingImagesTask_insertedImages']);
 	}
@@ -118,10 +117,11 @@ class AddMissingImagesTaskTest extends IntegrationTestCase {
 	private function doMissingImageScan($contextUser = null) {
 		// Reset config that full scan is done, to make sure we are scanning again
 		$this->config->setUserValue($this->user->getUID(), 'facerecognition', AddMissingImagesTask::FULL_IMAGE_SCAN_DONE_KEY, 'false');
-
-		$imageMapper = $this->container->query('OCA\FaceRecognition\Db\ImageMapper');
-		$fileService = $this->container->query('OCA\FaceRecognition\Service\FileService');
-		$settingsService = $this->container->query('OCA\FaceRecognition\Service\SettingsService');
+		
+		
+		$imageMapper = $this->container->get('OCA\FaceRecognition\Db\ImageMapper');
+		$fileService = $this->container->get('OCA\FaceRecognition\Service\FileService');
+		$settingsService = $this->container->get('OCA\FaceRecognition\Service\SettingsService');
 		$addMissingImagesTask = new AddMissingImagesTask($imageMapper, $fileService, $settingsService);
 		$this->assertNotEquals("", $addMissingImagesTask->description());
 

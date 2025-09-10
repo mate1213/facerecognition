@@ -229,7 +229,10 @@ class FaceMapper extends QBMapper
 			->andWhere($qb->expr()->gte('f.width', $qb->createParameter('min_size')))
 			->andWhere($qb->expr()->gte('f.height', $qb->createParameter('min_size')))
 			->andWhere($qb->expr()->gte('f.confidence', $qb->createParameter('min_confidence')))
-			->andWhere($qb->expr()->eq('cf.is_groupable', $qb->createParameter('is_groupable')))
+			->andWhere($qb->expr()->orX(
+				$qb->expr()->eq('cf.is_groupable', $qb->createParameter('is_groupable')),
+				$qb->expr()->isNull('cf.is_groupable')
+			))
 			->orderBy('f.id', 'ASC')
 			->setParameter('user', $userId)
 			->setParameter('model', $model)
@@ -431,12 +434,10 @@ class FaceMapper extends QBMapper
 	 * @return Face
 	 */
 	public function insertFace(Face $face, ?IDBConnection $db = null): Face{
-		if ($db !== null) {
-			$qb = $db->getQueryBuilder();
-		} else {
-			$qb = $this->db->getQueryBuilder();
+		if ($db === null) {
+			$db = $this->db;
 		}
-
+		$qb = $db->getQueryBuilder();
 		$qb->insert($this->getTableName())
 			->values([
 				'image_id' => $qb->createNamedParameter($face->image),
@@ -453,7 +454,7 @@ class FaceMapper extends QBMapper
 
 		$face->setId($qb->getLastInsertId());
 		if ($face->person !== null) {
-			$insertPersonFaceConnection = $this->db->getQueryBuilder();
+			$insertPersonFaceConnection = $db->getQueryBuilder();
 			$insertPersonFaceConnection->insert('facerecog_cluster_faces')
 				->values([
 					'face_id' => $insertPersonFaceConnection->createNamedParameter($face->id),

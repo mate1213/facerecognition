@@ -25,7 +25,9 @@ namespace OCA\FaceRecognition\Tests\Integration;
 
 use OCP\AppFramework\App;
 use OCP\AppFramework\IAppContainer;
+use PHPUnit\Framework\Attributes\CoversClass;
 
+#[CoversClass(App::class)]
 class AppTest extends IntegrationTestCase {
 
 	public function setUp(): void {
@@ -35,7 +37,7 @@ class AppTest extends IntegrationTestCase {
 	}
 
 	public function testAppInstalled() {
-		$appManager = $this->container->query('OCP\App\IAppManager');
+		$appManager = $this->container->get('OCP\App\IAppManager');
 		$this->assertTrue($appManager->isInstalled('facerecognition'));
 	}
 }
