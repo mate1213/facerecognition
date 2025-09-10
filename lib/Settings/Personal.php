@@ -43,19 +43,23 @@ class Personal implements ISettings {
 		$this->userId = $userId;
 	}
 
-	public function getPriority(){
+	public function getPriority()
+	{
 		return 20;
 	}
 
-	public function getSection(){
+	public function getSection()
+	{
 		return 'facerecognition';
 	}
 
-	public function getSectionID(): string{
+	public function getSectionID(): string
+	{
 		return 'facerecognition';
 	}
 
-	public function getForm(){
+	public function getForm()
+	{
 		$userEnabled = $this->settingsService->getUserEnabled($this->userId);
 		$unamedCount = 0;
 		$hiddenCount = 0;
@@ -87,7 +91,8 @@ class Personal implements ISettings {
 		return new TemplateResponse('facerecognition', 'settings/personal');
 	}
 
-	public function getPanel(): TemplateResponse{
+	public function getPanel(): TemplateResponse
+	{
 		return $this->getForm();
 	}
 
