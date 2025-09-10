@@ -56,5 +56,5 @@ class CommandLock {
 		flock($lockFile, LOCK_UN);
 		unlink(self::LockFile());
 	}
-	
+
 }

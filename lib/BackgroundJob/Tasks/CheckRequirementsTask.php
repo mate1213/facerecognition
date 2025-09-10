@@ -62,7 +62,7 @@ class CheckRequirementsTask extends FaceRecognitionBackgroundTask {
 	public function __construct(ModelManager    $modelManager,
 	                            SettingsService $settingsService,
 	                            Imaginary       $imaginaryHelper)
-{
+	{
 		parent::__construct();
 
 		$this->modelManager    = $modelManager;

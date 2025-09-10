@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @copyright Copyright (c) 2022 Matias De lellis <mati86dl@gmail.com>
  *
@@ -21,7 +20,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-
 namespace OCA\FaceRecognition\Helper;
 
 use OCP\IUser;
@@ -34,8 +32,7 @@ use OCA\FaceRecognition\Album\AlbumMapper;
 
 use OCA\FaceRecognition\Service\SettingsService;
 
-class PhotoAlbums
-{
+class PhotoAlbums {
 
 	/** @var PersonMapper Person mapper*/
 	private $personMapper;
@@ -55,12 +52,11 @@ class PhotoAlbums
 	 * @param AlbumMapper $albumMapper
 	 * @param SettingsService $settingsService
 	 */
-	public function __construct(
-		PersonMapper    $personMapper,
-		ImageMapper     $imageMapper,
-		AlbumMapper     $albumMapper,
-		SettingsService $settingsService
-	) {
+	public function __construct(PersonMapper    $personMapper,
+	                            ImageMapper     $imageMapper,
+	                            AlbumMapper     $albumMapper,
+	                            SettingsService $settingsService)
+	{
 		$this->personMapper    = $personMapper;
 		$this->imageMapper     = $imageMapper;
 		$this->albumMapper     = $albumMapper;
@@ -70,7 +66,7 @@ class PhotoAlbums
 	/**
 	 * @return void
 	 */
-	public function syncUser(string $userId){
+	public function syncUser (string $userId) {
 		$modelId = $this->settingsService->getCurrentFaceModel();
 
 		/* Get current albums and persons to sync */
@@ -78,13 +74,13 @@ class PhotoAlbums
 		$albumNames = $this->albumMapper->getAll($userId);
 
 		/* Create albums for new persons */
-		$albumsToCreate = array_diff($personNames, $albumNames);
+		$albumsToCreate = array_diff ($personNames, $albumNames);
 		foreach ($albumsToCreate as $albumToCreate) {
 			$this->albumMapper->create($userId, $albumToCreate);
 		}
 
 		/* Remove albums for old persons */
-		$albumsToDelete = array_diff($albumNames, $personNames);
+		$albumsToDelete = array_diff ($albumNames, $personNames);
 		foreach ($albumsToDelete as $albumToDelete) {
 			$albumId = $this->albumMapper->get($userId, $albumToDelete);
 			$this->albumMapper->delete($albumId);
@@ -99,13 +95,13 @@ class PhotoAlbums
 			$personImages = $this->getPersonsImages($userId, $modelId, $albumName);
 
 			/* Delete old photos. Maybe corrections. */
-			$imagesToDelete = array_diff($albumImages, $personImages);
+			$imagesToDelete = array_diff ($albumImages, $personImages);
 			foreach ($imagesToDelete as $image) {
 				$this->albumMapper->removeFile($albumId, $image);
 			}
 
 			/* Add new photos to the person's album */
-			$imagesToAdd = array_diff($personImages, $albumImages);
+			$imagesToAdd = array_diff ($personImages, $albumImages);
 			foreach ($imagesToAdd as $image) {
 				$this->albumMapper->addFile($albumId, $image, $userId);
 			}
@@ -115,19 +111,19 @@ class PhotoAlbums
 	/**
 	 * @return void
 	 */
-	public function syncUserPersonNamesSelected(string $userId, string $personNames, OutputInterface $output){
+	public function syncUserPersonNamesSelected (string $userId, string $personNames, OutputInterface $output) {
 		$modelId = $this->settingsService->getCurrentFaceModel();
 
 		/* Get current albums and persons to sync */
 		$personsNames = $this->getPersonsNamesSelected($userId, $modelId, $personNames);
-		if (count($personsNames) === 0) {
+		if ( count($personsNames) === 0 ){
 			$output->writeln("Person name $personNames invalid - skipping");
 			return;
 		}
 		$albumNames = $this->albumMapper->getAll($userId);
 
 		/* Create albums for new persons */
-		$albumsToCreate = array_diff($personsNames, $albumNames);
+		$albumsToCreate = array_diff ($personsNames, $albumNames);
 		foreach ($albumsToCreate as $albumToCreate) {
 			$this->albumMapper->create($userId, $albumToCreate);
 		}
@@ -141,13 +137,13 @@ class PhotoAlbums
 			$personImages = $this->getPersonsImages($userId, $modelId, $albumName);
 
 			/* Delete old photos. Maybe corrections. */
-			$imagesToDelete = array_diff($albumImages, $personImages);
+			$imagesToDelete = array_diff ($albumImages, $personImages);
 			foreach ($imagesToDelete as $image) {
 				$this->albumMapper->removeFile($albumId, $image);
 			}
 
 			/* Add new photos to the person's album */
-			$imagesToAdd = array_diff($personImages, $albumImages);
+			$imagesToAdd = array_diff ($personImages, $albumImages);
 			foreach ($imagesToAdd as $image) {
 				$this->albumMapper->addFile($albumId, $image, $userId);
 			}
@@ -157,7 +153,7 @@ class PhotoAlbums
 	/**
 	 * @return void
 	 */
-	public function syncUserPersonNamesCombinedAlbum(string $userId, array $personList, OutputInterface $output){
+	public function syncUserPersonNamesCombinedAlbum (string $userId, array $personList, OutputInterface $output) {
 		$modelId = $this->settingsService->getCurrentFaceModel();
 
 		/* Get current albums and persons to sync */
@@ -166,10 +162,10 @@ class PhotoAlbums
 		$personNames = array();
 		foreach ($personList as $person) {
 			$personName = $this->getPersonsNamesSelected($userId, $modelId, $person);
-			if ($personName[0] === $person) {
+			if ( $personName[0] === $person ){
 				array_push($personNames, $personName[0]);
 				$albumToCreateCombined .= $personName[0] . "+";
-			} else {
+			}else{
 				$output->writeln("Person name $person invalid - exit without creating combined album");
 				return;
 			}
@@ -179,7 +175,7 @@ class PhotoAlbums
 		$albumNames = $this->albumMapper->getAll($userId);
 
 		/* Create albums for new persons */
-		$albumsToCreate = array_diff($albumTodo, $albumNames);
+		$albumsToCreate = array_diff ($albumTodo, $albumNames);
 		$countAlbumsToCreate = count($albumsToCreate);
 		if ($countAlbumsToCreate === 1) {
 			$albumToCreate = $albumsToCreate[0];
@@ -199,19 +195,19 @@ class PhotoAlbums
 		$personImages = $this->getMultiPersonsImages($userId, $modelId, $personNames);
 
 		/* Delete old photos. Maybe corrections. */
-		$imagesToDelete = array_diff($albumImages, $personImages);
+		$imagesToDelete = array_diff ($albumImages, $personImages);
 		foreach ($imagesToDelete as $image) {
 			$this->albumMapper->removeFile($albumId, $image);
 		}
 
 		/* Add new photos to the person's album */
-		$imagesToAdd = array_diff($personImages, $albumImages);
+		$imagesToAdd = array_diff ($personImages, $albumImages);
 		foreach ($imagesToAdd as $image) {
 			$this->albumMapper->addFile($albumId, $image, $userId);
 		}
 	}
 
-	private function getPersonsNames(string $userId, int $modelId): array{
+	private function getPersonsNames(string $userId, int $modelId): array {
 		$distintNames = $this->personMapper->findDistinctNames($userId, $modelId);
 		$names = [];
 		foreach ($distintNames as $distintName) {
@@ -220,7 +216,7 @@ class PhotoAlbums
 		return $names;
 	}
 
-	private function getPersonsNamesSelected(string $userId, int $modelId, string $faceNames): array{
+	private function getPersonsNamesSelected(string $userId, int $modelId, string $faceNames): array {
 		$distintNames = $this->personMapper->findDistinctNamesSelected($userId, $modelId, $faceNames);
 		$names = [];
 		foreach ($distintNames as $distintName) {
@@ -229,7 +225,7 @@ class PhotoAlbums
 		return $names;
 	}
 
-	private function getPersonsImages(string $userId, int $modelId, string $personName): array{
+	private function getPersonsImages(string $userId, int $modelId, string $personName): array {
 		$personImages = $this->imageMapper->findFromPerson($userId, $modelId, $personName);
 		$images = [];
 		foreach ($personImages as $image) {
@@ -238,9 +234,9 @@ class PhotoAlbums
 		return array_unique($images);
 	}
 
-	private function getMultiPersonsImages(string $userId, int $modelId, array $personNames): array{
+	private function getMultiPersonsImages(string $userId, int $modelId, array $personNames): array {
 		$multiPersonImages = array();
-		foreach ($personNames as $personName) {
+		foreach ($personNames as $personName){
 			$personImages = $this->imageMapper->findFromPerson($userId, $modelId, $personName);
 			$images = [];
 			foreach ($personImages as $image) {
@@ -251,13 +247,14 @@ class PhotoAlbums
 
 		$noPersons = count($multiPersonImages);
 		$multiPersonMatchingImages = array();
-		for ($i = 1; $i < $noPersons; ++$i) {
+		for ($i = 1 ;  $i < $noPersons ; ++$i) {
 			if ($i === 1) {
-				$multiPersonMatchingImages = array_intersect($multiPersonImages[$i - 1], $multiPersonImages[$i]);
+				$multiPersonMatchingImages = array_intersect($multiPersonImages[$i-1], $multiPersonImages[$i]);
 			} else {
 				$multiPersonMatchingImages = array_intersect($multiPersonMatchingImages, $multiPersonImages[$i]);
 			}
 		}
 		return array_unique($multiPersonMatchingImages);
 	}
+
 }

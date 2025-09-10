@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @copyright Copyright (c) 2020, Matias De lellis <mati86dl@gmail.com>
  *
@@ -24,10 +23,9 @@
 
 namespace OCA\FaceRecognition\Helper;
 
-class FaceRect
-{
+class FaceRect {
 
-	public static function overlapPercent(array $rectA, array $rectB): float{
+	public static function overlapPercent(array $rectA, array $rectB): float {
 		// Firts face rect
 		$leftA = $rectA['left'];
 		$rightA = $rectA['right'];
@@ -62,4 +60,5 @@ class FaceRect
 		// Calculate and return the overlay percent.
 		return floatval($overlapArea / ($areaA + $areaB - $overlapArea));
 	}
+
 }

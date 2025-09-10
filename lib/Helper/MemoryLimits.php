@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @copyright Copyright (c) 2017,2020, Matias De lellis <mati86dl@gmail.com>
  * @copyright Copyright (c) 2018-2019, Branko Kokanovic <branko@kokanovic.org>
@@ -22,7 +21,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-
 namespace OCA\FaceRecognition\Helper;
 
 use OCA\FaceRecognition\Service\SettingsService;
@@ -30,8 +28,7 @@ use OCA\FaceRecognition\Service\SettingsService;
 /**
  * Tries to get total amount of memory on the host, given to PHP.
  */
-class MemoryLimits
-{
+class MemoryLimits {
 
 	/**
 	 * Tries to get memory available to PHP. This is highly speculative business.
@@ -43,7 +40,7 @@ class MemoryLimits
 	 * @return float Total memory available to PHP, in bytes, or negative if
 	 * we don't know any better
 	 */
-	public static function getAvailableMemory(): float{
+	public static function getAvailableMemory(): float {
 		// Try first to get from php.ini
 		$availableMemory = MemoryLimits::getPhpMemory();
 
@@ -66,7 +63,7 @@ class MemoryLimits
 	 * @return float Total memory available to PHP, in bytes, or negative if
 	 * we don't know any better or it is unlimited.
 	 */
-	public static function getPhpMemory(): float{
+	public static function getPhpMemory(): float {
 		// Get from php.ini
 		try {
 			$ini_value = ini_get('memory_limit');
@@ -82,7 +79,7 @@ class MemoryLimits
 	 * we don't know any better
 	 * Only linux is currently supported.
 	 */
-	public static function getSystemMemory(): float{
+	public static function getSystemMemory(): float {
 		if (php_uname("s") !== "Linux")
 			return -1;
 
@@ -99,8 +96,8 @@ class MemoryLimits
 	 * @return float Total memory available on linux system, in bytes, or
 	 * zero if we don't know any better.
 	 */
-	private static function getTotalMemoryLinux(): float{
-		$fh = fopen('/proc/meminfo', 'r');
+	private static function getTotalMemoryLinux(): float {
+		$fh = fopen('/proc/meminfo','r');
 		if ($fh === false) {
 			return 0;
 		}
@@ -111,6 +108,7 @@ class MemoryLimits
 				$mem = $pieces[1];
 				break;
 			}
+
 		}
 		fclose($fh);
 
@@ -125,7 +123,7 @@ class MemoryLimits
 	 *
 	 * @return int Value in integers (bytes)
 	 */
-	public static function returnBytes(string $val): int{
+	public static function returnBytes(string $val): int {
 		$val = trim($val);
 		if ($val === "") {
 			return 0;
@@ -136,8 +134,8 @@ class MemoryLimits
 			return 0;
 		}
 
-		$last = strtolower($val[strlen($val) - 1]);
-		switch ($last) {
+		$last = strtolower($val[strlen($val)-1]);
+		switch($last) {
 			case 'g':
 				$valInt *= 1024;
 				// Fallthrough on purpose
@@ -150,4 +148,5 @@ class MemoryLimits
 
 		return $valInt;
 	}
+
 }
