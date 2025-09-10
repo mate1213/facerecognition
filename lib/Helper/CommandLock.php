@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @copyright Copyright (c) 2017, Matias De lellis <mati86dl@gmail.com>
  * @copyright Copyright (c) 2018, Branko Kokanovic <branko@kokanovic.org>
@@ -22,31 +21,29 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-
 namespace OCA\FaceRecognition\Helper;
 
 /**
  * Tasks that do flock over file and acts as a global mutex,
  * so we don't run more than one background task in parallel.
  */
-class CommandLock
-{
+class CommandLock {
 
-	private static function LockFile(): string{
+	private static function LockFile(): string {
 		return sys_get_temp_dir() . '/' . 'nextcloud_face_recognition_lock.pid';
 	}
 
 	/**
 	 * @return string
 	 */
-	public static function IsLockedBy(): string{
+	public static function IsLockedBy(): string {
 		$fp = fopen(self::LockFile(), 'r');
 		$lockDescription = fread($fp, filesize(self::LockFile()));
 		//fclose($fp);
 		return $lockDescription;
 	}
 
-	public static function lock(string $lockDescription){
+	public static function lock(string $lockDescription) {
 		$fp = fopen(self::LockFile(), 'c');
 		if (!$fp || !flock($fp, LOCK_EX | LOCK_NB, $eWouldBlock) || $eWouldBlock) {
 			return null;
@@ -55,8 +52,9 @@ class CommandLock
 		return $fp;
 	}
 
-	public static function unlock($lockFile): void{
+	public static function unlock($lockFile): void {
 		flock($lockFile, LOCK_UN);
 		unlink(self::LockFile());
 	}
+	
 }
