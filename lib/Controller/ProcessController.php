@@ -46,8 +46,7 @@ class ProcessController extends Controller {
 	                            IRequest        $request,
 	                            ImageMapper     $imageMapper,
 	                            SettingsService $settingsService,
-	                            $UserId)
-	{
+	                            $UserId){
 		parent::__construct($AppName, $request);
 
 		$this->imageMapper     = $imageMapper;

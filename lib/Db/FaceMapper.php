@@ -36,13 +36,11 @@ use OCP\DB\QueryBuilder\IFunctionBuilder;
 class FaceMapper extends QBMapper
 {
 
-	public function __construct(IDBConnection $db)
-	{
+	public function __construct(IDBConnection $db){
 		parent::__construct($db, 'facerecog_faces', '\OCA\FaceRecognition\Db\Face');
 	}
 
-	public function find(int $faceId, string $userId): ?Face
-	{
+	public function find(int $faceId, string $userId): ?Face{
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('f.id', 'cf.cluster_id as person', 'f.image_id as image', 'x', 'y', 'width', 'height', 'landmarks', 'descriptor', 'confidence', 'creation_time', $qb->createFunction("COALESCE(cf.is_groupable, 'true') as is_groupable"))
 			->from($this->getTableName(), 'f')
@@ -58,8 +56,7 @@ class FaceMapper extends QBMapper
 		}
 	}
 
-	public function findDescriptorsBathed(array $faceIds): array
-	{
+	public function findDescriptorsBathed(array $faceIds): array{
 		$descriptors = [];
 		for ($i = 0; $i < count($faceIds); $i= $i+1000)
 		{
@@ -92,8 +89,7 @@ class FaceMapper extends QBMapper
 	 *
 	 * @return Face[]
 	 */
-	public function findFromFile(string $userId, int $modelId, int $fileId): array
-	{
+	public function findFromFile(string $userId, int $modelId, int $fileId): array{
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('f.id', 'cf.cluster_id as person', 'f.image_id as image', 'x', 'y', 'width', 'height', 'landmarks', 'descriptor', 'confidence', 'creation_time', $qb->createFunction("COALESCE(cf.is_groupable, 'true') as is_groupable"))
 			->from($this->getTableName(), 'f')
@@ -122,8 +118,7 @@ class FaceMapper extends QBMapper
 	 * @param bool $onlyWithoutPersons True if we need to count only faces which are not having person associated for it.
 	 * If false, all faces are counted.
 	 */
-	public function countFaces(string $userId, int $model, bool $onlyWithoutPersons = false): int
-	{
+	public function countFaces(string $userId, int $model, bool $onlyWithoutPersons = false): int{
 		$qb = $this->db->getQueryBuilder();
 		$qb = $qb
 			->select($qb->createFunction('COUNT(f.id)'))
@@ -155,8 +150,7 @@ class FaceMapper extends QBMapper
 	 * @return Face Oldest face, if any is found
 	 * @throws DoesNotExistException If there is no faces in database without person for a given user and model.
 	 */
-	public function getOldestCreatedFaceWithoutPerson(string $userId, int $model): ?Face
-	{
+	public function getOldestCreatedFaceWithoutPerson(string $userId, int $model): ?Face{
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('f.id', 'cf.cluster_id as person', 'f.image_id as image', 'x', 'y', 'width', 'height', 'landmarks', 'descriptor', 'confidence', 'creation_time', $qb->createFunction("COALESCE(cf.is_groupable, 'true') as is_groupable"))
 			->from($this->getTableName(), 'f')
@@ -184,8 +178,7 @@ class FaceMapper extends QBMapper
 	 * @param int $model Model ID
 	 * @return Face[]
 	 */
-	public function getFaces(string $userId, int $model): array
-	{
+	public function getFaces(string $userId, int $model): array{
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('f.id', 'cf.cluster_id as person', 'f.image_id as image', 'x', 'y', 'width', 'height', 'landmarks', 'descriptor', 'confidence', 'creation_time', $qb->createFunction("COALESCE(cf.is_groupable, 'true') as is_groupable"))
 			->from($this->getTableName(), 'f')
@@ -218,8 +211,7 @@ class FaceMapper extends QBMapper
 	 *
 	 * @return Face[]
 	 */
-	public function getGroupableFaces(string $userId, int $model, int $minSize, float $minConfidence): array
-	{
+	public function getGroupableFaces(string $userId, int $model, int $minSize, float $minConfidence): array{
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('f.id', 'cf.cluster_id as person', 'f.image_id as image', 'x', 'y', 'width', 'height', 'landmarks', 'descriptor', 'confidence', 'creation_time', $qb->createFunction("COALESCE(cf.is_groupable, 'true') as is_groupable"))
 			->from($this->getTableName(), 'f')
@@ -258,8 +250,7 @@ class FaceMapper extends QBMapper
 	 *
 	 * @return Face[]
 	 */
-	public function getNonGroupableFaces(string $userId, int $model, int $minSize, float $minConfidence): array
-	{
+	public function getNonGroupableFaces(string $userId, int $model, int $minSize, float $minConfidence): array{
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('f.id', 'cf.cluster_id as person', 'f.image_id as image', 'x', 'y', 'width', 'height', 'landmarks', 'descriptor', 'confidence', 'creation_time', $qb->createFunction("COALESCE(cf.is_groupable, 'true') as is_groupable"))
 			->from($this->getTableName(), 'f')
@@ -300,8 +291,7 @@ class FaceMapper extends QBMapper
 	 *
 	 * @return Face[]
 	 */
-	public function findFromCluster(string $userId, int $clusterId, int $model, ?int $limit = null, $offset = null): array
-	{
+	public function findFromCluster(string $userId, int $clusterId, int $model, ?int $limit = null, $offset = null): array{
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('f.id', 'cf.cluster_id as person', 'image_id as image', 'x', 'y', 'width', 'height', 'landmarks', 'descriptor', 'confidence', 'creation_time')
 			->from($this->getTableName(), 'f')
@@ -322,8 +312,7 @@ class FaceMapper extends QBMapper
 	/**
 	 * @param int|null $limit
 	 */
-	public function findFromPerson(string $userId, string $personId, int $model, ?int $limit = null, $offset = null): array
-	{
+	public function findFromPerson(string $userId, string $personId, int $model, ?int $limit = null, $offset = null): array{
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('f.id', 'cf.cluster_id as person', 'image_id as image', 'x', 'y', 'width', 'height', 'landmarks', 'descriptor', 'confidence', 'creation_time')
 			->from($this->getTableName(), 'f')
@@ -351,8 +340,7 @@ class FaceMapper extends QBMapper
 	 *
 	 * @param int $imageId Image for which to find all faces for
 	 */
-	public function findByImage(int $imageId): array
-	{
+	public function findByImage(int $imageId): array{
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('f.id', new Literal('NULL as person'), 'image_id as image', 'x', 'y', 'width', 'height', 'landmarks', 'descriptor', 'confidence', 'creation_time')
 			->from($this->getTableName(), 'f')
@@ -369,8 +357,7 @@ class FaceMapper extends QBMapper
 	 *
 	 * @return void
 	 */
-	public function removeFromImage(int $imageId, ?IDBConnection $db = null): void
-	{
+	public function removeFromImage(int $imageId, ?IDBConnection $db = null): void{
 		if ($db !== null) {
 			$qb = $db->getQueryBuilder();
 		} else {
@@ -390,8 +377,7 @@ class FaceMapper extends QBMapper
 	 *
 	 * @return void
 	 */
-	public function deleteUserModel(string $userId, $modelId): void
-	{
+	public function deleteUserModel(string $userId, $modelId): void{
 		$sub = $this->db->getQueryBuilder();
 		$sub->select(new Literal('1'));
 		$sub->from('facerecog_images', 'i')
@@ -415,8 +401,7 @@ class FaceMapper extends QBMapper
 	 *
 	 * @return void
 	 */
-	public function unsetPersonsRelationForUser(string $userId, int $model): void
-	{
+	public function unsetPersonsRelationForUser(string $userId, int $model): void{
 		$sub = $this->db->getQueryBuilder();
 		$sub->select('cf.cluster_id')
 			->from('facerecog_cluster_faces', 'cf')
@@ -444,8 +429,7 @@ class FaceMapper extends QBMapper
 	 *
 	 * @return Face
 	 */
-	public function insertFace(Face $face, ?IDBConnection $db = null): Face
-	{
+	public function insertFace(Face $face, ?IDBConnection $db = null): Face{
 		if ($db !== null) {
 			$qb = $db->getQueryBuilder();
 		} else {

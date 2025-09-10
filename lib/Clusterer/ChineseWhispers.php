@@ -38,8 +38,7 @@ class ChineseWhispers {
 	/**
 	 * Cluster the dataset by assigning a label to each sample.from the edges
 	 */
-	static public function predict(array &$edges, array &$labels, int $num_iterations = 100)
-	{
+	static public function predict(array &$edges, array &$labels, int $num_iterations = 100){
 		// To improve the stability of the clusters, we must
 		// iterate the neighbors in a pseudo-random way.
 		mt_srand(2023);
@@ -146,8 +145,7 @@ class ChineseWhispers {
 		}
 	}
 
-	static function convert_unordered_to_ordered (&$edges, &$out_edges)
-	{
+	static function convert_unordered_to_ordered (&$edges, &$out_edges){
 		$out_edges = [];
 		for ($i = 0; $i < count($edges); ++$i)
 		{

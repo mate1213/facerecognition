@@ -83,8 +83,7 @@ class Person extends Entity implements JsonSerializable
 	 */
 	protected $linkedUser;
 
-	public function __construct()
-	{
+	public function __construct(){
 		$this->addType('id', Types::INTEGER);
 		$this->addType('user', Types::STRING);
 		$this->addType('isVisible', Types::BOOLEAN);
@@ -93,8 +92,7 @@ class Person extends Entity implements JsonSerializable
 		$this->addType('linkedUser', Types::STRING);
 	}
 
-	public function jsonSerialize() : mixed
-	{
+	public function jsonSerialize() : mixed{
 		return [
 			'id' => $this->id,
 			'user' => $this->user,
@@ -106,8 +104,7 @@ class Person extends Entity implements JsonSerializable
 		];
 	}
 
-	public function setIsVisible($isVisible): void
-	{
+	public function setIsVisible($isVisible): void{
 		if (is_bool($isVisible)) {
 			$this->isVisible = $isVisible;
 		} else {
@@ -116,8 +113,7 @@ class Person extends Entity implements JsonSerializable
 		$this->markFieldUpdated('isVisible');
 	}
 
-	public function setIsValid($isValid): void
-	{
+	public function setIsValid($isValid): void{
 		if (is_bool($isValid)) {
 			$this->isValid = $isValid;
 		} else {

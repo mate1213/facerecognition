@@ -72,8 +72,7 @@ class PersonController extends Controller {
 	                            PersonMapper    $personmapper,
 	                            SettingsService $settingsService,
 	                            UrlService      $urlService,
-	                            $UserId)
-	{
+	                            $UserId){
 		parent::__construct($AppName, $request);
 
 		$this->faceMapper      = $faceMapper;

@@ -70,8 +70,7 @@ class PhotoAlbums
 	/**
 	 * @return void
 	 */
-	public function syncUser(string $userId)
-	{
+	public function syncUser(string $userId){
 		$modelId = $this->settingsService->getCurrentFaceModel();
 
 		/* Get current albums and persons to sync */
@@ -116,8 +115,7 @@ class PhotoAlbums
 	/**
 	 * @return void
 	 */
-	public function syncUserPersonNamesSelected(string $userId, string $personNames, OutputInterface $output)
-	{
+	public function syncUserPersonNamesSelected(string $userId, string $personNames, OutputInterface $output){
 		$modelId = $this->settingsService->getCurrentFaceModel();
 
 		/* Get current albums and persons to sync */
@@ -159,8 +157,7 @@ class PhotoAlbums
 	/**
 	 * @return void
 	 */
-	public function syncUserPersonNamesCombinedAlbum(string $userId, array $personList, OutputInterface $output)
-	{
+	public function syncUserPersonNamesCombinedAlbum(string $userId, array $personList, OutputInterface $output){
 		$modelId = $this->settingsService->getCurrentFaceModel();
 
 		/* Get current albums and persons to sync */
@@ -214,8 +211,7 @@ class PhotoAlbums
 		}
 	}
 
-	private function getPersonsNames(string $userId, int $modelId): array
-	{
+	private function getPersonsNames(string $userId, int $modelId): array{
 		$distintNames = $this->personMapper->findDistinctNames($userId, $modelId);
 		$names = [];
 		foreach ($distintNames as $distintName) {
@@ -224,8 +220,7 @@ class PhotoAlbums
 		return $names;
 	}
 
-	private function getPersonsNamesSelected(string $userId, int $modelId, string $faceNames): array
-	{
+	private function getPersonsNamesSelected(string $userId, int $modelId, string $faceNames): array{
 		$distintNames = $this->personMapper->findDistinctNamesSelected($userId, $modelId, $faceNames);
 		$names = [];
 		foreach ($distintNames as $distintName) {
@@ -234,8 +229,7 @@ class PhotoAlbums
 		return $names;
 	}
 
-	private function getPersonsImages(string $userId, int $modelId, string $personName): array
-	{
+	private function getPersonsImages(string $userId, int $modelId, string $personName): array{
 		$personImages = $this->imageMapper->findFromPerson($userId, $modelId, $personName);
 		$images = [];
 		foreach ($personImages as $image) {
@@ -244,8 +238,7 @@ class PhotoAlbums
 		return array_unique($images);
 	}
 
-	private function getMultiPersonsImages(string $userId, int $modelId, array $personNames): array
-	{
+	private function getMultiPersonsImages(string $userId, int $modelId, array $personNames): array{
 		$multiPersonImages = array();
 		foreach ($personNames as $personName) {
 			$personImages = $this->imageMapper->findFromPerson($userId, $modelId, $personName);

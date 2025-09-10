@@ -53,8 +53,7 @@ class Admin implements ISettings {
 	public function __construct(ModelManager    $modelManager,
 	                            SettingsService $settingsService,
 	                            MemoryLimits    $memoryLimits,
-	                            IL10N           $l10n)
-	{
+	                            IL10N           $l10n){
 		$this->modelManager    = $modelManager;
 		$this->settingsService = $settingsService;
 		$this->memoryLimits    = $memoryLimits;

@@ -32,8 +32,7 @@ class DownloadService {
 	/** @var ITempManager */
 	private $tempManager;
 
-	public function __construct(ITempManager $tempManager)
-	{
+	public function __construct(ITempManager $tempManager){
 		$this->tempManager = $tempManager;
 	}
 

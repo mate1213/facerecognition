@@ -32,24 +32,21 @@ namespace OCA\FaceRecognition\Helper;
 class CommandLock
 {
 
-	private static function LockFile(): string
-	{
+	private static function LockFile(): string{
 		return sys_get_temp_dir() . '/' . 'nextcloud_face_recognition_lock.pid';
 	}
 
 	/**
 	 * @return string
 	 */
-	public static function IsLockedBy(): string
-	{
+	public static function IsLockedBy(): string{
 		$fp = fopen(self::LockFile(), 'r');
 		$lockDescription = fread($fp, filesize(self::LockFile()));
 		//fclose($fp);
 		return $lockDescription;
 	}
 
-	public static function lock(string $lockDescription)
-	{
+	public static function lock(string $lockDescription){
 		$fp = fopen(self::LockFile(), 'c');
 		if (!$fp || !flock($fp, LOCK_EX | LOCK_NB, $eWouldBlock) || $eWouldBlock) {
 			return null;
@@ -58,8 +55,7 @@ class CommandLock
 		return $fp;
 	}
 
-	public static function unlock($lockFile): void
-	{
+	public static function unlock($lockFile): void{
 		flock($lockFile, LOCK_UN);
 		unlink(self::LockFile());
 	}

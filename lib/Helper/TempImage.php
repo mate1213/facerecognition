@@ -84,8 +84,7 @@ class TempImage extends Image
 	 *
 	 * @return string
 	 */
-	public function getTempPath(): string
-	{
+	public function getTempPath(): string{
 		return $this->tempPath;
 	}
 
@@ -94,8 +93,7 @@ class TempImage extends Image
 	 *
 	 * @return float
 	 */
-	public function getRatio(): float
-	{
+	public function getRatio(): float{
 		return $this->ratio;
 	}
 
@@ -103,16 +101,14 @@ class TempImage extends Image
 	 *
 	 * @return bool
 	 */
-	public function getSkipped(): bool
-	{
+	public function getSkipped(): bool{
 		return $this->skipped;
 	}
 
 	/**
 	 * Clean temporary files
 	 */
-	public function clean()
-	{
+	public function clean(){
 		$this->tempManager->clean();
 	}
 
@@ -120,8 +116,7 @@ class TempImage extends Image
 	 * Obtain a temporary image according to the imposed restrictions.
 	 *
 	 */
-	private function prepareImage()
-	{
+	private function prepareImage(){
 
 		if ($this->imaginary->isEnabled()) {
 			$fileInfo = $this->imaginary->getInfo($this->imagePath);
@@ -175,8 +170,7 @@ class TempImage extends Image
 	 *
 	 * @return float Ratio of resize. 1 if there was no resize
 	 */
-	private function resizeOCImage(): float
-	{
+	private function resizeOCImage(): float{
 		$widthOrig = imagesx($this->resource());
 		$heightOrig = imagesy($this->resource());
 
@@ -203,8 +197,7 @@ class TempImage extends Image
 	 *
 	 * @return float Ratio of resize. 1 if there was no resize
 	 */
-	private function getResizeRatio($widthOrig, $heightOrig): float
-	{
+	private function getResizeRatio($widthOrig, $heightOrig): float{
 		$areaRatio = $this->maxImageArea / ($widthOrig * $heightOrig);
 		return sqrt($areaRatio);
 	}

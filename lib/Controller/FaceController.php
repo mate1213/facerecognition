@@ -66,8 +66,7 @@ class FaceController extends Controller {
 	                            FaceMapper      $faceMapper,
 	                            ImageMapper     $imageMapper,
 	                            SettingsService $settingsService,
-	                            $UserId)
-	{
+	                            $UserId){
 		parent::__construct($AppName, $request);
 
 		$this->rootFolder      = $rootFolder;

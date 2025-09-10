@@ -47,8 +47,7 @@ class EnumerateImagesMissingFacesTask extends FaceRecognitionBackgroundTask {
 	 * @param ImageMapper $imageMapper Image mapper
 	 */
 	public function __construct(SettingsService $settingsService,
-	                            ImageMapper     $imageMapper)
-	{
+	                            ImageMapper     $imageMapper){
 		parent::__construct();
 		$this->settingsService = $settingsService;
 		$this->imageMapper     = $imageMapper;

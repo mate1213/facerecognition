@@ -62,8 +62,7 @@ class ExternalModel implements IModel {
 	 *
 	 * @param SettingsService $settingsService
 	 */
-	public function __construct(SettingsService $settingsService)
-	{
+	public function __construct(SettingsService $settingsService){
 		$this->settingsService = $settingsService;
 	}
 

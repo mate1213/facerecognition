@@ -51,8 +51,7 @@ class FileController extends Controller {
 	                            FileService     $fileService,
 	                            SettingsService $settingsService,
 	                            UrlService      $urlService,
-	                            $UserId)
-	{
+	                            $UserId){
 		parent::__construct($AppName, $request);
 
 		$this->imageMapper     = $imageMapper;

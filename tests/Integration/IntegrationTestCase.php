@@ -63,7 +63,7 @@ abstract class IntegrationTestCase extends TestCase {
 		// Create user on which we will upload images and do testing
 		$userManager = OC::$server->getUserManager();
 		$username = 'testuser' . rand(0, PHP_INT_MAX);
-		$this->user = $userManager->createUser($username, 'password');
+		$this->user = $userManager->createUser($username, 'YVvV4huLVUNR#UgJC*bBGXzHR4uW24$kB#dRTX*9');
 		$this->loginAsUser($username);
 		// Get container to get classes using DI
 		$app = new App('facerecognition');

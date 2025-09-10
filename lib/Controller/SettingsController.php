@@ -67,8 +67,7 @@ class SettingsController extends Controller {
 	                             SettingsService $settingsService,
 	                             IL10N           $l10n,
 	                             IUserManager    $userManager,
-	                             $userId)
-	{
+	                             $userId){
 		parent::__construct($appName, $request);
 
 		$this->appName         = $appName;

@@ -108,8 +108,7 @@ class Image extends Entity implements JsonSerializable
 	 */
 	protected $processingDuration;
 
-	public function __construct()
-	{
+	public function __construct(){
 		$this->addType('id', Types::INTEGER);
 		$this->addType('user', Types::STRING);
 		$this->addType('file', Types::INTEGER);
@@ -118,8 +117,7 @@ class Image extends Entity implements JsonSerializable
 		$this->addType('lastProcessedTime', Types::DATETIME);
 	}
 
-	public function jsonSerialize() : mixed
-	{
+	public function jsonSerialize() : mixed{
 		return [
 			'id' => $this->id,
 			'user' => $this->user,
@@ -132,8 +130,7 @@ class Image extends Entity implements JsonSerializable
 		];
 	}
 
-	public function setIsProcessed($isProcessed): void
-	{
+	public function setIsProcessed($isProcessed): void{
 		if (is_bool($isProcessed)) {
 			$this->isProcessed = $isProcessed;
 		} else {

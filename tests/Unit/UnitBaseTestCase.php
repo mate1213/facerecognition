@@ -37,8 +37,7 @@ abstract class UnitBaseTestCase extends TestCase
 	/**
 	 * {@inheritDoc}
 	 */
-	public function setUp(): void
-	{
+	public function setUp(): void{
 		parent::setUp();
 		$this->dbConnection = OC::$server->getDatabaseConnection();
 		$this->dbConnection->beginTransaction();
@@ -65,8 +64,7 @@ abstract class UnitBaseTestCase extends TestCase
 		}
 	}
 
-	public function tearDown(): void
-	{
+	public function tearDown(): void{
 		if ($this->dbConnection != null) {
 			$this->dbConnection->rollBack();
 			return;

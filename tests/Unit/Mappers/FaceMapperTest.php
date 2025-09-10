@@ -48,8 +48,7 @@ class FaceMapperTest extends UnitBaseTestCase
 	/**
 	 * {@inheritDoc}
 	 */
-	public function setUp(): void
-	{
+	public function setUp(): void{
 		parent::setUp();
 		$this->faceMapper = new FaceMapper($this->dbConnection);
 
@@ -60,8 +59,7 @@ class FaceMapperTest extends UnitBaseTestCase
 		$this->faceCountQuery->select($this->faceCountQuery->createFunction('COUNT(id) as count'))->from('facerecog_faces');
 	}
 
-	public function test_FindById_existingFace_connectedCluster(): void
-	{
+	public function test_FindById_existingFace_connectedCluster(): void{
 		//Act
 		$face = $this->faceMapper->find(1, "user1"); //face id 1 belongs to user1
 
@@ -82,8 +80,7 @@ class FaceMapperTest extends UnitBaseTestCase
 		$this->assertEquals(40, $face->getHeight());
 	}
 
-	public function test_FindById_existingFace_NOTconnectedCluster(): void
-	{
+	public function test_FindById_existingFace_NOTconnectedCluster(): void{
 		//Act
 		$face = $this->faceMapper->find(9, "user1"); //face id 1 belongs to user1
 
@@ -104,8 +101,7 @@ class FaceMapperTest extends UnitBaseTestCase
 		$this->assertEquals(59, $face->getHeight());
 	}
 
-	public function test_FindById_existingFace_connectedToMultipleCluster(): void
-	{
+	public function test_FindById_existingFace_connectedToMultipleCluster(): void{
 		//Act
 		$face = $this->faceMapper->find(100, "user1"); //face id 1 belongs to user1
 
@@ -126,16 +122,14 @@ class FaceMapperTest extends UnitBaseTestCase
 		$this->assertEquals(40, $face->getHeight());
 	}
 
-	public function test_FindById_nonExisting(): void
-	{
+	public function test_FindById_nonExisting(): void{
 		//Act
 		$face = $this->faceMapper->find(1000, "user1");
 		//Assert
 		$this->assertNull($face);
 	}
 
-	public function test_FindDescriptorsBathed_multipleEntry(): void
-	{
+	public function test_FindDescriptorsBathed_multipleEntry(): void{
 		//Act
 		$descriptors = $this->faceMapper->findDescriptorsBathed([1, 2]);
 
@@ -157,8 +151,7 @@ class FaceMapperTest extends UnitBaseTestCase
 
 	
 
-	public function test_FindDescriptorsBathed_moreThan1000Entry(): void
-	{
+	public function test_FindDescriptorsBathed_moreThan1000Entry(): void{
 		$sql = file_get_contents("tests/DatabaseInserts/31_1005FacesInsert.sql");
 		$this->dbConnection->executeStatement($sql);
 		$faceIds = [];
@@ -195,8 +188,7 @@ class FaceMapperTest extends UnitBaseTestCase
 		}
 	}
 
-	public function test_FindDescriptorsBathed_singleEntry(): void
-	{
+	public function test_FindDescriptorsBathed_singleEntry(): void{
 		//Act
 		$descriptors = $this->faceMapper->findDescriptorsBathed([1]);
 
@@ -212,8 +204,7 @@ class FaceMapperTest extends UnitBaseTestCase
 		$this->assertEquals(1, $firstDescriptor['id']);
 	}
 
-	public function test_FindDescriptorsBathed_emptyarray(): void
-	{
+	public function test_FindDescriptorsBathed_emptyarray(): void{
 		//Act
 		$descriptors = $this->faceMapper->findDescriptorsBathed([]);
 
@@ -224,8 +215,7 @@ class FaceMapperTest extends UnitBaseTestCase
 	}
 
 	#[DataProviderExternal(FaceDataProvider::class, 'findFromFile_Provider')]
-	public function test_FindFromFile($fileId, $expectedCount): void
-	{
+	public function test_FindFromFile($fileId, $expectedCount): void{
 		//Act
 		$faces = $this->faceMapper->findFromFile("user1", 1, $fileId);
 
@@ -236,8 +226,7 @@ class FaceMapperTest extends UnitBaseTestCase
 		$this->assertCount($expectedCount, $faces);
 	}
 
-	public function test_CountFaces_ForUser_OnlyWithoutPerson(): void
-	{
+	public function test_CountFaces_ForUser_OnlyWithoutPerson(): void{
 		//Act
 		$facesCount = $this->faceMapper->countFaces("user2", 2, true);
 
@@ -246,8 +235,7 @@ class FaceMapperTest extends UnitBaseTestCase
 		$this->assertEquals(1, $facesCount);
 	}
 
-	public function test_CountFaces_ForUser(): void
-	{
+	public function test_CountFaces_ForUser(): void{
 		//Act
 		$facesCount = $this->faceMapper->countFaces("user1", 1, false);
 
@@ -257,8 +245,7 @@ class FaceMapperTest extends UnitBaseTestCase
 	}
 
 	#[DataProviderExternal(FaceDataProvider::class, 'getOldestCreatedFaceWithoutPerson_ForUser_ByModel_Provider')]
-	public function test_GetOldestCreatedFaceWithoutPerson_ForUser_ByModel(string $user, int $model, bool $isFaceNull): void
-	{
+	public function test_GetOldestCreatedFaceWithoutPerson_ForUser_ByModel(string $user, int $model, bool $isFaceNull): void{
 		//Act
 		$face = $this->faceMapper->getOldestCreatedFaceWithoutPerson($user, $model);
 
@@ -284,8 +271,7 @@ class FaceMapperTest extends UnitBaseTestCase
 	}
 
 	#[DataProviderExternal(FaceDataProvider::class, 'getFaces_ForUser_ByModel_Provider')]
-	public function test_GetFaces_ForUser_ByModel(string $user, int $model, int $expectedCount): void
-	{
+	public function test_GetFaces_ForUser_ByModel(string $user, int $model, int $expectedCount): void{
 		//Act
 		$faces = $this->faceMapper->getFaces($user, $model);
 
@@ -297,8 +283,7 @@ class FaceMapperTest extends UnitBaseTestCase
 	}
 
 	#[DataProviderExternal(FaceDataProvider::class, 'getGroupableFaces_ForUser_ByModel_MinSize_MinConfidence_Provider')]
-	public function test_GetGroupableFaces_ForUser_ByModel_MinSize_MinConfidence(int $minSize, float $minConfidence, int $expectedCount): void
-	{
+	public function test_GetGroupableFaces_ForUser_ByModel_MinSize_MinConfidence(int $minSize, float $minConfidence, int $expectedCount): void{
 		//Act
 		$faces = $this->faceMapper->getGroupableFaces("user1", 1, $minSize, $minConfidence);
 
@@ -310,8 +295,7 @@ class FaceMapperTest extends UnitBaseTestCase
 	}
 
 	#[DataProviderExternal(FaceDataProvider::class, 'getNonGroupableFaces_ForUser_ByModel_MinSize_MinConfidence_Provider')]
-	public function test_GetNonGroupableFaces_ForUser_ByModel_MinSize_MinConfidence(int $minSize, float $minConfidence, int $expectedCount): void
-	{
+	public function test_GetNonGroupableFaces_ForUser_ByModel_MinSize_MinConfidence(int $minSize, float $minConfidence, int $expectedCount): void{
 		//Act
 		$faces = $this->faceMapper->getNonGroupableFaces("user1", 1, $minSize, $minConfidence);
 
@@ -323,8 +307,7 @@ class FaceMapperTest extends UnitBaseTestCase
 	}
 
 	#[DataProviderExternal(FaceDataProvider::class, 'findFromCluster_ForUser_ByClusterId_ByModel_Limit_Offset_Provider')]
-	public function test_FindFromCluster_ForUser_ByClusterId_ByModel_Limit_Offset(int $clusterId, ?int $limit, ?int $offset, int $expectedCount): void
-	{
+	public function test_FindFromCluster_ForUser_ByClusterId_ByModel_Limit_Offset(int $clusterId, ?int $limit, ?int $offset, int $expectedCount): void{
 		//Act
 		$faces = $this->faceMapper->findFromCluster("user1", $clusterId, 1, $limit, $offset);
 
@@ -336,8 +319,7 @@ class FaceMapperTest extends UnitBaseTestCase
 	}
 
 	#[DataProviderExternal(FaceDataProvider::class, 'findFromPerson_ForUser_ByPersonName_ByModel_Limit_Offset_Provider')]
-	public function test_FindFromPerson_ForUser_ByClusterId_ByModel_Limit_Offset(string $personName, ?int $limit, ?int $offset, int $expectedCount): void
-	{
+	public function test_FindFromPerson_ForUser_ByClusterId_ByModel_Limit_Offset(string $personName, ?int $limit, ?int $offset, int $expectedCount): void{
 		//Act
 		$faces = $this->faceMapper->findFromPerson("user1", $personName, 1, $limit, $offset);
 
@@ -349,8 +331,7 @@ class FaceMapperTest extends UnitBaseTestCase
 	}
 
 	#[DataProviderExternal(FaceDataProvider::class, 'findByImage_Provider')]
-	public function test_findByImage(int $imageId, int $expectedCount): void
-	{
+	public function test_findByImage(int $imageId, int $expectedCount): void{
 		//Act
 		$faces = $this->faceMapper->findByImage($imageId);
 
@@ -362,8 +343,7 @@ class FaceMapperTest extends UnitBaseTestCase
 	}
 
 	#[DataProviderExternal(FaceDataProvider::class, 'removeFromImage_Provider')]
-	public function test_RemoveFromImage(int $imageId, int $expectedCount): void
-	{
+	public function test_RemoveFromImage(int $imageId, int $expectedCount): void{
 		//Act
 		$this->faceMapper->removeFromImage($imageId);
 
@@ -377,8 +357,7 @@ class FaceMapperTest extends UnitBaseTestCase
 	}
 
 	#[DataProviderExternal(FaceDataProvider::class, 'removeFromImage_Provider')]
-	public function test_RemoveFromImage_WithDbConnection(int $imageId, int $expectedCount): void
-	{
+	public function test_RemoveFromImage_WithDbConnection(int $imageId, int $expectedCount): void{
 		//Act
 		$this->faceMapper->removeFromImage($imageId, $this->dbConnection);
 
@@ -391,8 +370,7 @@ class FaceMapperTest extends UnitBaseTestCase
 		$this->assertEquals($expectedCount, (int)$row['count']);
 	}
 
-	public function test_DeleteUserModel(): void
-	{
+	public function test_DeleteUserModel(): void{
 		//Act
 		$this->faceMapper->deleteUserModel('user2', 2);
 
@@ -402,8 +380,7 @@ class FaceMapperTest extends UnitBaseTestCase
 	}
 
 	#[DataProviderExternal(FaceDataProvider::class, 'unsetPersonsRelationForUser_Provider')]
-	public function test_UnsetPersonsRelationForUser(string $user, int $model, int $expectedCount): void
-	{
+	public function test_UnsetPersonsRelationForUser(string $user, int $model, int $expectedCount): void{
 		//Act
 		$this->faceMapper->unsetPersonsRelationForUser($user, $model);
 
@@ -412,8 +389,7 @@ class FaceMapperTest extends UnitBaseTestCase
 		$this->assertFaceClusterConnectionCount($expectedCount);
 	}
 
-	public function test_UnsetPersonsRelationForUser_with1000Faces(): void
-	{
+	public function test_UnsetPersonsRelationForUser_with1000Faces(): void{
 		$sql = file_get_contents("tests/DatabaseInserts/31_1005FacesInsert.sql");
 		$this->dbConnection->executeStatement($sql);
 		$sql = file_get_contents("tests/DatabaseInserts/51_1005FaceClusterConnection.sql");
@@ -428,8 +404,7 @@ class FaceMapperTest extends UnitBaseTestCase
 	}
 
 	#[DataProviderExternal(FaceDataProvider::class, 'insertFace_Provider')]
-	public function test_InsertFace(Face $faceToInsert, int $expectedFaceCount, int $expectedConnectionCount): void
-	{
+	public function test_InsertFace(Face $faceToInsert, int $expectedFaceCount, int $expectedConnectionCount): void{
 
 		//Act
 		$this->faceMapper->insertFace($faceToInsert);
@@ -440,8 +415,7 @@ class FaceMapperTest extends UnitBaseTestCase
 	}
 
 	#[DataProviderExternal(FaceDataProvider::class, 'insertFace_Provider')]
-	public function test_InsertFace_withDbContext(Face $faceToInsert, int $expectedFaceCount, int $expectedConnectionCount): void
-	{
+	public function test_InsertFace_withDbContext(Face $faceToInsert, int $expectedFaceCount, int $expectedConnectionCount): void{
 		//Act
 		$this->faceMapper->insertFace($faceToInsert, $this->dbConnection);
 
@@ -450,8 +424,7 @@ class FaceMapperTest extends UnitBaseTestCase
 		$this->assertFaceClusterConnectionCount($expectedConnectionCount);
 	}
 
-	public function tearDown(): void
-	{
+	public function tearDown(): void{
 		$this->faceMapper = null;
 		$this->clusterFaceCountQuery = null;
 		$this->faceCountQuery = null;
@@ -459,15 +432,13 @@ class FaceMapperTest extends UnitBaseTestCase
 		parent::tearDown();
 	}
 
-	private function assertFaceCount($expectedCount)
-	{
+	private function assertFaceCount($expectedCount){
 		$row  = $this->faceCountQuery->executeQuery()->fetch();
 		$this->assertNotFalse($row);
 		$this->assertEquals($expectedCount, (int)$row['count']);
 	}
 
-	private function assertFaceClusterConnectionCount($expectedCount)
-	{
+	private function assertFaceClusterConnectionCount($expectedCount){
 		$row  = $this->clusterFaceCountQuery->executeQuery()->fetch();
 		$this->assertNotFalse($row);
 		$this->assertEquals($expectedCount, (int)$row['count']);
@@ -476,8 +447,7 @@ class FaceMapperTest extends UnitBaseTestCase
 
 class FaceDataProvider
 {
-	public static function findFromFile_Provider(): array
-	{
+	public static function findFromFile_Provider(): array{
 		return [
 			[101, 1],
 			[102, 0], //file not for this user
@@ -487,8 +457,7 @@ class FaceDataProvider
 		];
 	}
 
-	public static function getFaces_ForUser_ByModel_Provider(): array
-	{
+	public static function getFaces_ForUser_ByModel_Provider(): array{
 		return [
 			["user1", 1, 10],
 			["user1", 2, 0],
@@ -499,8 +468,7 @@ class FaceDataProvider
 			["user3", 6, 0]  //non existing user and model
 		];
 	}
-	public static function getOldestCreatedFaceWithoutPerson_ForUser_ByModel_Provider(): array
-	{
+	public static function getOldestCreatedFaceWithoutPerson_ForUser_ByModel_Provider(): array{
 		return [
 			["user1", 1, true],
 			["user1", 2, true],
@@ -509,8 +477,7 @@ class FaceDataProvider
 		];
 	}
 
-	public static function getGroupableFaces_ForUser_ByModel_MinSize_MinConfidence_Provider(): array
-	{
+	public static function getGroupableFaces_ForUser_ByModel_MinSize_MinConfidence_Provider(): array{
 		return [
 			[20, 0.97, 1],
 			[500, 0.97, 0],
@@ -521,8 +488,7 @@ class FaceDataProvider
 		];
 	}
 
-	public static function getNonGroupableFaces_ForUser_ByModel_MinSize_MinConfidence_Provider(): array
-	{
+	public static function getNonGroupableFaces_ForUser_ByModel_MinSize_MinConfidence_Provider(): array{
 		return [
 			[20, 0.97, 9],
 			[500, 0.97, 10],
@@ -533,8 +499,7 @@ class FaceDataProvider
 		];
 	}
 
-	public static function findFromCluster_ForUser_ByClusterId_ByModel_Limit_Offset_Provider(): array
-	{
+	public static function findFromCluster_ForUser_ByClusterId_ByModel_Limit_Offset_Provider(): array{
 		return [
 			[1, null, null, 2],
 			[10, null, null, 2],
@@ -544,8 +509,7 @@ class FaceDataProvider
 		];
 	}
 
-	public static function findFromPerson_ForUser_ByPersonName_ByModel_Limit_Offset_Provider(): array
-	{
+	public static function findFromPerson_ForUser_ByPersonName_ByModel_Limit_Offset_Provider(): array{
 		return [
 			['Alice', null, null, 2],
 			['Alice', 1, 1, 1],
@@ -554,16 +518,14 @@ class FaceDataProvider
 		];
 	}
 
-	public static function findByImage_Provider(): array
-	{
+	public static function findByImage_Provider(): array{
 		return [
 			[1, 1],
 			[10, 6]
 		];
 	}
 
-	public static function removeFromImage_Provider(): array
-	{
+	public static function removeFromImage_Provider(): array{
 		return [
 			[1, 0],
 			[10, 0],
@@ -571,8 +533,7 @@ class FaceDataProvider
 		];
 	}
 
-	public static function unsetPersonsRelationForUser_Provider(): array
-	{
+	public static function unsetPersonsRelationForUser_Provider(): array{
 		return [
 			['user1', 1, 10],
 			['user2', 2, 16],
@@ -582,8 +543,7 @@ class FaceDataProvider
 		];
 	}
 
-	public static function insertFace_Provider(): array
-	{
+	public static function insertFace_Provider(): array{
 		$face1 = new Face();
 		$face1->setImage(1);
 		$face1->setX(10);

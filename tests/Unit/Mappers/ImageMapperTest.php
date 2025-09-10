@@ -56,8 +56,7 @@ class ImageMapperTest extends UnitBaseTestCase
 	/**
 	 * {@inheritDoc}
 	 */
-	public function setUp(): void
-	{
+	public function setUp(): void{
 		parent::setUp();
 
 		$this->faceMapper = new FaceMapper($this->dbConnection);
@@ -73,8 +72,7 @@ class ImageMapperTest extends UnitBaseTestCase
 		$this->faceCountQuery->select($this->faceCountQuery->createFunction('COUNT(*) as count'))->from('facerecog_faces');
 	}
 
-	public function test_Find(): void
-	{
+	public function test_Find(): void{
 		//Act
 		$image = $this->imageMapper->find('user1', 1);
 
@@ -91,8 +89,7 @@ class ImageMapperTest extends UnitBaseTestCase
 		$this->assertEquals(DateTime::createFromFormat('Y-m-d H:i:s', '2025-08-26 10:05:00'), $image->getLastProcessedTime());
 	}
 
-	public function test_Find_ConnectedToMultipleUser(): void
-	{
+	public function test_Find_ConnectedToMultipleUser(): void{
 		//Act
 		$image = $this->imageMapper->find('user2', 10);
 
@@ -126,8 +123,7 @@ class ImageMapperTest extends UnitBaseTestCase
 	}
 
 	#[DataProviderExternal(ImageDataProvider::class, 'find_Provider')]
-	public function test_Find_InvalidQuery(string $userId, int $modelId): void
-	{
+	public function test_Find_InvalidQuery(string $userId, int $modelId): void{
 		//Act
 		$image = $this->imageMapper->find($userId, $modelId);
 
@@ -136,8 +132,7 @@ class ImageMapperTest extends UnitBaseTestCase
 	}
 
 	#[DataProviderExternal(ImageDataProvider::class, 'findAll_Provider')]
-	public function test_FindAll(string $user, int $model, int $expectedCount): void
-	{
+	public function test_FindAll(string $user, int $model, int $expectedCount): void{
 		//Act
 		$images = $this->imageMapper->findAll($user, $model);
 
@@ -153,8 +148,7 @@ class ImageMapperTest extends UnitBaseTestCase
 	}
 
 	#[DataProviderExternal(ImageDataProvider::class, 'findFromFile_Provider')]
-	public function test_findFromFile(string $user, int $model, int $nc_file_id, ?int $expectedId): void
-	{
+	public function test_findFromFile(string $user, int $model, int $nc_file_id, ?int $expectedId): void{
 		//Act
 		$image = $this->imageMapper->findFromFile($user, $model, $nc_file_id);
 
@@ -171,8 +165,7 @@ class ImageMapperTest extends UnitBaseTestCase
 	}
 
 	#[DataProviderExternal(ImageDataProvider::class, 'otherUserStilHasConnection_Provider')]
-	public function test_otherUserStilHasConnection(int $imageId, bool $expectedResult): void
-	{
+	public function test_otherUserStilHasConnection(int $imageId, bool $expectedResult): void{
 		//Act
 		$hasConnection = $this->imageMapper->otherUserStilHasConnection($imageId);
 
@@ -181,8 +174,7 @@ class ImageMapperTest extends UnitBaseTestCase
 	}
 
 	#[DataProviderExternal(ImageDataProvider::class, 'removeUserImageConnection_Provider')]
-	public function test_removeUserImageConnection(string $user, int $imageId, int $expectedConnections): void
-	{
+	public function test_removeUserImageConnection(string $user, int $imageId, int $expectedConnections): void{
 		$image = new Image();
 		$image->id = $imageId;
 		$image->user = $user;
@@ -196,8 +188,7 @@ class ImageMapperTest extends UnitBaseTestCase
 	}
 
 	#[DataProviderExternal(ImageDataProvider::class, 'findFromFile_Provider')]
-	public function test_imageExists(string $user, int $model, int $nc_file_id, ?int $expectedId): void
-	{
+	public function test_imageExists(string $user, int $model, int $nc_file_id, ?int $expectedId): void{
 		$image = new Image();
 		$image->user = $user;
 		$image->file = $nc_file_id;
@@ -216,8 +207,7 @@ class ImageMapperTest extends UnitBaseTestCase
 	}
 
 	#[DataProviderExternal(ImageDataProvider::class, 'countImages_Provider')]
-	public function test_countImages(int $model, int $expectedCount): void
-	{
+	public function test_countImages(int $model, int $expectedCount): void{
 		//Act
 		$resultCount = $this->imageMapper->countImages($model);
 
@@ -226,8 +216,7 @@ class ImageMapperTest extends UnitBaseTestCase
 	}
 
 	#[DataProviderExternal(ImageDataProvider::class, 'countProcessedImages_Provider')]
-	public function test_countProcessedImages(int $model, int $expectedCount): void
-	{
+	public function test_countProcessedImages(int $model, int $expectedCount): void{
 		//Act
 		$resultCount = $this->imageMapper->countProcessedImages($model);
 
@@ -236,8 +225,7 @@ class ImageMapperTest extends UnitBaseTestCase
 	}
 
 	#[DataProviderExternal(ImageDataProvider::class, 'avgProcessingDuration_Provider')]
-	public function test_avgProcessingDuration(int $model, int $expectedCount): void
-	{
+	public function test_avgProcessingDuration(int $model, int $expectedCount): void{
 		//Act
 		$resultCount = $this->imageMapper->avgProcessingDuration($model);
 
@@ -246,8 +234,7 @@ class ImageMapperTest extends UnitBaseTestCase
 	}
 
 	#[DataProviderExternal(ImageDataProvider::class, 'countUserImages_Provider')]
-	public function test_countUserImages(string $user, int $model, bool $processed, int $expectedCount): void
-	{
+	public function test_countUserImages(string $user, int $model, bool $processed, int $expectedCount): void{
 		//Act
 		$resultCount = $this->imageMapper->countUserImages($user, $model, $processed);
 
@@ -257,8 +244,7 @@ class ImageMapperTest extends UnitBaseTestCase
 	}
 
 	#[DataProviderExternal(ImageDataProvider::class, 'findImagesWithoutFaces_Provider')]
-	public function test_findImagesWithoutFaces(?string $user, int $model, int $expectedCount): void
-	{
+	public function test_findImagesWithoutFaces(?string $user, int $model, int $expectedCount): void{
 		//Act
 		$images = $this->imageMapper->findImagesWithoutFaces($user, $model);
 
@@ -278,8 +264,7 @@ class ImageMapperTest extends UnitBaseTestCase
 	}
 
 	#[DataProviderExternal(ImageDataProvider::class, 'findImages_Provider')]
-	public function test_findImages(string $user, int $model, int $expectedCount): void
-	{
+	public function test_findImages(string $user, int $model, int $expectedCount): void{
 		//Act
 		$images = $this->imageMapper->findImages($user, $model);
 
@@ -295,8 +280,7 @@ class ImageMapperTest extends UnitBaseTestCase
 	}
 
 	#[DataProviderExternal(ImageDataProvider::class, 'findFromPersonLike_Provider')]
-	public function test_findFromPersonLike(string $user, int $model, string $nameLike, ?int $offset, ?int $limit, int $expectedCount): void
-	{
+	public function test_findFromPersonLike(string $user, int $model, string $nameLike, ?int $offset, ?int $limit, int $expectedCount): void{
 		//Act
 		$images = $this->imageMapper->findFromPersonLike($user, $model, $nameLike, $offset, $limit);
 
@@ -308,8 +292,7 @@ class ImageMapperTest extends UnitBaseTestCase
 	}
 
 	#[DataProviderExternal(ImageDataProvider::class, 'findFromPerson_Provider')]
-	public function test_findFromPerson(string $user, int $model, string $name, ?int $offset, ?int $limit, int $expectedCount): void
-	{
+	public function test_findFromPerson(string $user, int $model, string $name, ?int $offset, ?int $limit, int $expectedCount): void{
 		//Act
 		$images = $this->imageMapper->findFromPerson($user, $model, $name, $offset, $limit);
 
@@ -321,8 +304,7 @@ class ImageMapperTest extends UnitBaseTestCase
 	}
 
 	#[DataProviderExternal(ImageDataProvider::class, 'countFromPerson_Provider')]
-	public function test_countFromPerson(string $user, int $model, string $name, int $expectedCount): void
-	{
+	public function test_countFromPerson(string $user, int $model, string $name, int $expectedCount): void{
 		//Act
 		$resultCount = $this->imageMapper->countFromPerson($user, $model, $name);
 
@@ -332,8 +314,7 @@ class ImageMapperTest extends UnitBaseTestCase
 	}
 
 	#[DataProviderExternal(ImageDataProvider::class, 'imageProcessed_Provider')]
-	public function test_imageProcessed(int $imageId, array $faces, int $duration, ?Exception $e, int $expectedFaceCount, ?Exception $expected = null): void
-	{
+	public function test_imageProcessed(int $imageId, array $faces, int $duration, ?Exception $e, int $expectedFaceCount, ?Exception $expected = null): void{
 		foreach ($faces as $face) {
 			$face->setImage($imageId);
 		}
@@ -351,8 +332,7 @@ class ImageMapperTest extends UnitBaseTestCase
 		$this->assertRowCountFaces($expectedFaceCount);
 	}
 
-	public function test_resetImage(): void
-	{
+	public function test_resetImage(): void{
 		$image = $this->imageMapper->find('user1', 1);
 		//Act
 		$this->imageMapper->resetImage($image);
@@ -365,8 +345,7 @@ class ImageMapperTest extends UnitBaseTestCase
 		$this->assertNull($image->getLastProcessedTime());
 	}
 
-	public function test_resetErrors(): void
-	{
+	public function test_resetErrors(): void{
 		//Act
 		$this->imageMapper->resetErrors('user2');
 
@@ -383,8 +362,7 @@ class ImageMapperTest extends UnitBaseTestCase
 		}
 	}
 
-	public function test_resetErrors_moreThan1000Entries(): void
-	{
+	public function test_resetErrors_moreThan1000Entries(): void{
 		$sql = file_get_contents("tests/DatabaseInserts/11_1005ImageWithErrorModel2.sql");
 		$this->dbConnection->executeStatement($sql);
 		$sql = file_get_contents("tests/DatabaseInserts/21_1005userImageConnectionForUser1.sql");
@@ -406,8 +384,7 @@ class ImageMapperTest extends UnitBaseTestCase
 		}
 	}
 
-	public function test_deleteUserImages(): void
-	{
+	public function test_deleteUserImages(): void{
 		//Act
 		$this->imageMapper->deleteUserImages("user1");
 
@@ -416,8 +393,7 @@ class ImageMapperTest extends UnitBaseTestCase
 		$this->assertRowCountImages(5);
 	}
 
-	public function test_deleteUserImages_moreThan1000Entries(): void
-	{
+	public function test_deleteUserImages_moreThan1000Entries(): void{
 		$sql = file_get_contents("tests/DatabaseInserts/11_1005ImageWithErrorModel2.sql");
 		$this->dbConnection->executeStatement($sql);
 		$sql = file_get_contents("tests/DatabaseInserts/21_1005userImageConnectionForUser1.sql");
@@ -432,8 +408,7 @@ class ImageMapperTest extends UnitBaseTestCase
 	}
 
 	#[DataProviderExternal(ImageDataProvider::class, 'deleteUserModel_Provider')]
-	public function test_deleteUserModel(string $userId, int $modelId, int $expectedConnections, int $expectedImages): void
-	{
+	public function test_deleteUserModel(string $userId, int $modelId, int $expectedConnections, int $expectedImages): void{
 		//Act
 		$this->imageMapper->deleteUserModel($userId, $modelId);
 
@@ -442,8 +417,7 @@ class ImageMapperTest extends UnitBaseTestCase
 		$this->assertRowCountUserImages($expectedConnections);
 	}
 
-	public function test_deleteUserModel_moreThan1000Entries(): void
-	{
+	public function test_deleteUserModel_moreThan1000Entries(): void{
 		$sql = file_get_contents("tests/DatabaseInserts/11_1005ImageWithErrorModel2.sql");
 		$this->dbConnection->executeStatement($sql);
 		$sql = file_get_contents("tests/DatabaseInserts/21_1005userImageConnectionForUser1.sql");
@@ -485,8 +459,7 @@ class ImageMapperTest extends UnitBaseTestCase
 	}
 
 	#[DataProviderExternal(ImageDataProvider::class, 'update_Provider')]
-	public function test_update(int $imageId, ?string $user, int $model, int $nc_file_id): void
-	{
+	public function test_update(int $imageId, ?string $user, int $model, int $nc_file_id): void{
 		$image = new Image();
 		$image->id = 1;
 		$image->user = "user1";
@@ -510,8 +483,7 @@ class ImageMapperTest extends UnitBaseTestCase
 		$this->assertEquals($nc_file_id, $image->getFile());
 	}
 
-	public function test_update_nochange(): void
-	{
+	public function test_update_nochange(): void{
 		$image = new Image();
 		$image->id = 1;
 		$image->user = "user1";
@@ -529,8 +501,7 @@ class ImageMapperTest extends UnitBaseTestCase
 		$this->assertEquals(101, $image->getFile());
 	}
 
-	public function test_update_invalidId(): void
-	{
+	public function test_update_invalidId(): void{
 		$image = new Image();
 		$image->setUser("user1");
 
@@ -541,8 +512,7 @@ class ImageMapperTest extends UnitBaseTestCase
 		$image = $this->imageMapper->update($image);
 	}
 	#[DataProviderExternal(ImageDataProvider::class, 'delete_Provider')]
-	public function test_delete(int $imageId, ?string $user, int $model, int $nc_file_id, int $imageCount, int $connectionCount): void
-	{
+	public function test_delete(int $imageId, ?string $user, int $model, int $nc_file_id, int $imageCount, int $connectionCount): void{
 		$image = new Image();
 		$image->id = $imageId;
 		$image->user = $user;
@@ -560,8 +530,7 @@ class ImageMapperTest extends UnitBaseTestCase
 	/**
 	 * {@inheritDoc}
 	 */
-	public function tearDown(): void
-	{
+	public function tearDown(): void{
 		$this->imageMapper = null;
 		$this->faceMapper = null;
 		$this->imageCountQuery = null;
@@ -570,28 +539,24 @@ class ImageMapperTest extends UnitBaseTestCase
 		parent::tearDown();
 	}
 
-	private function assertInitialDBstate(): void
-	{
+	private function assertInitialDBstate(): void{
 		$this->assertRowCountImages(10);
 		$this->assertRowCountUserImages(11);
 	}
 
-	private function assertRowCountImages(int $expectedCount): void
-	{
+	private function assertRowCountImages(int $expectedCount): void{
 		$row = $this->imageCountQuery->executeQuery()->fetch();
 		$this->assertNotFalse($row);
 		$this->assertEquals($expectedCount, (int)$row['count'], "Expected image count: " . $expectedCount . " actual: " . (int)$row['count']);
 	}
 
-	private function assertRowCountUserImages($expectedCount): void
-	{
+	private function assertRowCountUserImages($expectedCount): void{
 		$row = $this->userImageCountQuery->executeQuery()->fetch();
 		$this->assertNotFalse($row);
 		$this->assertEquals($expectedCount, (int)$row['count'], "Expected user_image count: " . $expectedCount . " actual: " . (int)$row['count']);
 	}
 
-	private function assertRowCountFaces($expectedCount): void
-	{
+	private function assertRowCountFaces($expectedCount): void{
 		$row = $this->faceCountQuery->executeQuery()->fetch();
 		$this->assertNotFalse($row);
 		$this->assertEquals($expectedCount, (int)$row['count'], "Expected face count: " . $expectedCount . " actual: " . (int)$row['count']);
@@ -600,8 +565,7 @@ class ImageMapperTest extends UnitBaseTestCase
 
 class ImageDataProvider
 {
-	public static function find_Provider(): array
-	{
+	public static function find_Provider(): array{
 		return [
 			["user2", 1], //existing user and model, but not connected
 			["user3", 1], //not existing user
@@ -610,8 +574,7 @@ class ImageDataProvider
 		];
 	}
 
-	public static function findAll_Provider(): array
-	{
+	public static function findAll_Provider(): array{
 		return [
 			["user1", 1, 5],
 			["user2", 1, 1],
@@ -622,8 +585,7 @@ class ImageDataProvider
 		];
 	}
 
-	public static function findFromFile_Provider(): array
-	{
+	public static function findFromFile_Provider(): array{
 		return [
 			["user1", 1, 101, 1], //
 			["user1", 2, 101, null],
@@ -641,8 +603,7 @@ class ImageDataProvider
 		];
 	}
 
-	public static function removeUserImageConnection_Provider(): array
-	{
+	public static function removeUserImageConnection_Provider(): array{
 		return [
 			["user1", 1, 10], //Single image
 			["user1", 10, 10], //Shared image
@@ -651,8 +612,7 @@ class ImageDataProvider
 		];
 	}
 
-	public static function insert_Provider(): array
-	{
+	public static function insert_Provider(): array{
 		$nullException = "An exception occurred while executing a query: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user' cannot be null";
 		$duplicateException = "An exception occurred while executing a query: SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry '1-user1' for key 'PRIMARY'";
 		return [
@@ -675,8 +635,7 @@ class ImageDataProvider
 		];
 	}
 
-	public static function otherUserStilHasConnection_Provider(): array
-	{
+	public static function otherUserStilHasConnection_Provider(): array{
 		return [
 			[1, false],
 			[10, true],
@@ -684,8 +643,7 @@ class ImageDataProvider
 		];
 	}
 
-	public static function countImages_Provider(): array
-	{
+	public static function countImages_Provider(): array{
 		return [
 			[1, 5],
 			[2, 5],
@@ -693,8 +651,7 @@ class ImageDataProvider
 		];
 	}
 
-	public static function countProcessedImages_Provider(): array
-	{
+	public static function countProcessedImages_Provider(): array{
 		return [
 			[1, 3],
 			[2, 3],
@@ -702,8 +659,7 @@ class ImageDataProvider
 		];
 	}
 
-	public static function avgProcessingDuration_Provider(): array
-	{
+	public static function avgProcessingDuration_Provider(): array{
 		return [
 			[1, 123],
 			[2, 173],
@@ -711,8 +667,7 @@ class ImageDataProvider
 		];
 	}
 
-	public static function countUserImages_Provider(): array
-	{
+	public static function countUserImages_Provider(): array{
 		return [
 			["user1", 1, false, 5],
 			["user2", 1, false, 1],
@@ -729,8 +684,7 @@ class ImageDataProvider
 		];
 	}
 
-	public static function findImagesWithoutFaces_Provider(): array
-	{
+	public static function findImagesWithoutFaces_Provider(): array{
 		return [
 			["user1", 1, 2],
 			["user2", 1, 0],
@@ -743,8 +697,7 @@ class ImageDataProvider
 		];
 	}
 
-	public static function findImages_Provider(): array
-	{
+	public static function findImages_Provider(): array{
 		return [
 			["user1", 1, 5],
 			["user2", 1, 1],
@@ -755,8 +708,7 @@ class ImageDataProvider
 		];
 	}
 
-	public static function findFromPersonLike_Provider(): array
-	{
+	public static function findFromPersonLike_Provider(): array{
 		return [
 			["user1", 1, "Al", null, null, 1],
 			["user1", 1, "al", null, null, 1],
@@ -771,8 +723,7 @@ class ImageDataProvider
 		];
 	}
 
-	public static function findFromPerson_Provider(): array
-	{
+	public static function findFromPerson_Provider(): array{
 		return [
 			["user1", 1, "Alice", null, null, 1],
 			["user1", 1, "alice", null, null, 0],
@@ -787,8 +738,7 @@ class ImageDataProvider
 		];
 	}
 
-	public static function countFromPerson_Provider(): array
-	{
+	public static function countFromPerson_Provider(): array{
 		return [
 			["user1", 1, "Alice", 1],
 			["user1", 1, "alice", 0],
@@ -801,8 +751,7 @@ class ImageDataProvider
 		];
 	}
 
-	public static function imageProcessed_Provider(): array
-	{
+	public static function imageProcessed_Provider(): array{
 		//First face to test single face
 		$face1 = new Face();
 		$face1->person = null;
@@ -856,8 +805,7 @@ class ImageDataProvider
 		];
 	}
 
-	public static function deleteUserModel_Provider(): array
-	{
+	public static function deleteUserModel_Provider(): array{
 		return [
 			["user1", 1, 6, 6],
 			["user1", 2, 10, 9],
@@ -869,8 +817,7 @@ class ImageDataProvider
 		];
 	}
 
-	public static function update_Provider(): array
-	{
+	public static function update_Provider(): array{
 		return [
 			[1, "user1", 1, 101], //no update
 			[1, "user1", 2, 101], //model update
@@ -883,8 +830,7 @@ class ImageDataProvider
 		];
 	}
 
-	public static function delete_Provider(): array
-	{
+	public static function delete_Provider(): array{
 		return [
 			[1, "user1", 1, 101, 9, 10],
 			[2, "user2", 2, 102, 9, 10],

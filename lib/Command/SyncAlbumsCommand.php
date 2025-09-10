@@ -66,8 +66,7 @@ class SyncAlbumsCommand extends Command {
 	                            PersonMapper    $personMapper,
 	                            IAppManager     $appManager,
 	                            PhotoAlbums     $photoAlbums,
-	                            SettingsService $settingsService)
-	{
+	                            SettingsService $settingsService){
 		parent::__construct();
 
 		$this->appManager      = $appManager;

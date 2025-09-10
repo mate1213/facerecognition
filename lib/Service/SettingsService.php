@@ -164,8 +164,7 @@ class SettingsService {
 	 * @param string $userId
 	 */
 	public function __construct(IConfig $config,
-	                            $userId)
-	{
+	                            $userId){
 		$this->config = $config;
 		$this->userId = $userId;
 	}

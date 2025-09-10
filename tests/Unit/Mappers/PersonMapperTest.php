@@ -54,38 +54,261 @@ class PersonMapperTest extends UnitBaseTestCase
         $this->personMapper = new PersonMapper($this->dbConnection);
     }
 
+
+    public function test_Update_notUpdated(): void
+    {
+        $cluster = $this->personMapper->find('user1', 1);
+        $cluster->resetUpdatedFields();
+
+        //Act
+        $cluster = $this->personMapper->update($cluster);
+
+        //Assert
+        $cluster = $this->personMapper->find('user1', 1);
+        $this->assertNotNull($cluster);
+        $this->assertInstanceOf(Person::class, $cluster);
+        $this->assertEquals(1, $cluster->getId());
+        $this->assertEquals('user1', $cluster->getUser());
+        $this->assertEquals('Alice', $cluster->getName());
+        $this->assertEquals(null, $cluster->getLinkedUser());
+        $this->assertEquals(true, $cluster->getIsVisible());
+        $this->assertEquals(true, $cluster->getIsValid());
+        $this->assertEquals(DateTime::createFromFormat('Y-m-d H:i:s', '2025-08-26 10:00:00'), $cluster->getLastGenerationTime());
+    }
+
+    public function test_Update_user(): void
+    {
+        $cluster = $this->personMapper->find('user1', 1);
+        $cluster->setUser('user2');
+
+        //Act
+        $cluster = $this->personMapper->update($cluster);
+
+        //Assert
+        $cluster = $this->personMapper->find('user2', 1);
+        $this->assertNotNull($cluster);
+        $this->assertInstanceOf(Person::class, $cluster);
+        $this->assertEquals(1, $cluster->getId());
+        $this->assertEquals('user2', $cluster->getUser());
+        $this->assertEquals('Alice', $cluster->getName());
+        $this->assertEquals(null, $cluster->getLinkedUser());
+        $this->assertEquals(true, $cluster->getIsVisible());
+        $this->assertEquals(true, $cluster->getIsValid());
+        $this->assertEquals(DateTime::createFromFormat('Y-m-d H:i:s', '2025-08-26 10:00:00'), $cluster->getLastGenerationTime());
+    }
+
+    public function test_Update_changePerson(): void
+    {
+        $cluster = $this->personMapper->find('user1', 1);
+        $cluster->setName('Dummy');
+
+        //Act
+        $cluster = $this->personMapper->update($cluster);
+
+        //Assert
+        $cluster = $this->personMapper->find('user1', 1);
+        $this->assertNotNull($cluster);
+        $this->assertInstanceOf(Person::class, $cluster);
+        $this->assertEquals(1, $cluster->getId());
+        $this->assertEquals('user1', $cluster->getUser());
+        $this->assertEquals('Dummy', $cluster->getName());
+        $this->assertEquals(null, $cluster->getLinkedUser());
+        $this->assertEquals(true, $cluster->getIsVisible());
+        $this->assertEquals(true, $cluster->getIsValid());
+        $this->assertEquals(DateTime::createFromFormat('Y-m-d H:i:s', '2025-08-26 10:00:00'), $cluster->getLastGenerationTime());
+    }
+
+    public function test_Update_addToPerson(): void
+    {
+        $cluster = $this->personMapper->find('user1', 3);
+        $cluster->setName('Dummy');
+
+        //Act
+        $cluster = $this->personMapper->update($cluster);
+
+        //Assert
+        $cluster = $this->personMapper->find('user1', 3);
+        $this->assertNotNull($cluster);
+        $this->assertInstanceOf(Person::class, $cluster);
+        $this->assertEquals(3, $cluster->getId());
+        $this->assertEquals('user1', $cluster->getUser());
+        $this->assertEquals('Dummy', $cluster->getName());
+        $this->assertEquals(null, $cluster->getLinkedUser());
+        $this->assertEquals(true, $cluster->getIsVisible());
+        $this->assertEquals(true, $cluster->getIsValid());
+        $this->assertEquals(DateTime::createFromFormat('Y-m-d H:i:s', '2025-08-26 11:00:00'), $cluster->getLastGenerationTime());
+    }
+
+    public function test_Update_removeFromPerson(): void
+    {
+        $cluster = $this->personMapper->find('user1', 1);
+        $cluster->setName(null);
+
+        //Act
+        $cluster = $this->personMapper->update($cluster);
+
+        //Assert
+        $cluster = $this->personMapper->find('user1', 1);
+        $this->assertNotNull($cluster);
+        $this->assertInstanceOf(Person::class, $cluster);
+        $this->assertEquals(1, $cluster->getId());
+        $this->assertEquals('user1', $cluster->getUser());
+        $this->assertNull($cluster->getName());
+        $this->assertNull($cluster->getLinkedUser());
+        $this->assertEquals(true, $cluster->getIsVisible());
+        $this->assertEquals(true, $cluster->getIsValid());
+        $this->assertEquals(DateTime::createFromFormat('Y-m-d H:i:s', '2025-08-26 10:00:00'), $cluster->getLastGenerationTime());
+    }
+
+    public function test_Update_LinkedUser(): void
+    {
+        $cluster = $this->personMapper->find('user1', 1);
+        $cluster->setLinkedUser('TestUser1');
+
+        //Act
+        $cluster = $this->personMapper->update($cluster);
+
+        //Assert
+        $cluster = $this->personMapper->find('user1', 1);
+        $this->assertNotNull($cluster);
+        $this->assertInstanceOf(Person::class, $cluster);
+        $this->assertEquals(1, $cluster->getId());
+        $this->assertEquals('user1', $cluster->getUser());
+        $this->assertEquals('Alice', $cluster->getName());
+        $this->assertEquals('TestUser1', $cluster->getLinkedUser());
+        $this->assertEquals(true, $cluster->getIsVisible());
+        $this->assertEquals(true, $cluster->getIsValid());
+        $this->assertEquals(DateTime::createFromFormat('Y-m-d H:i:s', '2025-08-26 10:00:00'), $cluster->getLastGenerationTime());
+    }
+
+    public function test_Update_IsVisible(): void
+    {
+        $cluster = $this->personMapper->find('user1', 1);
+        $cluster->setIsVisible(false);
+
+        //Act
+        $cluster = $this->personMapper->update($cluster);
+
+        //Assert
+        $cluster = $this->personMapper->find('user1', 1);
+        $this->assertNotNull($cluster);
+        $this->assertInstanceOf(Person::class, $cluster);
+        $this->assertEquals(1, $cluster->getId());
+        $this->assertEquals('user1', $cluster->getUser());
+        $this->assertEquals('Alice', $cluster->getName());
+        $this->assertEquals(null, $cluster->getLinkedUser());
+        $this->assertEquals(false, $cluster->getIsVisible());
+        $this->assertEquals(true, $cluster->getIsValid());
+        $this->assertEquals(DateTime::createFromFormat('Y-m-d H:i:s', '2025-08-26 10:00:00'), $cluster->getLastGenerationTime());
+    }
+
+    public function test_Update_IsValid(): void
+    {
+        $cluster = $this->personMapper->find('user1', 1);
+        $cluster->setIsValid(false);
+
+        //Act
+        $cluster = $this->personMapper->update($cluster);
+
+        //Assert
+        $cluster = $this->personMapper->find('user1', 1);
+        $this->assertNotNull($cluster);
+        $this->assertInstanceOf(Person::class, $cluster);
+        $this->assertEquals(1, $cluster->getId());
+        $this->assertEquals('user1', $cluster->getUser());
+        $this->assertEquals('Alice', $cluster->getName());
+        $this->assertEquals(null, $cluster->getLinkedUser());
+        $this->assertEquals(true, $cluster->getIsVisible());
+        $this->assertEquals(false, $cluster->getIsValid());
+        $this->assertEquals(DateTime::createFromFormat('Y-m-d H:i:s', '2025-08-26 10:00:00'), $cluster->getLastGenerationTime());
+    }
+
+    public function test_Update_LastGenerationTime(): void
+    {
+        $cluster = $this->personMapper->find('user1', 1);
+        $cluster->setLastGenerationTime(DateTime::createFromFormat('Y-m-d H:i:s', '2020-01-01 00:00:00'));
+
+        //Act
+        $cluster = $this->personMapper->update($cluster);
+
+        //Assert
+        $cluster = $this->personMapper->find('user1', 1);
+        $this->assertNotNull($cluster);
+        $this->assertInstanceOf(Person::class, $cluster);
+        $this->assertEquals(1, $cluster->getId());
+        $this->assertEquals('user1', $cluster->getUser());
+        $this->assertEquals('Alice', $cluster->getName());
+        $this->assertEquals(null, $cluster->getLinkedUser());
+        $this->assertEquals(true, $cluster->getIsVisible());
+        $this->assertEquals(true, $cluster->getIsValid());
+        $this->assertEquals(DateTime::createFromFormat('Y-m-d H:i:s', '2020-01-01 00:00:00'), $cluster->getLastGenerationTime());
+    }
+
+    public function test_Update_IdNotUpdated(): void
+    {
+        $cluster = $this->personMapper->find('user1', 1);
+        $cluster->setId(1000);
+
+        //Act
+        $cluster = $this->personMapper->update($cluster);
+
+        //Assert
+        $cluster = $this->personMapper->find('user1', 1);
+        $this->assertNotNull($cluster);
+        $this->assertInstanceOf(Person::class, $cluster);
+        $this->assertEquals(1, $cluster->getId());
+        $this->assertEquals('user1', $cluster->getUser());
+        $this->assertEquals('Alice', $cluster->getName());
+        $this->assertEquals(null, $cluster->getLinkedUser());
+        $this->assertEquals(true, $cluster->getIsVisible());
+        $this->assertEquals(true, $cluster->getIsValid());
+        $this->assertEquals(DateTime::createFromFormat('Y-m-d H:i:s', '2025-08-26 10:00:00'), $cluster->getLastGenerationTime());
+    }
+
+    public function test_Update_IdIsNull_ExpectException(): void
+    {
+        $cluster = $this->personMapper->find('user1', 1);
+        $cluster->setId(null);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Entity which should be updated has no id');
+
+        //Act
+        $cluster = $this->personMapper->update($cluster);
+    }
+
     public function test_Find_nameExists(): void
     {
         //Act
-        $person = $this->personMapper->find('user1', 1);
+        $cluster = $this->personMapper->find('user1', 1);
 
         //Assert
-        $this->assertNotNull($person);
-        $this->assertInstanceOf(Person::class, $person);
-        $this->assertEquals(1, $person->getId());
-        $this->assertEquals('user1', $person->getUser());
-        $this->assertEquals('Alice', $person->getName());
-        $this->assertEquals(null, $person->getLinkedUser());
-        $this->assertEquals(true, $person->getIsVisible());
-        $this->assertEquals(true, $person->getIsValid());
-        $this->assertEquals(DateTime::createFromFormat('Y-m-d H:i:s', '2025-08-26 10:00:00'), $person->getLastGenerationTime());
+        $this->assertNotNull($cluster);
+        $this->assertInstanceOf(Person::class, $cluster);
+        $this->assertEquals(1, $cluster->getId());
+        $this->assertEquals('user1', $cluster->getUser());
+        $this->assertEquals('Alice', $cluster->getName());
+        $this->assertEquals(null, $cluster->getLinkedUser());
+        $this->assertEquals(true, $cluster->getIsVisible());
+        $this->assertEquals(true, $cluster->getIsValid());
+        $this->assertEquals(DateTime::createFromFormat('Y-m-d H:i:s', '2025-08-26 10:00:00'), $cluster->getLastGenerationTime());
     }
 
     public function test_Find_noNameExists(): void
     {
         //Act
-        $person = $this->personMapper->find('user1', 3);
+        $cluster = $this->personMapper->find('user1', 3);
 
         //Assert
-        $this->assertNotNull($person);
-        $this->assertInstanceOf(Person::class, $person);
-        $this->assertEquals(3, $person->getId());
-        $this->assertEquals('user1', $person->getUser());
-        $this->assertEquals(null, $person->getName());
-        $this->assertEquals(null, $person->getLinkedUser());
-        $this->assertEquals(true, $person->getIsVisible());
-        $this->assertEquals(true, $person->getIsValid());
-        $this->assertEquals(DateTime::createFromFormat('Y-m-d H:i:s', '2025-08-26 11:00:00'), $person->getLastGenerationTime());
+        $this->assertNotNull($cluster);
+        $this->assertInstanceOf(Person::class, $cluster);
+        $this->assertEquals(3, $cluster->getId());
+        $this->assertEquals('user1', $cluster->getUser());
+        $this->assertEquals(null, $cluster->getName());
+        $this->assertEquals(null, $cluster->getLinkedUser());
+        $this->assertEquals(true, $cluster->getIsVisible());
+        $this->assertEquals(true, $cluster->getIsValid());
+        $this->assertEquals(DateTime::createFromFormat('Y-m-d H:i:s', '2025-08-26 11:00:00'), $cluster->getLastGenerationTime());
     }
 
     public function test_Find_noneExisting(): void
@@ -94,10 +317,10 @@ class PersonMapperTest extends UnitBaseTestCase
         $this->expectExceptionMessage('Did expect one result but found none when executing: query "SELECT `c`.`id`, `user`, `p`.`name`, `is_visible`, `is_valid`, `last_generation_time`, `linked_user` FROM `*PREFIX*facerecog_clusters` `c` LEFT JOIN `*PREFIX*facerecog_person_clusters` `pc` ON `pc`.`cluster_id` = `c`.`id` LEFT JOIN `*PREFIX*facerecog_persons` `p` ON (`pc`.`person_id` = `p`.`id`) AND (`pc`.`cluster_id` IS NOT NULL) WHERE (`c`.`id` = :dcValue1) AND (`c`.`user` = :dcValue2)"');
 
         //Act
-        $person = $this->personMapper->find('user1', 8);
+        $cluster = $this->personMapper->find('user1', 8);
 
         //Assert
-        $this->assertNull($person);
+        $this->assertNull($cluster);
     }
 
     #[DataProviderExternal(PersonDataProvider::class, 'findByName_Provider')]
@@ -112,9 +335,9 @@ class PersonMapperTest extends UnitBaseTestCase
         $this->assertContainsOnlyInstancesOf(Person::class, $people);
         $this->assertCount($expectedCount, $people);
         if ($expectedCount > 0) {
-            foreach ($people as $person) {
-                $this->assertEquals($userId, $person->getUser());
-                $this->assertEquals($personName, $person->getName());
+            foreach ($people as $cluster) {
+                $this->assertEquals($userId, $cluster->getUser());
+                $this->assertEquals($personName, $cluster->getName());
             }
         }
     }
@@ -131,10 +354,10 @@ class PersonMapperTest extends UnitBaseTestCase
         $this->assertContainsOnlyInstancesOf(Person::class, $people);
         $this->assertCount($expectedCount, $people);
         if ($expectedCount > 0) {
-            foreach ($people as $person) {
-                $this->assertEquals($userId, $person->getUser());
-                $this->assertEquals($isValid, $person->getIsValid());
-                $this->assertEquals($isVisible, $person->getIsVisible());
+            foreach ($people as $cluster) {
+                $this->assertEquals($userId, $cluster->getUser());
+                $this->assertEquals($isValid, $cluster->getIsValid());
+                $this->assertEquals($isVisible, $cluster->getIsVisible());
             }
         }
     }
@@ -151,10 +374,10 @@ class PersonMapperTest extends UnitBaseTestCase
         $this->assertContainsOnlyInstancesOf(Person::class, $people);
         $this->assertCount($expectedCount, $people);
         if ($expectedCount > 0) {
-            foreach ($people as $person) {
-                $this->assertEquals($userId, $person->getUser());
-                $this->assertEquals(true, $person->getIsValid());
-                $this->assertEquals(false, $person->getIsVisible());
+            foreach ($people as $cluster) {
+                $this->assertEquals($userId, $cluster->getUser());
+                $this->assertEquals(true, $cluster->getIsValid());
+                $this->assertEquals(false, $cluster->getIsVisible());
             }
         }
     }
@@ -171,10 +394,10 @@ class PersonMapperTest extends UnitBaseTestCase
         $this->assertContainsOnlyInstancesOf(Person::class, $people);
         $this->assertCount($expectedCount, $people);
         if ($expectedCount > 0) {
-            foreach ($people as $person) {
-                $this->assertEquals($userId, $person->getUser());
-                $this->assertEquals(true, $person->getIsValid());
-                $this->assertEquals(true, $person->getIsVisible());
+            foreach ($people as $cluster) {
+                $this->assertEquals($userId, $cluster->getUser());
+                $this->assertEquals(true, $cluster->getIsValid());
+                $this->assertEquals(true, $cluster->getIsVisible());
             }
         }
     }
@@ -191,8 +414,8 @@ class PersonMapperTest extends UnitBaseTestCase
         $this->assertContainsOnlyInstancesOf(Person::class, $people);
         $this->assertCount($expectedCount, $people);
         if ($expectedCount > 0) {
-            foreach ($people as $person) {
-                $this->assertEquals($userId, $person->getUser());
+            foreach ($people as $cluster) {
+                $this->assertEquals($userId, $cluster->getUser());
             }
         }
     }
@@ -209,8 +432,8 @@ class PersonMapperTest extends UnitBaseTestCase
         $this->assertContainsOnlyInstancesOf(Person::class, $people);
         $this->assertCount($expectedCount, $people);
         if ($expectedCount > 0) {
-            foreach ($people as $person) {
-                $this->assertNotNull($person->getName());
+            foreach ($people as $cluster) {
+                $this->assertNotNull($cluster->getName());
             }
         }
     }
@@ -228,8 +451,8 @@ class PersonMapperTest extends UnitBaseTestCase
         $this->assertContainsOnlyInstancesOf(Person::class, $people);
         $this->assertCount($expectedCount, $people);
         if ($expectedCount > 0) {
-            foreach ($people as $person) {
-                $this->assertNotNull($person->getName());
+            foreach ($people as $cluster) {
+                $this->assertNotNull($cluster->getName());
             }
         }
     }
@@ -247,8 +470,8 @@ class PersonMapperTest extends UnitBaseTestCase
         $this->assertContainsOnlyInstancesOf(Person::class, $people);
         $this->assertCount($expectedCount, $people);
         if ($expectedCount > 0) {
-            foreach ($people as $person) {
-                $this->assertNotNull($person->getName());
+            foreach ($people as $cluster) {
+                $this->assertNotNull($cluster->getName());
             }
         }
     }
@@ -414,10 +637,10 @@ class PersonMapperTest extends UnitBaseTestCase
     public function test_detachFace(int $clusterId, int $faceId, ?string $name): void
     {
         //Act
-        $person = $this->personMapper->detachFace($clusterId, $faceId, $name);
+        $cluster = $this->personMapper->detachFace($clusterId, $faceId, $name);
 
         //Assert
-        $this->assertNotNull($person);
+        $this->assertNotNull($cluster);
     }
 
     #[DataProviderExternal(className: PersonDataProvider::class, methodName: 'insertPersonIfNotExists_Provider')]
@@ -468,7 +691,7 @@ class PersonMapperTest extends UnitBaseTestCase
     }
 
     #[DataProviderExternal(className: PersonDataProvider::class, methodName: 'updateClusterPersonConnection_Provider')]
-    public function test_updateClusterPersonConnections(int $clusterId, ?string $personName, int $expectedId): void
+    public function test_updateClusterPersonConnections(int $clusterId, ?string $personName, int $expectedId, int $expectedpersonCount): void
     {
         //Act
         $this->personMapper->updateClusterPersonConnection($clusterId, $personName);
@@ -498,10 +721,18 @@ class PersonMapperTest extends UnitBaseTestCase
         } else {
             $this->assertEmpty($data);
         }
+        
+        $qb = $this->dbConnection->getQueryBuilder();
+        $qb->select($qb->createFunction('COUNT(*)'))
+            ->from('facerecog_persons');
+        $result = $qb->executeQuery();
+        $data = $result->fetch(\PDO::FETCH_NUM);
+        $result->closeCursor();
+        $this->assertEquals($expectedpersonCount, (int)$data[0]);
     }
 
     #[DataProviderExternal(className: PersonDataProvider::class, methodName: 'updateClusterPersonConnection_Provider')]
-    public function test_updateClusterPersonConnections_withDb(int $clusterId, ?string $personName, int $expectedId): void
+    public function test_updateClusterPersonConnections_withDb(int $clusterId, ?string $personName, int $expectedId, int $expectedpersonCount): void
     {
         //Act
         $this->personMapper->updateClusterPersonConnection($clusterId, $personName, $this->dbConnection);
@@ -531,10 +762,18 @@ class PersonMapperTest extends UnitBaseTestCase
         } else {
             $this->assertEmpty($data);
         }
+        
+        $qb = $this->dbConnection->getQueryBuilder();
+        $qb->select($qb->createFunction('COUNT(*)'))
+            ->from('facerecog_persons');
+        $result = $qb->executeQuery();
+        $data = $result->fetch(\PDO::FETCH_NUM);
+        $result->closeCursor();
+        $this->assertEquals($expectedpersonCount, (int)$data[0]);
     }
 
     #[DataProviderExternal(className: PersonDataProvider::class, methodName: 'updateClusterPersonConnection_error_Provider')]
-    public function test_updateClusterPersonConnections_error(int $clusterId, ?string $personName, int $expectedId): void
+    public function test_updateClusterPersonConnections_error(int $clusterId, ?string $personName, int $expectedId, int $expectedpersonCount): void
     {
         $qb = $this->dbConnection->getQueryBuilder();
         $qb->insert('facerecog_person_clusters')
@@ -577,10 +816,18 @@ class PersonMapperTest extends UnitBaseTestCase
         } else {
             $this->assertEmpty($data);
         }
+        
+        $qb = $this->dbConnection->getQueryBuilder();
+        $qb->select($qb->createFunction('COUNT(*)'))
+            ->from('facerecog_persons');
+        $result = $qb->executeQuery();
+        $data = $result->fetch(\PDO::FETCH_NUM);
+        $result->closeCursor();
+        $this->assertEquals($expectedpersonCount, (int)$data[0]);
     }
 
     #[DataProviderExternal(className: PersonDataProvider::class, methodName: 'updateClusterPersonConnection_error_Provider')]
-    public function test_updateClusterPersonConnections_withDb_error(int $clusterId, ?string $personName, int $expectedId): void
+    public function test_updateClusterPersonConnections_withDb_error(int $clusterId, ?string $personName, int $expectedId, int $expectedpersonCount): void
     {
         $qb = $this->dbConnection->getQueryBuilder();
         $qb->insert('facerecog_person_clusters')
@@ -623,6 +870,14 @@ class PersonMapperTest extends UnitBaseTestCase
         } else {
             $this->assertEmpty($data);
         }
+        
+        $qb = $this->dbConnection->getQueryBuilder();
+        $qb->select($qb->createFunction('COUNT(*)'))
+            ->from('facerecog_persons');
+        $result = $qb->executeQuery();
+        $data = $result->fetch(\PDO::FETCH_NUM);
+        $result->closeCursor();
+        $this->assertEquals($expectedpersonCount, (int)$data[0]);
     }
 
     #[DataProviderExternal(className: PersonDataProvider::class, methodName: 'countClusterFaces_Provider')]
@@ -763,7 +1018,6 @@ class PersonMapperTest extends UnitBaseTestCase
         $countOfActions = $this->personMapper->mergeClusterToDatabase("user1", array(3 => [3]), array(3 => [10000]));
 
         //Assert
-
         $qb = $this->dbConnection->getQueryBuilder();
         $qb->select($qb->createFunction('COUNT(*)'))
             ->from('facerecog_clusters');
@@ -1086,25 +1340,27 @@ class PersonDataProvider
 
     public static function updateClusterPersonConnection_Provider(): array
     {
+        //int $clusterId, ?string $personName, int $expectedId, int $expectedpersonCount
         return [
             //remove Existing connection
-            [1, null, 0],
+            [1, null, 0, 1],
             //rename Existing connection
-            [1, 'Dummy', 3],
+            [1, 'Dummy', 3, 2],
             //NonExisting connection
-            [3, 'Dummy', 3],
+            [3, 'Dummy', 3, 3],
             //No connection created
-            [3, null, 0],
+            [3, null, 0, 2],
         ];
     }
 
     public static function updateClusterPersonConnection_error_Provider(): array
     {
+        //int $clusterId, ?string $personName, int $expectedId, int $expectedpersonCount
         return [
             //remove Existing connection
-            [1, null, 0],
+            [1, null, 0, 2],
             //rename Existing connection
-            [1, 'Dummy', 3],
+            [1, 'Dummy', 3, 2],
         ];
     }
 

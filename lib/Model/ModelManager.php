@@ -86,8 +86,7 @@ class ModelManager {
 	                            DlibHogModel    $dlibHogModel,
 	                            DlibCnnHogModel $dlibCnnHogModel,
 	                            ExternalModel   $externalModel,
-	                            DlibTaguchiHogModel $dlibTaguchiHogModel)
-	{
+	                            DlibTaguchiHogModel $dlibTaguchiHogModel){
 		$this->userManager     = $userManager;
 		$this->settingsService = $settingsService;
 
