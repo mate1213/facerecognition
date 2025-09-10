@@ -50,7 +50,8 @@ class ModelService {
 	public function __construct(IConfig         $config,
 	                            IAppData        $appData,
 	                            IRootFolder     $rootFolder,
-	                            SettingsService $settingsService){
+	                            SettingsService $settingsService)
+	{
 		$this->config         = $config;
 		$this->appData         = $appData;
 		$this->rootFolder      = $rootFolder;

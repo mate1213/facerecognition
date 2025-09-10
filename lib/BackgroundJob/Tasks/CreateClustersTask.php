@@ -63,7 +63,8 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 	public function __construct(PersonMapper    $personMapper,
 	                            ImageMapper     $imageMapper,
 	                            FaceMapper      $faceMapper,
-	                            SettingsService $settingsService){
+	                            SettingsService $settingsService)
+	{
 		parent::__construct();
 
 		$this->personMapper    = $personMapper;

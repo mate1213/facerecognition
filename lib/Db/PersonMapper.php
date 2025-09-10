@@ -38,7 +38,8 @@ use OC\DB\QueryBuilder\Literal;
 class PersonMapper extends QBMapper
 {
 
-	public function __construct(IDBConnection $db){
+	public function __construct(IDBConnection $db)
+	{
 		parent::__construct($db, 'facerecog_clusters', '\OCA\FaceRecognition\Db\Person');
 	}
 

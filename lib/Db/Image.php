@@ -108,7 +108,8 @@ class Image extends Entity implements JsonSerializable
 	 */
 	protected $processingDuration;
 
-	public function __construct(){
+	public function __construct()
+	{
 		$this->addType('id', Types::INTEGER);
 		$this->addType('user', Types::STRING);
 		$this->addType('file', Types::INTEGER);

@@ -65,7 +65,8 @@ class StatsCommand extends Command {
 	                            ImageMapper     $imageMapper,
 	                            FaceMapper      $faceMapper,
 	                            PersonMapper    $personMapper,
-	                            SettingsService $settingsService){
+	                            SettingsService $settingsService)
+	{
 		parent::__construct();
 
 		$this->userManager     = $userManager;

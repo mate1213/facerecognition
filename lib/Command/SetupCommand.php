@@ -55,7 +55,8 @@ class SetupCommand extends Command {
 	 * @param SettingsService $settingsService
 	 */
 	public function __construct(ModelManager    $modelManager,
-	                            SettingsService $settingsService){
+	                            SettingsService $settingsService)
+	{
 		parent::__construct();
 
 		$this->modelManager    = $modelManager;

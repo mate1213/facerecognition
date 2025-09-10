@@ -34,7 +34,8 @@ class Personal implements ISettings {
 	                            IInitialState    $initialState,
 	                            PersonMapper     $personmapper,
 	                            SettingsService  $settingsService,
-	                            string           $userId){
+	                            string           $userId)
+	{
 		$this->eventDispatcher = $eventDispatcher;
 		$this->initialState = $initialState;
 		$this->personMapper = $personmapper;

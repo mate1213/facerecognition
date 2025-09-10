@@ -62,7 +62,8 @@ class FileService {
 	public function __construct($userId,
 	                            IRootFolder     $rootFolder,
 	                            ITempManager    $tempManager,
-	                            SettingsService $settingsService){
+	                            SettingsService $settingsService)
+	{
 		$this->userId          = $userId;
 		$this->rootFolder      = $rootFolder;
 		$this->tempManager     = $tempManager;

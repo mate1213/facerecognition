@@ -63,7 +63,8 @@ class FaceManagementService {
 	                            FaceMapper      $faceMapper,
 	                            ImageMapper     $imageMapper,
 	                            PersonMapper    $personMapper,
-	                            SettingsService $settingsService){
+	                            SettingsService $settingsService)
+	{
 		$this->userManager     = $userManager;
 		$this->faceMapper      = $faceMapper;
 		$this->imageMapper     = $imageMapper;

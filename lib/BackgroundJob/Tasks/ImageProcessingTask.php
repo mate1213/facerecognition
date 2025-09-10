@@ -85,7 +85,8 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 	                            FileService      $fileService,
 	                            SettingsService  $settingsService,
 	                            ModelManager     $modelManager,
-	                            ILockingProvider $lockingProvider){
+	                            ILockingProvider $lockingProvider)
+	{
 		parent::__construct();
 
 		$this->imageMapper        = $imageMapper;

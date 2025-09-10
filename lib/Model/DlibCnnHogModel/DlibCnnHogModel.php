@@ -47,7 +47,8 @@ class DlibCnnHogModel implements IModel {
 	 *
 	 * @param DlibCnn5Model $dlibCnn5Model
 	 */
-	public function __construct(DlibCnn5Model   $dlibCnn5Model){
+	public function __construct(DlibCnn5Model   $dlibCnn5Model)
+	{
 		$this->dlibCnn5Model    = $dlibCnn5Model;
 	}
 

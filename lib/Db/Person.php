@@ -83,7 +83,8 @@ class Person extends Entity implements JsonSerializable
 	 */
 	protected $linkedUser;
 
-	public function __construct(){
+	public function __construct()
+	{
 		$this->addType('id', Types::INTEGER);
 		$this->addType('user', Types::STRING);
 		$this->addType('isVisible', Types::BOOLEAN);

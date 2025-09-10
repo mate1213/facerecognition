@@ -81,7 +81,8 @@ class MigrateCommand extends Command {
 	                            IUserManager          $userManager,
 	                            ModelManager          $modelManager,
 	                            FaceMapper            $faceMapper,
-	                            ImageMapper           $imageMapper){
+	                            ImageMapper           $imageMapper)
+	{
 		parent::__construct();
 
 		$this->faceManagementService = $faceManagementService;

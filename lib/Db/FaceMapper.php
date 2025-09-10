@@ -36,7 +36,8 @@ use OCP\DB\QueryBuilder\IFunctionBuilder;
 class FaceMapper extends QBMapper
 {
 
-	public function __construct(IDBConnection $db){
+	public function __construct(IDBConnection $db)
+	{
 		parent::__construct($db, 'facerecog_faces', '\OCA\FaceRecognition\Db\Face');
 	}
 

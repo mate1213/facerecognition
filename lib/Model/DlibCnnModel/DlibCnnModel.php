@@ -82,7 +82,8 @@ class DlibCnnModel implements IModel {
 	public function __construct(CompressionService $compressionService,
 	                            DownloadService $downloadService,
 	                            ModelService    $modelService,
-	                            SettingsService $settingsService){
+	                            SettingsService $settingsService)
+	{
 		$this->compressionService = $compressionService;
 		$this->downloadService    = $downloadService;
 		$this->modelService     = $modelService;

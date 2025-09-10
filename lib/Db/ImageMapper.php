@@ -39,7 +39,8 @@ class ImageMapper extends QBMapper
 	/** @var FaceMapper Face mapper*/
 	private $faceMapper;
 
-	public function __construct(IDBConnection $db, FaceMapper $faceMapper){
+	public function __construct(IDBConnection $db, FaceMapper $faceMapper)
+	{
 		parent::__construct($db, 'facerecog_images', '\OCA\FaceRecognition\Db\Image');
 		$this->faceMapper = $faceMapper;
 	}

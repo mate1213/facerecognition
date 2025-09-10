@@ -56,7 +56,8 @@ class UrlService {
 	                            IUserSession    $userSession,
 	                            IURLGenerator   $urlGenerator,
 	                            SettingsService $settingsService,
-	                            $userId){
+	                            $userId)
+	{
 		$this->rootFolder      = $rootFolder;
 		$this->userSession     = $userSession;
 		$this->urlGenerator    = $urlGenerator;

@@ -73,7 +73,8 @@ class StaleImagesRemovalTask extends FaceRecognitionBackgroundTask {
 	                            FaceMapper      $faceMapper,
 	                            PersonMapper    $personMapper,
 	                            FileService     $fileService,
-	                            SettingsService $settingsService){
+	                            SettingsService $settingsService)
+	{
 		parent::__construct();
 
 		$this->imageMapper     = $imageMapper;

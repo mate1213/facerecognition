@@ -54,7 +54,8 @@ class DisabledUserRemovalTask extends FaceRecognitionBackgroundTask {
 	 */
 	public function __construct (ImageMapper           $imageMapper,
 	                             FaceManagementService $faceManagementService,
-	                             SettingsService       $settingsService){
+	                             SettingsService       $settingsService)
+	{
 		parent::__construct();
 
 		$this->imageMapper           = $imageMapper;
