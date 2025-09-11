@@ -30,9 +30,12 @@ use PHPUnit\Framework\TestCase;
 
 abstract class UnitBaseTestCase extends TestCase
 {
-	/** @var IDBConnection test instance*/
+	/** @var IDBConnection*/
 	protected $dbConnection;
+	/** @var bool*/
 	private $isSetupComplete = false;
+	/** @var bool */
+	protected $notRunLargeTests = true;
 
 	/**
 	 * {@inheritDoc}

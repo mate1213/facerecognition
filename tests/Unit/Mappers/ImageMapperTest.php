@@ -362,43 +362,7 @@ class ImageMapperTest extends UnitBaseTestCase
 		}
 	}
 
-	public function test_resetErrors_moreThan1000Entries(): void{
-		$sql = file_get_contents("tests/DatabaseInserts/11_1005ImageWithErrorModel2.sql");
-		$this->dbConnection->executeStatement($sql);
-		$sql = file_get_contents("tests/DatabaseInserts/21_1005userImageConnectionForUser1.sql");
-		$this->dbConnection->executeStatement($sql);
-
-		//Act
-		$this->imageMapper->resetErrors('user1');
-
-		//Assert
-		$images = $this->imageMapper->findAll('user1', 2);
-		$this->assertNotNull($images);
-		foreach ($images as $image) {
-			if ($image->getId() > 1000)
-			{
-				$this->assertEquals(false, $image->getIsProcessed(), "Image id: " . $image->getId() . " is_processed set true, but it should be false");
-				$this->assertNull($image->getError(), "Image id: " . $image->getId() . " error not null, but it should be null");
-				$this->assertNull($image->getLastProcessedTime(), "Image id: " . $image->getId() . " last_processed_time not null, but it should be null");
-			}
-		}
-	}
-
 	public function test_deleteUserImages(): void{
-		//Act
-		$this->imageMapper->deleteUserImages("user1");
-
-		//Assert
-		$this->assertRowCountUserImages(5);
-		$this->assertRowCountImages(5);
-	}
-
-	public function test_deleteUserImages_moreThan1000Entries(): void{
-		$sql = file_get_contents("tests/DatabaseInserts/11_1005ImageWithErrorModel2.sql");
-		$this->dbConnection->executeStatement($sql);
-		$sql = file_get_contents("tests/DatabaseInserts/21_1005userImageConnectionForUser1.sql");
-		$this->dbConnection->executeStatement($sql);
-
 		//Act
 		$this->imageMapper->deleteUserImages("user1");
 
@@ -415,20 +379,6 @@ class ImageMapperTest extends UnitBaseTestCase
 		//Assert
 		$this->assertRowCountImages($expectedImages);
 		$this->assertRowCountUserImages($expectedConnections);
-	}
-
-	public function test_deleteUserModel_moreThan1000Entries(): void{
-		$sql = file_get_contents("tests/DatabaseInserts/11_1005ImageWithErrorModel2.sql");
-		$this->dbConnection->executeStatement($sql);
-		$sql = file_get_contents("tests/DatabaseInserts/21_1005userImageConnectionForUser1.sql");
-		$this->dbConnection->executeStatement($sql);
-
-		//Act
-		$this->imageMapper->deleteUserModel("user1", 2);
-
-		//Assert
-		$this->assertRowCountUserImages(10);
-		$this->assertRowCountImages(9);
 	}
 
 	#[DataProviderExternal(ImageDataProvider::class, 'insert_Provider')]
@@ -525,6 +475,71 @@ class ImageMapperTest extends UnitBaseTestCase
 		//Assert
 		$this->assertRowCountImages($imageCount);
 		$this->assertRowCountUserImages($connectionCount);
+	}
+
+	public function test_large_deleteUserImages_moreThan1000Entries(): void{
+		if ($this->notRunLargeTests)
+		{
+			$this->assertTrue(true);
+			return;
+		}
+		$sql = file_get_contents("tests/DatabaseInserts/11_1005ImageWithErrorModel2.sql");
+		$this->dbConnection->executeStatement($sql);
+		$sql = file_get_contents("tests/DatabaseInserts/21_1005userImageConnectionForUser1.sql");
+		$this->dbConnection->executeStatement($sql);
+
+		//Act
+		$this->imageMapper->deleteUserImages("user1");
+
+		//Assert
+		$this->assertRowCountUserImages(5);
+		$this->assertRowCountImages(5);
+	}
+
+	public function test_large_deleteUserModel_moreThan1000Entries(): void{
+		if ($this->notRunLargeTests)
+		{
+			$this->assertTrue(true);
+			return;
+		}
+		$sql = file_get_contents("tests/DatabaseInserts/11_1005ImageWithErrorModel2.sql");
+		$this->dbConnection->executeStatement($sql);
+		$sql = file_get_contents("tests/DatabaseInserts/21_1005userImageConnectionForUser1.sql");
+		$this->dbConnection->executeStatement($sql);
+
+		//Act
+		$this->imageMapper->deleteUserModel("user1", 2);
+
+		//Assert
+		$this->assertRowCountUserImages(10);
+		$this->assertRowCountImages(9);
+	}
+
+	public function test_large_resetErrors_moreThan1000Entries(): void{
+		if ($this->notRunLargeTests)
+		{
+			$this->assertTrue(true);
+			return;
+		}
+		$sql = file_get_contents("tests/DatabaseInserts/11_1005ImageWithErrorModel2.sql");
+		$this->dbConnection->executeStatement($sql);
+		$sql = file_get_contents("tests/DatabaseInserts/21_1005userImageConnectionForUser1.sql");
+		$this->dbConnection->executeStatement($sql);
+
+		//Act
+		$this->imageMapper->resetErrors('user1');
+
+		//Assert
+		$images = $this->imageMapper->findAll('user1', 2);
+		$this->assertNotNull($images);
+		foreach ($images as $image) {
+			if ($image->getId() > 1000)
+			{
+				$this->assertEquals(false, $image->getIsProcessed(), "Image id: " . $image->getId() . " is_processed set true, but it should be false");
+				$this->assertNull($image->getError(), "Image id: " . $image->getId() . " error not null, but it should be null");
+				$this->assertNull($image->getLastProcessedTime(), "Image id: " . $image->getId() . " last_processed_time not null, but it should be null");
+			}
+		}
 	}
 
 	/**

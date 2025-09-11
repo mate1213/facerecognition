@@ -23,25 +23,26 @@
  */
 namespace OCA\FaceRecognition\Tests\Integration;
 
-use OC;
 use OC\Files\View;
 
-use OCP\IConfig;
 use OCP\IUser;
-use OCP\AppFramework\App;
-use OCP\AppFramework\IAppContainer;
-
-use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
-use OCA\FaceRecognition\BackgroundJob\FaceRecognitionLogger;
 use OCA\FaceRecognition\BackgroundJob\Tasks\AddMissingImagesTask;
 use OCA\FaceRecognition\BackgroundJob\Tasks\DisabledUserRemovalTask;
 
-use OCA\FaceRecognition\Db\Image;
-
 use OCA\FaceRecognition\Model\ModelManager;
 
-use Test\TestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 
+#[CoversClass(DisabledUserRemovalTask::class)]
+#[UsesClass(\OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext::class)]
+#[UsesClass(\OCA\FaceRecognition\BackgroundJob\FaceRecognitionLogger::class)]
+#[UsesClass(\OCA\FaceRecognition\BackgroundJob\Tasks\AddMissingImagesTask::class)]
+#[UsesClass(\OCA\FaceRecognition\Db\FaceMapper::class)]
+#[UsesClass(\OCA\FaceRecognition\Db\Image::class)]
+#[UsesClass(\OCA\FaceRecognition\Db\ImageMapper::class)]
+#[UsesClass(\OCA\FaceRecognition\Service\FileService::class)]
+#[UsesClass(\OCA\FaceRecognition\Service\SettingsService::class)]
 class DisabledUserRemovalTaskTest extends IntegrationTestCase {
 
 	/**

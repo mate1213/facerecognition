@@ -24,7 +24,6 @@
 namespace OCA\FaceRecognition\Tests\Integration;
 
 use OCP\AppFramework\App;
-use OCP\AppFramework\IAppContainer;
 use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(App::class)]

@@ -27,6 +27,7 @@ use OC;
 use OC\Files\View;
 
 use OCP\IConfig;
+use OCP\IAppConfig;
 use OCP\IUser;
 use OCP\AppFramework\App;
 use OCP\AppFramework\IAppContainer;
@@ -62,6 +63,9 @@ abstract class IntegrationTestCase extends TestCase {
 	/** @var IConfig Config */
 	protected $config;
 
+	/** @var IAppConfig Config */
+	protected $appConfig;
+
 	/** @var IDBConnection test instance*/
 	protected $dbConnection;
 	
@@ -89,6 +93,7 @@ abstract class IntegrationTestCase extends TestCase {
 		// Insantiate our context, that all tasks need
 		$userManager = $this->container->get('OCP\IUserManager');
 		$this->config = $this->container->get('OCP\IConfig');
+		$this->appConfig = $this->container->get('OCP\IAppConfig');
 		$this->context = new FaceRecognitionContext($userManager, $this->config);
 		$logger = $this->container->get('Psr\Log\LoggerInterface');
 		$this->context->logger = new FaceRecognitionLogger($logger);
@@ -105,10 +110,10 @@ abstract class IntegrationTestCase extends TestCase {
 	public function tearDown(): void {
 		$this->settingsService->setCurrentFaceModel($this->originalModel);
 
-		// $faceMgmtService = $this->container->get('OCA\FaceRecognition\Service\FaceManagementService');
-		// $faceMgmtService->resetAllForUser($this->user->getUID());
+		$faceMgmtService = $this->container->get('OCA\FaceRecognition\Service\FaceManagementService');
+		$faceMgmtService->resetAllForUser($this->user->getUID());
 
-		// $this->user->delete();
+		$this->user->delete();
 
 		parent::tearDown();
 	}

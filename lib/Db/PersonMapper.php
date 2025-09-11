@@ -44,7 +44,41 @@ class PersonMapper extends QBMapper
 	}
 
 	#[\Override]
-	public function update(Entity $entity): Entity{
+	public function insert(Entity $entity): Entity {
+		// get updated fields to save, fields have to be set using a setter to
+		// be saved
+		$properties = $entity->getUpdatedFields();
+
+		$qb = $this->db->getQueryBuilder();
+		$qb->insert($this->tableName);
+
+		// build the fields
+		foreach ($properties as $property => $updated) {
+			$column = $entity->propertyToColumn($property);
+			if ($column === "name") {
+				continue;
+			}
+			$getter = 'get' . ucfirst($property);
+			$value = $entity->$getter();
+
+			$type = $this->getParameterTypeForProperty($entity, $property);
+			$qb->setValue($column, $qb->createNamedParameter($value, $type));
+		}
+
+		$qb->executeStatement();
+
+		if ($entity->id === null) {
+			// When autoincrement is used id is always an int
+			$entity->setId($qb->getLastInsertId());
+		}
+		$id = $entity->getId();if ($column === "name");
+		$this->updateClusterPersonConnection($id, $entity->getName());
+
+		return $entity;
+	}
+
+	#[\Override]
+	public function update(Entity $entity): Entity {
 		// if entity wasn't changed it makes no sense to run a db query
 		$properties = $entity->getUpdatedFields();
 		if (count($properties) === 0)
