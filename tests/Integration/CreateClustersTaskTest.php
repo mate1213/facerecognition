@@ -62,23 +62,27 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(Image::class)]
 #[UsesClass(Person::class)]
 class CreateClustersTaskTest extends IntegrationTestCase {
-	private $originalModel = 0;
-	private $settingsService;
+
+	/** @var PersonMapper*/
 	private $personMapper;
+
+	/** @var FaceMapper*/
 	private $faceMapper;
+
+	/** @var ImageMapper*/
 	private $imageMapper;
+	
+	/** @var Image*/
 	private $image;
+
+	/** @var Face*/
 	private $face;
 
-	
 	public function setUp(): void {
 		parent::setUp();
-		$this->personMapper = new PersonMapper($this->dbConnection);
-		$this->faceMapper = new FaceMapper($this->dbConnection);
-		$this->imageMapper = new ImageMapper($this->dbConnection, $this->faceMapper);
-		$this->settingsService = new SettingsService($this->config, $this->user->getUID());
-		$this->originalModel = $this->settingsService->getCurrentFaceModel();
-		$this->settingsService->setCurrentFaceModel(ModelManager::DEFAULT_FACE_MODEL_ID);
+		$this->personMapper =  $this->container->get('OCA\FaceRecognition\Db\PersonMapper');
+		$this->faceMapper = $this->container->get('OCA\FaceRecognition\Db\FaceMapper');
+		$this->imageMapper = $this->container->get('OCA\FaceRecognition\Db\ImageMapper');
 
 		$this->image = new Image();
 		$this->image->setUser($this->user->getUid());
@@ -164,11 +168,5 @@ class CreateClustersTaskTest extends IntegrationTestCase {
 		}
 
 		$this->assertEquals(true, $generator->getReturn());
-	}
-
-	public function tearDown(): void {
-		$this->settingsService->setCurrentFaceModel($this->originalModel);
-
-		parent::tearDown();
 	}
 }

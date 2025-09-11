@@ -34,6 +34,7 @@ use OCP\AppFramework\IAppContainer;
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionLogger;
 use OCA\FaceRecognition\BackgroundJob\Tasks\AddMissingImagesTask;
+use OCA\FaceRecognition\Model\ModelManager;
 use OCP\IDBConnection;
 
 use \phpunit\Framework\TestCase;
@@ -42,6 +43,13 @@ use \phpunit\Framework\TestCase;
  * Main class that all integration tests should inherit from.
  */
 abstract class IntegrationTestCase extends TestCase {
+
+	/** @var int*/
+	protected $originalModel = 0;
+
+	/** @var SettingsService*/
+	protected $settingsService;
+
 	/** @var IAppContainer */
 	protected $container;
 
@@ -73,7 +81,7 @@ abstract class IntegrationTestCase extends TestCase {
 		$userManager = OC::$server->getUserManager();
 		$username = 'testuser' . rand(0, PHP_INT_MAX);
 		$this->user = $userManager->createUser($username, 'YVvV4huLVUNR#UgJC*bBGXzHR4uW24$kB#dRTX*9');
-		// $this->loginAsUser($username);
+		$this->user->updateLastLoginTimestamp();
 		// Get container to get classes using DI
 		$app = new App('facerecognition');
 		$this->container = $app->getContainer();
@@ -87,13 +95,20 @@ abstract class IntegrationTestCase extends TestCase {
 
 		// The tests, by default, are with the analysis activated.
 		$this->config->setUserValue($this->user->getUID(), 'facerecognition', 'enabled', 'true');
+
+		
+		$this->settingsService = $this->container->get('OCA\FaceRecognition\Service\SettingsService');
+		$this->originalModel = $this->settingsService->getCurrentFaceModel();
+		$this->settingsService->setCurrentFaceModel(ModelManager::DEFAULT_FACE_MODEL_ID);
 	}
 
 	public function tearDown(): void {
-		$faceMgmtService = $this->container->get('OCA\FaceRecognition\Service\FaceManagementService');
-		$faceMgmtService->resetAllForUser($this->user->getUID());
+		$this->settingsService->setCurrentFaceModel($this->originalModel);
 
-		$this->user->delete();
+		// $faceMgmtService = $this->container->get('OCA\FaceRecognition\Service\FaceManagementService');
+		// $faceMgmtService->resetAllForUser($this->user->getUID());
+
+		// $this->user->delete();
 
 		parent::tearDown();
 	}

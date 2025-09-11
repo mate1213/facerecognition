@@ -34,10 +34,26 @@ use OCP\AppFramework\IAppContainer;
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionLogger;
 use OCA\FaceRecognition\BackgroundJob\Tasks\AddMissingImagesTask;
+use OCA\FaceRecognition\Service\SettingsService;
 
 use OCA\FaceRecognition\Model\ModelManager;
 use OCA\FaceRecognition\Tests\Integration\IntegrationTestCase;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
+
+#[CoversClass(AddMissingImagesTask::class)]
+#[UsesClass(SettingsService::class)]
+#[UsesClass(FaceRecognitionContext::class)]
+#[UsesClass(FaceRecognitionLogger::class)]
+#[UsesClass(FaceRecognitionLogger::class)]
+#[UsesClass(\OCA\FaceRecognition\Db\FaceMapper::class)]
+#[UsesClass(\OCA\FaceRecognition\Db\ImageMapper::class)]
+#[UsesClass(\OCA\FaceRecognition\Db\PersonMapper::class)]
+#[UsesClass(\OCA\FaceRecognition\Db\Image::class)]
+#[UsesClass(\OCA\FaceRecognition\Listener\UserDeletedListener::class)]
+#[UsesClass(\OCA\FaceRecognition\Service\FaceManagementService::class)]
+#[UsesClass(\OCA\FaceRecognition\Service\FileService::class)]
 class AddMissingImagesTaskTest extends IntegrationTestCase {
 
 	/**
@@ -73,7 +89,6 @@ class AddMissingImagesTaskTest extends IntegrationTestCase {
 	 * Test that empty crawling will do nothing
 	 */
 	public function testCrawlNoImages() {
-		// $this->loginAsUser($this->user->getUID());
 		$view = new View('/' . $this->user->getUID() . '/files');
 		$view->file_put_contents("foo.txt", "content");
 
@@ -88,7 +103,6 @@ class AddMissingImagesTaskTest extends IntegrationTestCase {
 	 * Test that crawling with some images will actually find them and add them to database
 	 */
 	public function testCrawl() {
-		// $this->loginAsUser($this->user->getUID());
 		$view = new View('/' . $this->user->getUID() . '/files');
 		$view->file_put_contents("foo1.txt", "content");
 		$view->file_put_contents("foo2.jpg", "content");
@@ -117,7 +131,6 @@ class AddMissingImagesTaskTest extends IntegrationTestCase {
 	private function doMissingImageScan($contextUser = null) {
 		// Reset config that full scan is done, to make sure we are scanning again
 		$this->config->setUserValue($this->user->getUID(), 'facerecognition', AddMissingImagesTask::FULL_IMAGE_SCAN_DONE_KEY, 'false');
-		
 		
 		$imageMapper = $this->container->get('OCA\FaceRecognition\Db\ImageMapper');
 		$fileService = $this->container->get('OCA\FaceRecognition\Service\FileService');

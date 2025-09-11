@@ -51,7 +51,7 @@ class ResetAllTest extends IntegrationTestCase {
 	 */
 	public function testResetAll() {
 		// Add one image to DB
-		$imageMapper = $this->container->query('OCA\FaceRecognition\Db\ImageMapper');
+		$imageMapper = $this->container->get('OCA\FaceRecognition\Db\ImageMapper');
 		$image = new Image();
 		$image->setUser($this->user->getUid());
 		$image->setFile(1);
@@ -61,7 +61,7 @@ class ResetAllTest extends IntegrationTestCase {
 		$this->assertEquals(1, $imageCount);
 
 		// Add one person to DB
-		$personMapper = $this->container->query('OCA\FaceRecognition\Db\PersonMapper');
+		$personMapper = $this->container->get('OCA\FaceRecognition\Db\PersonMapper');
 		$person = new Person();
 		$person->setUser($this->user->getUID());
 		$person->setIsValid(true);
@@ -71,7 +71,7 @@ class ResetAllTest extends IntegrationTestCase {
 		$this->assertEquals(0, $personCount); // Still 0 due it has no associated faces
 
 		// Add one face to DB
-		$faceMapper = $this->container->query('OCA\FaceRecognition\Db\FaceMapper');
+		$faceMapper = $this->container->get('OCA\FaceRecognition\Db\FaceMapper');
 		$face = Face::fromModel($image->getId(), array("left"=>0, "right"=>100, "top"=>0, "bottom"=>100, "detection_confidence"=>1.0));
 		$face->setPerson($person->getId());
 		$face = $faceMapper->insertFace($face);
@@ -83,8 +83,8 @@ class ResetAllTest extends IntegrationTestCase {
 		$this->assertEquals(1, $personCount);
 
 		// Execute reset all
-		$userManager = $this->container->query('OCP\IUserManager');
-		$settingsService = $this->container->query('OCA\FaceRecognition\Service\SettingsService');
+		$userManager = $this->container->get('OCP\IUserManager');
+		$settingsService = $this->container->get('OCA\FaceRecognition\Service\SettingsService');
 		$faceMgmtService = new FaceManagementService($userManager, $faceMapper, $imageMapper, $personMapper, $settingsService);
 		$faceMgmtService->resetAllForUser($this->user->getUID());
 
