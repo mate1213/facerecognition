@@ -24,7 +24,6 @@
 namespace OCA\FaceRecognition\Tests\Integration;
 
 use OC;
-use OC\Files\View;
 
 use OCP\IConfig;
 use OCP\IAppConfig;
@@ -34,8 +33,8 @@ use OCP\AppFramework\IAppContainer;
 
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionLogger;
-use OCA\FaceRecognition\BackgroundJob\Tasks\AddMissingImagesTask;
 use OCA\FaceRecognition\Model\ModelManager;
+use OCA\FaceRecognition\Service\SettingsService;
 use OCP\IDBConnection;
 
 use \phpunit\Framework\TestCase;
@@ -110,10 +109,10 @@ abstract class IntegrationTestCase extends TestCase {
 	public function tearDown(): void {
 		$this->settingsService->setCurrentFaceModel($this->originalModel);
 
-		$faceMgmtService = $this->container->get('OCA\FaceRecognition\Service\FaceManagementService');
-		$faceMgmtService->resetAllForUser($this->user->getUID());
+		// $faceMgmtService = $this->container->get('OCA\FaceRecognition\Service\FaceManagementService');
+		// $faceMgmtService->resetAllForUser($this->user->getUID());
 
-		$this->user->delete();
+		// $this->user->delete();
 
 		parent::tearDown();
 	}

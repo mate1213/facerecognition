@@ -37,13 +37,16 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 
 #[CoversClass(StaleImagesRemovalTask::class)]
-#[UsesClass(\OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext::class)]
-#[UsesClass(\OCA\FaceRecognition\BackgroundJob\FaceRecognitionLogger::class)]
 #[UsesClass(\OCA\FaceRecognition\Db\FaceMapper::class)]
 #[UsesClass(\OCA\FaceRecognition\Db\Image::class)]
 #[UsesClass(\OCA\FaceRecognition\Db\ImageMapper::class)]
 #[UsesClass(\OCA\FaceRecognition\Db\PersonMapper::class)]
 #[UsesClass(\OCA\FaceRecognition\Service\FileService::class)]
+#[UsesClass(\OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext::class)]
+#[UsesClass(\OCA\FaceRecognition\BackgroundJob\FaceRecognitionLogger::class)]
+#[UsesClass(\OCA\FaceRecognition\BackgroundJob\Tasks\AddMissingImagesTask::class)]
+#[UsesClass(\OCA\FaceRecognition\Listener\UserDeletedListener::class)]
+#[UsesClass(\OCA\FaceRecognition\Service\FaceManagementService::class)]
 #[UsesClass(\OCA\FaceRecognition\Service\SettingsService::class)]
 class StaleImagesRemovalTaskTest extends IntegrationTestCase {
 
