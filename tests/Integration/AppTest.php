@@ -26,7 +26,7 @@ namespace OCA\FaceRecognition\Tests\Integration;
 use OCP\AppFramework\App;
 use PHPUnit\Framework\Attributes\CoversClass;
 
-#[CoversClass(App::class)]
+#[CoversClass(\OCA\FaceRecognition\AppInfo\Application::class)]
 class AppTest extends IntegrationTestCase {
 
 	public function setUp(): void {

@@ -41,7 +41,6 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(\OCA\FaceRecognition\Model\DlibCnnHogModel\DlibCnnHogModel::class)]
 #[UsesClass(\OCA\FaceRecognition\Model\DlibCnnModel\DlibCnnModel::class)]
 #[UsesClass(\OCA\FaceRecognition\Model\DlibHogModel\DlibHogModel::class)]
-#[UsesClass(\OCA\FaceRecognition\Model\DlibCnnHogModel\DlibCnnHogModel::class)]
 #[UsesClass(\OCA\FaceRecognition\Model\ExternalModel\ExternalModel::class)]
 #[UsesClass(\OCA\FaceRecognition\Model\ModelManager::class)]
 #[UsesClass(\OCA\FaceRecognition\Service\DownloadService::class)]
