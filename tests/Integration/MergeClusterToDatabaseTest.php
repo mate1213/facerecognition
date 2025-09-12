@@ -40,6 +40,9 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(\OCA\FaceRecognition\Db\Image::class)]
 #[UsesClass(\OCA\FaceRecognition\Db\ImageMapper::class)]
 #[UsesClass(\OCA\FaceRecognition\Db\Person::class)]
+#[UsesClass(\OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext::class)]
+#[UsesClass(\OCA\FaceRecognition\BackgroundJob\FaceRecognitionLogger::class)]
+#[UsesClass(\OCA\FaceRecognition\Service\SettingsService::class)]
 class MergeClusterToDatabaseTest extends IntegrationTestCase {
 
 	public function testMergeEmptyClusterToDatabase() {

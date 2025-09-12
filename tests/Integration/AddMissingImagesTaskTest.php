@@ -46,7 +46,6 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(SettingsService::class)]
 #[UsesClass(FaceRecognitionContext::class)]
 #[UsesClass(FaceRecognitionLogger::class)]
-#[UsesClass(FaceRecognitionLogger::class)]
 #[UsesClass(\OCA\FaceRecognition\Db\FaceMapper::class)]
 #[UsesClass(\OCA\FaceRecognition\Db\ImageMapper::class)]
 #[UsesClass(\OCA\FaceRecognition\Db\PersonMapper::class)]
