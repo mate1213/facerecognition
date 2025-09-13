@@ -149,7 +149,7 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 		$face2 = $this->createFace($image->getId(), $person->getId());
 		self::$personMapper->invalidatePersons($image->getId());
 
-		self::$personMapper->mergeClusterToDatabase(self::$user->getUid(),
+		$ret = self::$personMapper->mergeClusterToDatabase(self::$user->getUid(),
 			array(
 				$person->getId() => [$face1->getId(), $face2->getId()]
 			),

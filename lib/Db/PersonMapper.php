@@ -349,7 +349,7 @@ class PersonMapper extends QBMapper
 	 */
 	public function countClusters(string $userId, int $modelId, bool $onlyInvalid = false): int{
 		$qb = $this->db->getQueryBuilder();
-		$qb->select($qb->createFunction('COUNT(' . $qb->getColumnName('c.id') . ')'))
+		$qb->select($qb->createFunction('COUNT(' . $qb->getColumnName('c.id') . ') OVER ()'))
 			->from($this->getTableName(), 'c')
 			->innerJoin('c', 'facerecog_cluster_faces', 'cf', $qb->expr()->eq('cf.cluster_id', 'c.id'))
 			->innerJoin('c', 'facerecog_faces', 'f', $qb->expr()->eq('cf.face_id', 'f.id'))
@@ -439,16 +439,13 @@ class PersonMapper extends QBMapper
 			foreach ($newClusters as $newPerson => $newFaces) {
 				if (array_key_exists($newPerson, $currentClusters)) {
 					// This cluster already existed, update cluster
-
-					if ($newFaces === $currentClusters[$newPerson]) {
-						// Set cluster as valid now
-						$qb = $this->db->getQueryBuilder();
-						$qb->update($this->getTableName())
-							->set("is_valid", $qb->createParameter('is_valid'))
-							->where($qb->expr()->eq('id', $qb->createNamedParameter($newPerson, IQueryBuilder::PARAM_INT)))
-							->setParameter('is_valid', true, IQueryBuilder::PARAM_BOOL)
-							->executeStatement();
-					}
+					// Set cluster as valid now
+					$qb = $this->db->getQueryBuilder();
+					$qb->update($this->getTableName())
+						->set("is_valid", $qb->createParameter('is_valid'))
+						->where($qb->expr()->eq('id', $qb->createNamedParameter($newPerson, IQueryBuilder::PARAM_INT)))
+						->setParameter('is_valid', true, IQueryBuilder::PARAM_BOOL)
+						->executeStatement();
 					$insertedClusterId = $newPerson;
 					$countOfClusters["modified"][] = $insertedClusterId;
 				} else {

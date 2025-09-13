@@ -59,16 +59,16 @@ class ImageMapperTest extends UnitBaseTestCase
 	public function setUp(): void{
 		parent::setUp();
 
-		$this->faceMapper = new FaceMapper($this->dbConnection);
-		$this->imageMapper = new ImageMapper($this->dbConnection, $this->faceMapper);
+		$this->faceMapper = new FaceMapper(self::$dbConnection);
+		$this->imageMapper = new ImageMapper(self::$dbConnection, $this->faceMapper);
 
-		$this->imageCountQuery = $this->dbConnection->getQueryBuilder();
+		$this->imageCountQuery = self::$dbConnection->getQueryBuilder();
 		$this->imageCountQuery->select($this->imageCountQuery->createFunction('COUNT(id) as count'))->from('facerecog_images');
 
-		$this->userImageCountQuery = $this->dbConnection->getQueryBuilder();
+		$this->userImageCountQuery = self::$dbConnection->getQueryBuilder();
 		$this->userImageCountQuery->select($this->userImageCountQuery->createFunction('COUNT(*) as count'))->from('facerecog_user_images');
 
-		$this->faceCountQuery = $this->dbConnection->getQueryBuilder();
+		$this->faceCountQuery = self::$dbConnection->getQueryBuilder();
 		$this->faceCountQuery->select($this->faceCountQuery->createFunction('COUNT(*) as count'))->from('facerecog_faces');
 	}
 
@@ -484,9 +484,9 @@ class ImageMapperTest extends UnitBaseTestCase
 			return;
 		}
 		$sql = file_get_contents("tests/DatabaseInserts/11_1005ImageWithErrorModel2.sql");
-		$this->dbConnection->executeStatement($sql);
+		self::$dbConnection->executeStatement($sql);
 		$sql = file_get_contents("tests/DatabaseInserts/21_1005userImageConnectionForUser1.sql");
-		$this->dbConnection->executeStatement($sql);
+		self::$dbConnection->executeStatement($sql);
 
 		//Act
 		$this->imageMapper->deleteUserImages("user1");
@@ -503,9 +503,9 @@ class ImageMapperTest extends UnitBaseTestCase
 			return;
 		}
 		$sql = file_get_contents("tests/DatabaseInserts/11_1005ImageWithErrorModel2.sql");
-		$this->dbConnection->executeStatement($sql);
+		self::$dbConnection->executeStatement($sql);
 		$sql = file_get_contents("tests/DatabaseInserts/21_1005userImageConnectionForUser1.sql");
-		$this->dbConnection->executeStatement($sql);
+		self::$dbConnection->executeStatement($sql);
 
 		//Act
 		$this->imageMapper->deleteUserModel("user1", 2);
@@ -522,9 +522,9 @@ class ImageMapperTest extends UnitBaseTestCase
 			return;
 		}
 		$sql = file_get_contents("tests/DatabaseInserts/11_1005ImageWithErrorModel2.sql");
-		$this->dbConnection->executeStatement($sql);
+		self::$dbConnection->executeStatement($sql);
 		$sql = file_get_contents("tests/DatabaseInserts/21_1005userImageConnectionForUser1.sql");
-		$this->dbConnection->executeStatement($sql);
+		self::$dbConnection->executeStatement($sql);
 
 		//Act
 		$this->imageMapper->resetErrors('user1');

@@ -23,13 +23,7 @@
  */
 namespace OCA\FaceRecognition\Tests\Integration;
 
-use OC;
-use OC\Files\View;
-
-use OCP\IConfig;
 use OCP\IUser;
-use OCP\AppFramework\App;
-use OCP\AppFramework\IAppContainer;
 
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionLogger;
@@ -55,14 +49,8 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(\OCA\FaceRecognition\Service\FileService::class)]
 class AddMissingImagesTaskTest extends IntegrationTestCase {
 
-	/** @var AddMissingImagesTask test instance*/
-	protected static $addMissingImagesTask;
-
-	public static function setUpBeforeClass(): void {
-		parent::setUpBeforeClass();
-		self::$addMissingImagesTask = new AddMissingImagesTask(self::$imageMapper, self::$fileService, self::$settingsService);
-	}
 	public function setup(): void {
+        parent::setUp();
 		self::$config->setUserValue(self::$user->getUID(), 'facerecognition', AddMissingImagesTask::FULL_IMAGE_SCAN_DONE_KEY, 'false');
 	}
 	/**

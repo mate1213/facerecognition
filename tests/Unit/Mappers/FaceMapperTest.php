@@ -50,12 +50,12 @@ class FaceMapperTest extends UnitBaseTestCase
 	 */
 	public function setUp(): void{
 		parent::setUp();
-		$this->faceMapper = new FaceMapper($this->dbConnection);
+		$this->faceMapper = new FaceMapper(self::$dbConnection);
 
-		$this->clusterFaceCountQuery = $this->dbConnection->getQueryBuilder();
+		$this->clusterFaceCountQuery = self::$dbConnection->getQueryBuilder();
 		$this->clusterFaceCountQuery->select($this->clusterFaceCountQuery->createFunction('COUNT(*) as count'))->from('facerecog_cluster_faces');
 
-		$this->faceCountQuery = $this->dbConnection->getQueryBuilder();
+		$this->faceCountQuery = self::$dbConnection->getQueryBuilder();
 		$this->faceCountQuery->select($this->faceCountQuery->createFunction('COUNT(id) as count'))->from('facerecog_faces');
 	}
 
@@ -309,7 +309,7 @@ class FaceMapperTest extends UnitBaseTestCase
 		$this->faceMapper->removeFromImage($imageId);
 
 		//Assert
-		$qb = $this->dbConnection->getQueryBuilder();
+		$qb = self::$dbConnection->getQueryBuilder();
 		$qb->select($qb->createFunction('COUNT(id) as count'))->from('facerecog_faces')->where($qb->expr()->eq('image_id', $qb->createNamedParameter($imageId)));
 		$result = $qb->executeQuery();
 		$row = $result->fetch();
@@ -320,10 +320,10 @@ class FaceMapperTest extends UnitBaseTestCase
 	#[DataProviderExternal(FaceDataProvider::class, 'removeFromImage_Provider')]
 	public function test_RemoveFromImage_WithDbConnection(int $imageId, int $expectedCount): void{
 		//Act
-		$this->faceMapper->removeFromImage($imageId, $this->dbConnection);
+		$this->faceMapper->removeFromImage($imageId, self::$dbConnection);
 
 		//Assert
-		$qb = $this->dbConnection->getQueryBuilder();
+		$qb = self::$dbConnection->getQueryBuilder();
 		$qb->select($qb->createFunction('COUNT(id) as count'))->from('facerecog_faces')->where($qb->expr()->eq('image_id', $qb->createNamedParameter($imageId)));
 		$result = $qb->executeQuery();
 		$row = $result->fetch();
@@ -364,7 +364,7 @@ class FaceMapperTest extends UnitBaseTestCase
 	#[DataProviderExternal(FaceDataProvider::class, 'insertFace_Provider')]
 	public function test_InsertFace_withDbContext(Face $faceToInsert, int $expectedFaceCount, int $expectedConnectionCount): void{
 		//Act
-		$this->faceMapper->insertFace($faceToInsert, $this->dbConnection);
+		$this->faceMapper->insertFace($faceToInsert, self::$dbConnection);
 
 		//Assert
 		$this->assertFaceCount($expectedFaceCount);
@@ -378,7 +378,7 @@ class FaceMapperTest extends UnitBaseTestCase
 			return;
 		}
 		$sql = file_get_contents("tests/DatabaseInserts/31_1005FacesInsert.sql");
-		$this->dbConnection->executeStatement($sql);
+		self::$dbConnection->executeStatement($sql);
 		$faceIds = [];
 		for ($i = 1001; $i < 2006; $i++)
 		{
@@ -420,9 +420,9 @@ class FaceMapperTest extends UnitBaseTestCase
 			return;
 		}
 		$sql = file_get_contents("tests/DatabaseInserts/31_1005FacesInsert.sql");
-		$this->dbConnection->executeStatement($sql);
+		self::$dbConnection->executeStatement($sql);
 		$sql = file_get_contents("tests/DatabaseInserts/51_1005FaceClusterConnection.sql");
-		$this->dbConnection->executeStatement($sql);
+		self::$dbConnection->executeStatement($sql);
 
 		//Act
 		$this->faceMapper->unsetPersonsRelationForUser('user1', 1);

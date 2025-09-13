@@ -30,46 +30,50 @@ use PHPUnit\Framework\TestCase;
 
 abstract class UnitBaseTestCase extends TestCase
 {
-	/** @var IDBConnection*/
-	protected $dbConnection;
+	/** @var IDBConnection test instance*/
+	protected static $dbConnection;
 	/** @var bool*/
 	private $isSetupComplete = false;
 	/** @var bool */
 	protected $notRunLargeTests = true;
+
+
+	public static function setUpBeforeClass(): void {
+		self::$dbConnection = OC::$server->getDatabaseConnection();
+	}
 
 	/**
 	 * {@inheritDoc}
 	 */
 	public function setUp(): void{
 		parent::setUp();
-		$this->dbConnection = OC::$server->getDatabaseConnection();
-		$this->dbConnection->beginTransaction();
+		self::$dbConnection->beginTransaction();
 
 		if (!$this->isSetupComplete) {
 			$this->isSetupComplete = true;
 			$sql = file_get_contents("tests/DatabaseInserts/00_emptyDatabase.sql");
-			$this->dbConnection->executeStatement($sql);
+			self::$dbConnection->executeStatement($sql);
 			$sql = file_get_contents("tests/DatabaseInserts/10_imageInsert.sql");
-			$this->dbConnection->executeStatement($sql);
+			self::$dbConnection->executeStatement($sql);
 			$sql = file_get_contents("tests/DatabaseInserts/20_userImagesInsert.sql");
-			$this->dbConnection->executeStatement($sql);
+			self::$dbConnection->executeStatement($sql);
 			$sql = file_get_contents("tests/DatabaseInserts/30_facesInsert.sql");
-			$this->dbConnection->executeStatement($sql);
+			self::$dbConnection->executeStatement($sql);
 			$sql = file_get_contents("tests/DatabaseInserts/40_clustersInsert.sql");
-			$this->dbConnection->executeStatement($sql);
+			self::$dbConnection->executeStatement($sql);
 			$sql = file_get_contents("tests/DatabaseInserts/50_clusterFacesInsert.sql");
-			$this->dbConnection->executeStatement($sql);
+			self::$dbConnection->executeStatement($sql);
 			$sql = file_get_contents("tests/DatabaseInserts/60_personInsert.sql");
-			$this->dbConnection->executeStatement($sql);
+			self::$dbConnection->executeStatement($sql);
 			$sql = file_get_contents("tests/DatabaseInserts/70_personClustersInsert.sql");
-			$this->dbConnection->executeStatement($sql);
-			//$this->dbConnection->commit();
+			self::$dbConnection->executeStatement($sql);
+			//self::$dbConnection->commit();
 		}
 	}
 
 	public function tearDown(): void{
-		if ($this->dbConnection != null) {
-			$this->dbConnection->rollBack();
+		if (self::$dbConnection != null) {
+			self::$dbConnection->rollBack();
 			return;
 		}
 		parent::tearDown();

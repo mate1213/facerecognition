@@ -23,8 +23,6 @@
  */
 namespace OCA\FaceRecognition\Tests\Integration;
 
-use OC\Files\View;
-
 use OCP\IUser;
 
 use OCA\FaceRecognition\Db\Image;
@@ -50,13 +48,6 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(\OCA\FaceRecognition\Service\SettingsService::class)]
 class StaleImagesRemovalTaskTest extends IntegrationTestCase {
 
-	/** @var StaleImagesRemovalTask test instance*/
-	protected static $staleImagesRemovalTask;
-
-	public static function setUpBeforeClass(): void {
-		parent::setUpBeforeClass();
-		self::$staleImagesRemovalTask =  new StaleImagesRemovalTask(self::$imageMapper, self::$faceMapper, self::$personMapper, self::$fileService, self::$settingsService);
-	}
 	/**
 	 * Test that StaleImagesRemovalTask is not active, even though there should be some removals.
 	 */

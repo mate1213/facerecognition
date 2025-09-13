@@ -78,6 +78,12 @@ abstract class IntegrationTestCase extends TestCase {
 	/** @var FileService*/
 	protected static $fileService;
 
+	/** @var AddMissingImagesTask*/
+	protected static $addMissingImagesTask;
+
+	/** @var StaleImagesRemovalTask*/
+	protected static $staleImagesRemovalTask;
+
 	/** @var ImageMapper*/
 	protected static $imageMapper;
 
@@ -97,11 +103,11 @@ abstract class IntegrationTestCase extends TestCase {
 	protected static $dbConnection;
 	
 	public static function setUpBeforeClass(): void {
-		parent::setUpBeforeClass();
 		// Better safe than sorry. Warn user that database will be changed in chaotic manner:)
 		if (false === getenv('TRAVIS')) {
 			self::fail("This test touches database. Add \"TRAVIS\" env variable if you want to run these test on your local instance.");
 		}
+		parent::setUpBeforeClass();
 
 		self::$dbConnection = OC::$server->getDatabaseConnection();
 		self::clearDatabase();
@@ -109,11 +115,8 @@ abstract class IntegrationTestCase extends TestCase {
 		// Get container to get classes using DI
 		$app = new App('facerecognition');
 		self::$container = $app->getContainer();
-		self::getIstaces();
+		self::getInstaces();
 
-		self::$context = new FaceRecognitionContext(self::$userManager, self::$config);
-		$logger = self::$container->get('Psr\Log\LoggerInterface');
-		self::$context->logger = new FaceRecognitionLogger($logger);
 		// Create user on which we will upload images and do testing
 		$username = 'testuser' . rand(0, PHP_INT_MAX);
 		self::$user = self::$userManager->createUser($username, 'YVvV4huLVUNR#UgJC*bBGXzHR4uW24$kB#dRTX*9');
@@ -130,12 +133,15 @@ abstract class IntegrationTestCase extends TestCase {
 	}
 
 	public function setUp(): void {
-		parent::setUp();
 		// Better safe than sorry. Warn user that database will be changed in chaotic manner:)
 		if (false === getenv('TRAVIS')) {
 			self::fail("This test touches database. Add \"TRAVIS\" env variable if you want to run these test on your local instance.");
 		}
+		parent::setUp();
 		self::clearDatabase();
+		self::$context = new FaceRecognitionContext(self::$userManager, self::$config);
+		$logger = self::$container->get('Psr\Log\LoggerInterface');
+		self::$context->logger = new FaceRecognitionLogger($logger);
 		self::$context->user = self::$user;
 	}
 
@@ -154,7 +160,7 @@ abstract class IntegrationTestCase extends TestCase {
 		$sql = file_get_contents("tests/DatabaseInserts/00_emptyDatabase.sql");
 		self::$dbConnection->executeStatement($sql);
 	}
-	private static function getIstaces() : void{
+	private static function getInstaces() : void{
 		self::$config = self::$container->get('OCP\IConfig');
 		self::$appConfig = self::$container->get('OCP\IAppConfig');
 		self::$userManager = self::$container->get('OCP\IUserManager');
@@ -164,5 +170,7 @@ abstract class IntegrationTestCase extends TestCase {
 		self::$imageMapper = self::$container->get('OCA\FaceRecognition\Db\ImageMapper');
 		self::$personMapper =  self::$container->get('OCA\FaceRecognition\Db\PersonMapper');
 		self::$faceMapper = self::$container->get('OCA\FaceRecognition\Db\FaceMapper');
+		self::$addMissingImagesTask = self::$container->get('OCA\FaceRecognition\BackgroundJob\Tasks\AddMissingImagesTask');
+		self::$staleImagesRemovalTask = self::$container->get('OCA\FaceRecognition\BackgroundJob\Tasks\StaleImagesRemovalTask');
 	}
 }
