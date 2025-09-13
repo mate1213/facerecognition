@@ -55,6 +55,13 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(\OCA\FaceRecognition\Service\FileService::class)]
 class AddMissingImagesTaskTest extends IntegrationTestCase {
 
+	/** @var AddMissingImagesTask test instance*/
+	protected static $addMissingImagesTask;
+
+	public static function setUpBeforeClass(): void {
+		parent::setUpBeforeClass();
+		self::$addMissingImagesTask = new AddMissingImagesTask(self::$imageMapper, self::$fileService, self::$settingsService);
+	}
 	/**
 	 * Test that AddMissingImagesTask is updating app config that it finished full scan.
 	 * Note that, in this test, we cannot check number of newly found images,
@@ -127,15 +134,13 @@ class AddMissingImagesTaskTest extends IntegrationTestCase {
 	private function doMissingImageScan($contextUser = null) {
 		// Reset config that full scan is done, to make sure we are scanning again
 		self::$config->setUserValue(self::$user->getUID(), 'facerecognition', AddMissingImagesTask::FULL_IMAGE_SCAN_DONE_KEY, 'false');
-		
-		$addMissingImagesTask = new AddMissingImagesTask(self::$imageMapper, self::$fileService, self::$settingsService);
-		$this->assertNotEquals("", $addMissingImagesTask->description());
+		$this->assertNotEquals("", self::$addMissingImagesTask->description());
 
 		// Set user for which to do scanning, if any
 		self::$context->user = $contextUser;
 
 		// Since this task returns generator, iterate until it is done
-		$generator = $addMissingImagesTask->execute(self::$context);
+		$generator = self::$addMissingImagesTask->execute(self::$context);
 		foreach ($generator as $_) {
 		}
 

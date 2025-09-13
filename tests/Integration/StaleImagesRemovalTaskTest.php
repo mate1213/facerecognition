@@ -50,6 +50,13 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(\OCA\FaceRecognition\Service\SettingsService::class)]
 class StaleImagesRemovalTaskTest extends IntegrationTestCase {
 
+	/** @var StaleImagesRemovalTask test instance*/
+	protected static $staleImagesRemovalTask;
+
+	public static function setUpBeforeClass(): void {
+		parent::setUpBeforeClass();
+		self::$staleImagesRemovalTask =  new StaleImagesRemovalTask(self::$imageMapper, self::$faceMapper, self::$personMapper, self::$fileService, self::$settingsService);
+	}
 	/**
 	 * Test that StaleImagesRemovalTask is not active, even though there should be some removals.
 	 */
@@ -60,8 +67,7 @@ class StaleImagesRemovalTaskTest extends IntegrationTestCase {
 		$image->setModel(ModelManager::DEFAULT_FACE_MODEL_ID);
 		self::$imageMapper->insert($image);
 
-		$staleImagesRemovalTask = $this->createStaleImagesRemovalTask();
-		$generator = $staleImagesRemovalTask->execute(self::$context);
+		$generator = self::$staleImagesRemovalTask->execute(self::$context);
 		foreach ($generator as $_) {
 		}
 		$this->assertEquals(true, $generator->getReturn());
@@ -127,21 +133,16 @@ class StaleImagesRemovalTaskTest extends IntegrationTestCase {
 		// Set config that stale image removal is needed
 		self::$config->setUserValue(self::$user->getUID(), 'facerecognition', SettingsService::STALE_IMAGES_REMOVAL_NEEDED_KEY, 'true');
 
-		$staleImagesRemovalTask = $this->createStaleImagesRemovalTask();
-		$this->assertNotEquals("", $staleImagesRemovalTask->description());
+		$this->assertNotEquals("", self::$staleImagesRemovalTask->description());
 
 		// Set user for which to do scanning, if any
 		self::$context->user = $contextUser;
 
 		// Since this task returns generator, iterate until it is done
-		$generator = $staleImagesRemovalTask->execute(self::$context);
+		$generator = self::$staleImagesRemovalTask->execute(self::$context);
 		foreach ($generator as $_) {
 		}
 
 		$this->assertEquals(true, $generator->getReturn());
-	}
-
-	private function createStaleImagesRemovalTask() {
-		return new StaleImagesRemovalTask(self::$imageMapper, self::$faceMapper, self::$personMapper, self::$fileService, self::$settingsService);
 	}
 }
