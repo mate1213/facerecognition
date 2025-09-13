@@ -62,6 +62,9 @@ class AddMissingImagesTaskTest extends IntegrationTestCase {
 		parent::setUpBeforeClass();
 		self::$addMissingImagesTask = new AddMissingImagesTask(self::$imageMapper, self::$fileService, self::$settingsService);
 	}
+	public function setup(): void {
+		self::$config->setUserValue(self::$user->getUID(), 'facerecognition', AddMissingImagesTask::FULL_IMAGE_SCAN_DONE_KEY, 'false');
+	}
 	/**
 	 * Test that AddMissingImagesTask is updating app config that it finished full scan.
 	 * Note that, in this test, we cannot check number of newly found images,
@@ -133,7 +136,6 @@ class AddMissingImagesTaskTest extends IntegrationTestCase {
 	 */
 	private function doMissingImageScan($contextUser = null) {
 		// Reset config that full scan is done, to make sure we are scanning again
-		self::$config->setUserValue(self::$user->getUID(), 'facerecognition', AddMissingImagesTask::FULL_IMAGE_SCAN_DONE_KEY, 'false');
 		$this->assertNotEquals("", self::$addMissingImagesTask->description());
 
 		// Set user for which to do scanning, if any

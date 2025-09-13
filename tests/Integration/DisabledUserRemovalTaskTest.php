@@ -47,6 +47,13 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(\OCA\FaceRecognition\Service\FaceManagementService::class)]
 class DisabledUserRemovalTaskTest extends IntegrationTestCase {
 
+	/** @var DisabledUserRemovalTask test instance*/
+	protected static $disabledUserRemovalTask;
+
+	public static function setUpBeforeClass(): void {
+		parent::setUpBeforeClass();
+		self::$disabledUserRemovalTask = new DisabledUserRemovalTask(self::$imageMapper, self::$faceMgmtService, self::$settingsService);
+	}
 	/**
 	 * Test that check when user disable analysis.
 	 */
@@ -91,21 +98,16 @@ class DisabledUserRemovalTaskTest extends IntegrationTestCase {
 	 * If not given, stale images for all users will be renived.
 	 */
 	private function doDisabledUserRemoval($contextUser = null) {
-		$disabledUserRemovalTask = $this->createDisabledUserRemovalTask();
-		$this->assertNotEquals("", $disabledUserRemovalTask->description());
+		$this->assertNotEquals("", self::$disabledUserRemovalTask->description());
 
 		// Set user for which to do scanning, if any
 		self::$context->user = $contextUser;
 
 		// Since this task returns generator, iterate until it is done
-		$generator = $disabledUserRemovalTask->execute(self::$context);
+		$generator = self::$disabledUserRemovalTask->execute(self::$context);
 		foreach ($generator as $_) {
 		}
 
 		$this->assertEquals(true, $generator->getReturn());
-	}
-
-	private function createDisabledUserRemovalTask() {
-		return new DisabledUserRemovalTask(self::$imageMapper, self::$faceMgmtService, self::$settingsService);
 	}
 }
