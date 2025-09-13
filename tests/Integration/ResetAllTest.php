@@ -52,49 +52,44 @@ class ResetAllTest extends IntegrationTestCase {
 	 */
 	public function testResetAll() {
 		// Add one image to DB
-		$imageMapper = $this->container->get('OCA\FaceRecognition\Db\ImageMapper');
 		$image = new Image();
-		$image->setUser($this->user->getUid());
+		$image->setUser(self::$user->getUid());
 		$image->setFile(1);
 		$image->setModel(ModelManager::DEFAULT_FACE_MODEL_ID);
-		$image = $imageMapper->insert($image);
-		$imageCount = $imageMapper->countUserImages($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
+		$image = self::$imageMapper->insert($image);
+		$imageCount = self::$imageMapper->countUserImages(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(1, $imageCount);
 
 		// Add one person to DB
-		$personMapper = $this->container->get('OCA\FaceRecognition\Db\PersonMapper');
 		$person = new Person();
-		$person->setUser($this->user->getUID());
+		$person->setUser(self::$user->getUID());
 		$person->setIsValid(true);
 		$person->setName('foo');
-		$person = $personMapper->insert($person);
-		$personCount = $personMapper->countPersons($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
+		$person = self::$personMapper->insert($person);
+		$personCount = self::$personMapper->countPersons(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(0, $personCount); // Still 0 due it has no associated faces
 
 		// Add one face to DB
-		$faceMapper = $this->container->get('OCA\FaceRecognition\Db\FaceMapper');
 		$face = Face::fromModel($image->getId(), array("left"=>0, "right"=>100, "top"=>0, "bottom"=>100, "detection_confidence"=>1.0));
 		$face->setPerson($person->getId());
-		$face = $faceMapper->insertFace($face);
-		$faceCount = $faceMapper->countFaces($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
+		$face = self::$faceMapper->insertFace($face);
+		$faceCount = self::$faceMapper->countFaces(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(1, $faceCount);
 
 		// Check faces with all correct relationships
-		$personCount = $personMapper->countPersons($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
+		$personCount = self::$personMapper->countPersons(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(1, $personCount);
 
 		// Execute reset all
-		$userManager = $this->container->get('OCP\IUserManager');
-		$settingsService = $this->container->get('OCA\FaceRecognition\Service\SettingsService');
-		$faceMgmtService = new FaceManagementService($userManager, $faceMapper, $imageMapper, $personMapper, $settingsService);
-		$faceMgmtService->resetAllForUser($this->user->getUID());
+		$faceMgmtService = new FaceManagementService(self::$userManager, self::$faceMapper, self::$imageMapper, self::$personMapper, self::$settingsService);
+		$faceMgmtService->resetAllForUser(self::$user->getUID());
 
 		// Check that everything is gone
-		$imageCount = $imageMapper->countUserImages($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
+		$imageCount = self::$imageMapper->countUserImages(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(0, $imageCount);
-		$faceCount = $faceMapper->countFaces($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
+		$faceCount = self::$faceMapper->countFaces(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(0, $faceCount);
-		$personCount = $personMapper->countPersons($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
+		$personCount = self::$personMapper->countPersons(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(0, $personCount);
 	}
 }

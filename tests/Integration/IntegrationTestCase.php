@@ -24,10 +24,12 @@
 namespace OCA\FaceRecognition\Tests\Integration;
 
 use OC;
+use OC\Files\View;
 
 use OCP\IConfig;
 use OCP\IAppConfig;
 use OCP\IUser;
+use OCP\IUserManager;
 use OCP\AppFramework\App;
 use OCP\AppFramework\IAppContainer;
 
@@ -35,6 +37,11 @@ use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionLogger;
 use OCA\FaceRecognition\Model\ModelManager;
 use OCA\FaceRecognition\Service\SettingsService;
+use OCA\FaceRecognition\Service\FaceManagementService;
+use OCA\FaceRecognition\Service\FileService;
+use OCA\FaceRecognition\Db\ImageMapper;
+use OCA\FaceRecognition\Db\FaceMapper;
+use OCA\FaceRecognition\Db\PersonMapper;
 use OCP\IDBConnection;
 
 use \phpunit\Framework\TestCase;
@@ -45,75 +52,116 @@ use \phpunit\Framework\TestCase;
 abstract class IntegrationTestCase extends TestCase {
 
 	/** @var int*/
-	protected $originalModel = 0;
-
-	/** @var SettingsService*/
-	protected $settingsService;
-
-	/** @var IAppContainer */
-	protected $container;
-
-	/** @var FaceRecognitionContext Context */
-	protected $context;
-
-	/** @var IUser User */
-	protected $user;
+	protected static $originalModel = 0;
 
 	/** @var IConfig Config */
-	protected $config;
+	protected static $config;
 
 	/** @var IAppConfig Config */
-	protected $appConfig;
+	protected static $appConfig;
+
+	/** @var IAppContainer */
+	protected static $container;
+
+	/** @var IUserManager */
+	protected static $userManager;
+
+	/** @var IUser User */
+	protected static $user;
+
+	/** @var SettingsService*/
+	protected static $settingsService;
+
+	/** @var FaceManagementService*/
+	protected static $faceMgmtService;
+	
+	/** @var FileService*/
+	protected static $fileService;
+
+	/** @var ImageMapper*/
+	protected static $imageMapper;
+
+	/** @var PersonMapper*/
+	protected static $personMapper;
+
+	/** @var FaceMapper*/
+	protected static $faceMapper;
+
+	/** @var FaceRecognitionContext Context */
+	protected static $context;
+
+	/** @var View UserStorageSpace */
+	protected static $view;
 
 	/** @var IDBConnection test instance*/
-	protected $dbConnection;
+	protected static $dbConnection;
 	
+	public static function setUpBeforeClass(): void {
+		parent::setUpBeforeClass();
+		// Better safe than sorry. Warn user that database will be changed in chaotic manner:)
+		if (false === getenv('TRAVIS')) {
+			self::fail("This test touches database. Add \"TRAVIS\" env variable if you want to run these test on your local instance.");
+		}
+
+		self::$dbConnection = OC::$server->getDatabaseConnection();
+		self::clearDatabase();
+
+		// Get container to get classes using DI
+		$app = new App('facerecognition');
+		self::$container = $app->getContainer();
+		self::getIstaces();
+
+		self::$context = new FaceRecognitionContext(self::$userManager, self::$config);
+		$logger = self::$container->get('Psr\Log\LoggerInterface');
+		self::$context->logger = new FaceRecognitionLogger($logger);
+		// Create user on which we will upload images and do testing
+		$username = 'testuser' . rand(0, PHP_INT_MAX);
+		self::$user = self::$userManager->createUser($username, 'YVvV4huLVUNR#UgJC*bBGXzHR4uW24$kB#dRTX*9');
+		self::$user->updateLastLoginTimestamp();
+
+		// The tests, by default, are with the analysis activated.
+		self::$config->setUserValue(self::$user->getUID(), 'facerecognition', 'enabled', 'true');
+
+		self::$originalModel = self::$settingsService->getCurrentFaceModel();
+		self::$settingsService->setCurrentFaceModel(ModelManager::DEFAULT_FACE_MODEL_ID);
+
+		
+		self::$view = new View('/' . self::$user->getUID());
+	}
+
 	public function setUp(): void {
 		parent::setUp();
 		// Better safe than sorry. Warn user that database will be changed in chaotic manner:)
 		if (false === getenv('TRAVIS')) {
-			$this->fail("This test touches database. Add \"TRAVIS\" env variable if you want to run these test on your local instance.");
+			self::fail("This test touches database. Add \"TRAVIS\" env variable if you want to run these test on your local instance.");
 		}
-
-		$this->dbConnection = OC::$server->getDatabaseConnection();
-		
-		$sql = file_get_contents("tests/DatabaseInserts/00_emptyDatabase.sql");
-		$this->dbConnection->executeStatement($sql);
-
-		// Create user on which we will upload images and do testing
-		$userManager = OC::$server->getUserManager();
-		$username = 'testuser' . rand(0, PHP_INT_MAX);
-		$this->user = $userManager->createUser($username, 'YVvV4huLVUNR#UgJC*bBGXzHR4uW24$kB#dRTX*9');
-		$this->user->updateLastLoginTimestamp();
-		// Get container to get classes using DI
-		$app = new App('facerecognition');
-		$this->container = $app->getContainer();
-
-		// Insantiate our context, that all tasks need
-		$userManager = $this->container->get('OCP\IUserManager');
-		$this->config = $this->container->get('OCP\IConfig');
-		$this->appConfig = $this->container->get('OCP\IAppConfig');
-		$this->context = new FaceRecognitionContext($userManager, $this->config);
-		$logger = $this->container->get('Psr\Log\LoggerInterface');
-		$this->context->logger = new FaceRecognitionLogger($logger);
-
-		// The tests, by default, are with the analysis activated.
-		$this->config->setUserValue($this->user->getUID(), 'facerecognition', 'enabled', 'true');
-
-		
-		$this->settingsService = $this->container->get('OCA\FaceRecognition\Service\SettingsService');
-		$this->originalModel = $this->settingsService->getCurrentFaceModel();
-		$this->settingsService->setCurrentFaceModel(ModelManager::DEFAULT_FACE_MODEL_ID);
+		self::clearDatabase();
 	}
 
 	public function tearDown(): void {
-		$this->settingsService->setCurrentFaceModel($this->originalModel);
-
-		// $faceMgmtService = $this->container->get('OCA\FaceRecognition\Service\FaceManagementService');
-		// $faceMgmtService->resetAllForUser($this->user->getUID());
-
-		// $this->user->delete();
-
+		self::$view->rmdir('/files');
 		parent::tearDown();
+	}
+
+	public static function tearDownAfterClass(): void {
+		self::$settingsService->setCurrentFaceModel(self::$originalModel);
+		self::$user->delete();
+		parent::tearDownAfterClass();
+	}
+
+	private static function clearDatabase() : void{
+		$sql = file_get_contents("tests/DatabaseInserts/00_emptyDatabase.sql");
+		self::$dbConnection->executeStatement($sql);
+	}
+	private static function getIstaces() : void{
+		self::$config = self::$container->get('OCP\IConfig');
+		self::$appConfig = self::$container->get('OCP\IAppConfig');
+		self::$userManager = self::$container->get('OCP\IUserManager');
+		self::$settingsService = self::$container->get('OCA\FaceRecognition\Service\SettingsService');
+		self::$fileService = self::$container->get('OCA\FaceRecognition\Service\FileService');
+		self::$faceMgmtService = self::$container->get('OCA\FaceRecognition\Service\FaceManagementService');
+		self::$imageMapper = self::$container->get('OCA\FaceRecognition\Db\ImageMapper');
+		self::$personMapper =  self::$container->get('OCA\FaceRecognition\Db\PersonMapper');
+		self::$faceMapper = self::$container->get('OCA\FaceRecognition\Db\FaceMapper');
 	}
 }

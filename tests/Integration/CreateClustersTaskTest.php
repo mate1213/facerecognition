@@ -63,15 +63,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(Person::class)]
 class CreateClustersTaskTest extends IntegrationTestCase {
 
-	/** @var PersonMapper*/
-	private $personMapper;
 
-	/** @var FaceMapper*/
-	private $faceMapper;
-
-	/** @var ImageMapper*/
-	private $imageMapper;
-	
 	/** @var Image*/
 	private $image;
 
@@ -80,26 +72,23 @@ class CreateClustersTaskTest extends IntegrationTestCase {
 
 	public function setUp(): void {
 		parent::setUp();
-		$this->personMapper =  $this->container->get('OCA\FaceRecognition\Db\PersonMapper');
-		$this->faceMapper = $this->container->get('OCA\FaceRecognition\Db\FaceMapper');
-		$this->imageMapper = $this->container->get('OCA\FaceRecognition\Db\ImageMapper');
 
 		$this->image = new Image();
-		$this->image->setUser($this->user->getUid());
+		$this->image->setUser(self::$user->getUid());
 		$this->image->setFile(1);
 		$this->image->setModel(ModelManager::DEFAULT_FACE_MODEL_ID);
-		$this->imageMapper->insert($this->image);
+		self::$imageMapper->insert($this->image);
 
 		$this->face = Face::fromModel($this->image->getId(), array("left"=>0, "right"=>100, "top"=>0, "bottom"=>100, "detection_confidence"=>1.0));
-		$this->faceMapper->insertFace($this->face);
+		self::$faceMapper->insertFace($this->face);
 
 		/* Check inserted face */
-		$min_face_size = $this->settingsService->getMinimumFaceSize();
-		$min_confidence = $this->settingsService->getMinimumConfidence();
+		$min_face_size = self::$settingsService->getMinimumFaceSize();
+		$min_confidence = self::$settingsService->getMinimumConfidence();
 
-		$groupablefaces = count($this->faceMapper->getGroupableFaces($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID, $min_face_size, $min_confidence));
+		$groupablefaces = count(self::$faceMapper->getGroupableFaces(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID, $min_face_size, $min_confidence));
 		$this->assertEquals(1, $groupablefaces);
-		$nonGroupablefaces = count($this->faceMapper->getNonGroupableFaces($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID, $min_face_size, $min_confidence));
+		$nonGroupablefaces = count(self::$faceMapper->getNonGroupableFaces(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID, $min_face_size, $min_confidence));
 		$this->assertEquals(0, $nonGroupablefaces);
 	}
 	
@@ -108,16 +97,16 @@ class CreateClustersTaskTest extends IntegrationTestCase {
 	 */
 	public function test_singleFaceShouldNeverCreateClusters() {
 		// With a single face should never create clusters.
-		$this->doCreateClustersTask($this->personMapper, $this->imageMapper, $this->faceMapper, $this->settingsService, $this->user);
+		$this->doCreateClustersTask(self::$personMapper, self::$imageMapper, self::$faceMapper, self::$settingsService, self::$user);
 
-		$personCount = $this->personMapper->countPersons($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
+		$personCount = self::$personMapper->countPersons(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(0, $personCount);
-		$persons = $this->personMapper->findAll($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
+		$persons = self::$personMapper->findAll(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(0, count($persons));
 
-		$faceCount = $this->faceMapper->countFaces($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
+		$faceCount = self::$faceMapper->countFaces(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(1, $faceCount);
-		$faces = $this->faceMapper->getFaces($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
+		$faces = self::$faceMapper->getFaces(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(1, count($faces));
 		$this->assertNull($faces[0]->getPerson());
 	}
@@ -127,25 +116,25 @@ class CreateClustersTaskTest extends IntegrationTestCase {
 	 */
 	public function testCreateSingleFaceCluster() {
 		// Force clustering the sigle face.
-		$this->settingsService->_setForceCreateClusters(true, $this->user->getUID());
+		self::$settingsService->_setForceCreateClusters(true, self::$user->getUID());
 
-		$this->doCreateClustersTask($this->personMapper, $this->imageMapper, $this->faceMapper, $this->settingsService, $this->user);
+		$this->doCreateClustersTask(self::$personMapper, self::$imageMapper, self::$faceMapper, self::$settingsService, self::$user);
 
-		$clusterCount = $this->personMapper->countClusters($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
+		$clusterCount = self::$personMapper->countClusters(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(1, $clusterCount);
 
-		$persons = $this->personMapper->findAll($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
+		$persons = self::$personMapper->findAll(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(1, count($persons));
 		$personId = $persons[0]->getId();
 
-		$faceCount = $this->faceMapper->countFaces($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
+		$faceCount = self::$faceMapper->countFaces(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(1, $faceCount);
 
-		$faces = $this->faceMapper->getFaces($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
+		$faces = self::$faceMapper->getFaces(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(1, count($faces));
 		$this->assertNotNull($faces[0]->getPerson());
 
-		$faces = $this->faceMapper->findFromCluster($this->user->getUID(), $personId, ModelManager::DEFAULT_FACE_MODEL_ID);
+		$faces = self::$faceMapper->findFromCluster(self::$user->getUID(), $personId, ModelManager::DEFAULT_FACE_MODEL_ID);
 		$this->assertEquals(1, count($faces));
 	}
 
@@ -160,10 +149,10 @@ class CreateClustersTaskTest extends IntegrationTestCase {
 		$this->assertNotEquals("", $createClustersTask->description());
 
 		// Set user for which to do processing, if any
-		$this->context->user = $contextUser;
+		self::$context->user = $contextUser;
 
 		// Since this task returns generator, iterate until it is done
-		$generator = $createClustersTask->execute($this->context);
+		$generator = $createClustersTask->execute(self::$context);
 		foreach ($generator as $_) {
 		}
 

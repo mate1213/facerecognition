@@ -32,14 +32,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(\OCA\FaceRecognition\Service\SettingsService::class)]
 class AppTest extends IntegrationTestCase {
 
-	public function setUp(): void {
-		parent::setUp();
-		$app = new App('facerecognition');
-		$this->container = $app->getContainer();
-	}
-
 	public function testAppInstalled() {
-		$appManager = $this->container->get('OCP\App\IAppManager');
+		$appManager = self::$container->get('OCP\App\IAppManager');
 		$this->assertTrue($appManager->isInstalled('facerecognition'));
 	}
 }
