@@ -136,6 +136,7 @@ abstract class IntegrationTestCase extends TestCase {
 			self::fail("This test touches database. Add \"TRAVIS\" env variable if you want to run these test on your local instance.");
 		}
 		self::clearDatabase();
+		self::$context->user = self::$user;
 	}
 
 	public function tearDown(): void {
