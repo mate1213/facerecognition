@@ -372,7 +372,7 @@ class FaceMapperTest extends UnitBaseTestCase
 	}
 
 	public function test_large_FindDescriptorsBathed_moreThan1000Entry(): void{
-		if ($this->notRunLargeTests)
+		if (!$this->runLargeTests)
 		{
 			$this->assertTrue(true);
 			return;
@@ -414,7 +414,7 @@ class FaceMapperTest extends UnitBaseTestCase
 	}
 
 	public function test_large_UnsetPersonsRelationForUser_with1000Faces(): void{
-		if ($this->notRunLargeTests)
+		if (!$this->runLargeTests)
 		{
 			$this->assertTrue(true);
 			return;

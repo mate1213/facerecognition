@@ -478,7 +478,7 @@ class ImageMapperTest extends UnitBaseTestCase
 	}
 
 	public function test_large_deleteUserImages_moreThan1000Entries(): void{
-		if ($this->notRunLargeTests)
+		if (!$this->runLargeTests)
 		{
 			$this->assertTrue(true);
 			return;
@@ -497,7 +497,7 @@ class ImageMapperTest extends UnitBaseTestCase
 	}
 
 	public function test_large_deleteUserModel_moreThan1000Entries(): void{
-		if ($this->notRunLargeTests)
+		if (!$this->runLargeTests)
 		{
 			$this->assertTrue(true);
 			return;
@@ -516,7 +516,7 @@ class ImageMapperTest extends UnitBaseTestCase
 	}
 
 	public function test_large_resetErrors_moreThan1000Entries(): void{
-		if ($this->notRunLargeTests)
+		if (!$this->runLargeTests)
 		{
 			$this->assertTrue(true);
 			return;
