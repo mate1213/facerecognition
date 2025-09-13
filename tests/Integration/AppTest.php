@@ -27,6 +27,9 @@ use OCP\AppFramework\App;
 use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(\OCA\FaceRecognition\AppInfo\Application::class)]
+#[CoversClass(\OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext::class)]
+#[CoversClass(\OCA\FaceRecognition\BackgroundJob\FaceRecognitionLogger::class)]
+#[CoversClass(\OCA\FaceRecognition\Service\SettingsService::class)]
 class AppTest extends IntegrationTestCase {
 
 	public function setUp(): void {

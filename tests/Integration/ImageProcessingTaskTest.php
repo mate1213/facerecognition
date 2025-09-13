@@ -172,8 +172,9 @@ class ImageProcessingTaskTest extends IntegrationTestCase {
 		// Set user for which to do processing, if any
 		$this->context->user = $contextUser;
 		// Upload file
-		$view = new View('/' . $this->user->getUID() . '/files');
-		$view->file_put_contents("foo1.jpg", $imgData);
+		$view = new View('/' . $this->user->getUID());
+		$view->mkdir('files');
+		$view->file_put_contents("files/foo1.jpg", $imgData);
 		// Scan it, so it is in database, ready to be processed
 		$this->doMissingImageScan($this->user);
 		$this->context->propertyBag['images'] = $imageMapper->findImagesWithoutFaces($this->user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID);

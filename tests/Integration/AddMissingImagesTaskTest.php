@@ -88,8 +88,9 @@ class AddMissingImagesTaskTest extends IntegrationTestCase {
 	 * Test that empty crawling will do nothing
 	 */
 	public function testCrawlNoImages() {
-		$view = new View('/' . $this->user->getUID() . '/files');
-		$view->file_put_contents("foo.txt", "content");
+		$view = new View('/' . $this->user->getUID());
+		$view->mkdir('files');
+		$view->file_put_contents("files/foo.txt", "content");
 
 		$this->doMissingImageScan($this->user);
 
@@ -102,17 +103,18 @@ class AddMissingImagesTaskTest extends IntegrationTestCase {
 	 * Test that crawling with some images will actually find them and add them to database
 	 */
 	public function testCrawl() {
-		$view = new View('/' . $this->user->getUID() . '/files');
-		$view->file_put_contents("foo1.txt", "content");
-		$view->file_put_contents("foo2.jpg", "content");
-		$view->file_put_contents("foo3.png", "content");
-		$view->mkdir('dir');
-		$view->file_put_contents("dir/foo4.txt", "content");
-		$view->file_put_contents("dir/foo5.bmp", "content");
-		$view->file_put_contents("dir/foo6.png", "content");
-		$view->mkdir('dir_nomedia');
-		$view->file_put_contents("dir_nomedia/.nomedia", "content");
-		$view->file_put_contents("dir_nomedia/foo7.jpg", "content");
+		$view = new View('/' . $this->user->getUID());
+		$view->mkdir('files');
+		$view->file_put_contents("files/foo1.txt", "content");
+		$view->file_put_contents("files/foo2.jpg", "content");
+		$view->file_put_contents("files/foo3.png", "content");
+		$view->mkdir('files/dir');
+		$view->file_put_contents("files/dir/foo4.txt", "content");
+		$view->file_put_contents("files/dir/foo5.bmp", "content");
+		$view->file_put_contents("files/dir/foo6.png", "content");
+		$view->mkdir('files/dir_nomedia');
+		$view->file_put_contents("files/dir_nomedia/.nomedia", "content");
+		$view->file_put_contents("files/dir_nomedia/foo7.jpg", "content");
 
 		$this->doMissingImageScan($this->user);
 

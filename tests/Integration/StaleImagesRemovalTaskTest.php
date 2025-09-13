@@ -91,10 +91,11 @@ class StaleImagesRemovalTaskTest extends IntegrationTestCase {
 	 */
 	public function testNoMediaImageRemoval() {
 		// Create foo1.jpg in root and foo2.jpg in child directory
-		$view = new View('/' . $this->user->getUID() . '/files');
-		$view->file_put_contents("foo1.jpg", "content");
-		$view->mkdir('dir_nomedia');
-		$view->file_put_contents("dir_nomedia/foo2.jpg", "content");
+		$view = new View('/' . $this->user->getUID());
+		$view->mkdir('files');
+		$view->file_put_contents("files/foo1.jpg", "content");
+		$view->mkdir('files/dir_nomedia');
+		$view->file_put_contents("files/dir_nomedia/foo2.jpg", "content");
 		// Create these two images in database by calling add missing images task
 		$this->config->setUserValue($this->user->getUID(), 'facerecognition', AddMissingImagesTask::FULL_IMAGE_SCAN_DONE_KEY, 'false');
 		$imageMapper = $this->container->get('OCA\FaceRecognition\Db\ImageMapper');
