@@ -496,29 +496,37 @@ class PersonMapperTest extends UnitBaseTestCase
         $this->assertEquals($expectedCount, $people);
     }
 
-    //MTODO: extend with userID; 
     //not possible to have more than 1000 face on one picture therefore not needed to test for 
     #[DataProviderExternal(className: PersonDataProvider::class, methodName: 'invalidatePersons_Provider')]
-    public function test_invalidatePersons(int $imageId): void
+    public function test_invalidatePersons(int $imageId, string $user, int $clustersCount): void
     {
         //Act
-       self::$personMapper->invalidatePersons($imageId);
+       self::$personMapper->invalidatePersons($imageId, $user);
 
         //Assert
         $sub = self::$dbConnection->getQueryBuilder();
-        $query = $sub->select('c.id')
+        $query = $sub->select('c.id', 'c.user','c.is_valid')
             ->from('facerecog_clusters', 'c')
             ->innerJoin('c', 'facerecog_cluster_faces', 'cf', $sub->expr()->eq('cf.cluster_id', 'c.id'))
             ->innerJoin('c', 'facerecog_faces', 'f', $sub->expr()->eq('cf.face_id', 'f.id'))
             ->innerJoin('c', 'facerecog_images', 'i', $sub->expr()->eq('f.image_id', 'i.id'))
             ->Where($sub->expr()->eq('f.image_id', $sub->createParameter('image_id')))
-            ->andWhere($sub->expr()->eq('c.is_valid', $sub->createParameter('is_valid')))
             ->setParameter('image_id', $imageId)
-            ->setParameter('is_valid', true, IQueryBuilder::PARAM_BOOL);
+            ->groupBy('c.id');
         $sqlResult = $query->executeQuery();
         $modifiedValidClusters = $sqlResult->fetchAll();
         $sqlResult->closeCursor();
-        $this->assertCount(0, $modifiedValidClusters);
+        foreach ($modifiedValidClusters as $row)
+        {
+            if ($row['user']== $user)
+            {
+                $this->assertEquals(0, $row['is_valid']);
+            }
+            else {
+                $this->assertEquals(1, $row['is_valid']);
+            }
+        }
+        $this->assertCount($clustersCount, $modifiedValidClusters);
     }
 
     #[DataProviderExternal(className: PersonDataProvider::class, methodName: 'deleteUserPersons_Provider')]
@@ -1239,11 +1247,12 @@ class PersonDataProvider
     {
         return [
             //Single File
-            [1],
+            [1, "user1", 1],
             //SharedFile
-            [10],
+            [10, "user1", 6],
+            [10, "user2", 6],
             //NonexistingFile
-            [100],
+            [100, "user1", 0],
         ];
     }
 

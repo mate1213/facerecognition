@@ -387,19 +387,22 @@ class PersonMapper extends QBMapper
 	 * @return void
 	 */
 	//MTODO: extend with userID; 
-	public function invalidatePersons(int $imageId): void{
+	public function invalidatePersons(int $imageId, string $userId): void{
 		$sub = $this->db->getQueryBuilder();
 		$sub->select('c.id')
 			->from($this->getTableName(), 'c')
 			->innerJoin('c', 'facerecog_cluster_faces', 'cf', $sub->expr()->eq('cf.cluster_id', 'c.id'))
 			->innerJoin('c', 'facerecog_faces', 'f', $sub->expr()->eq('cf.face_id', 'f.id'))
 			->innerJoin('c', 'facerecog_images', 'i', $sub->expr()->eq('f.image_id', 'i.id'))
-			->Where($sub->expr()->eq('f.image_id', $sub->createParameter('image_id')));
+			->innerJoin('c', 'facerecog_user_images', 'ui', $sub->expr()->eq('i.id', 'ui.image_id'))
+			->Where($sub->expr()->eq('f.image_id', $sub->createParameter('image_id')))
+			->andWhere($sub->expr()->eq('c.user', $sub->createParameter('user_id')));
 
 		$qb = $this->db->getQueryBuilder();
 		$qb->update($this->getTableName())
 			->set("is_valid", $qb->createParameter('is_valid'))
 			->where('id IN (' . $sub->getSQL() . ')')
+			->setParameter('user_id', $userId)
 			->setParameter('image_id', $imageId)
 			->setParameter('is_valid', false, IQueryBuilder::PARAM_BOOL)
 			->executeStatement();

@@ -76,7 +76,7 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 		$person = $this->createPerson();
 		$image = $this->createImage();
 		$face = $this->createFace($image->getId(), $person->getId());
-		self::$personMapper->invalidatePersons($image->getId());
+		self::$personMapper->invalidatePersons($image->getId(), self::$user->getUID());
 
 		self::$personMapper->mergeClusterToDatabase(self::$user->getUid(),
 			array($person->getId() => [$face->getId()]),
@@ -95,7 +95,7 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 		$person = $this->createPerson();
 		$image = $this->createImage();
 		$face = $this->createFace($image->getId(), $person->getId());
-		self::$personMapper->invalidatePersons($image->getId());
+		self::$personMapper->invalidatePersons($image->getId(), self::$user->getUID());
 
 		self::$personMapper->mergeClusterToDatabase(self::$user->getUid(),
 			array($person->getId() => [$face->getId()]),
@@ -147,7 +147,7 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 		$image = $this->createImage();
 		$face1 = $this->createFace($image->getId(), $person->getId());
 		$face2 = $this->createFace($image->getId(), $person->getId());
-		self::$personMapper->invalidatePersons($image->getId());
+		self::$personMapper->invalidatePersons($image->getId(), self::$user->getUID());
 
 		$ret = self::$personMapper->mergeClusterToDatabase(self::$user->getUid(),
 			array(
@@ -187,7 +187,7 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 		$image = $this->createImage();
 		$face1 = $this->createFace($image->getId(), $person->getId());
 		$face2 = $this->createFace($image->getId(), $person->getId());
-		self::$personMapper->invalidatePersons($image->getId());
+		self::$personMapper->invalidatePersons($image->getId(), self::$user->getUID());
 
 		self::$personMapper->mergeClusterToDatabase(self::$user->getUid(),
 			array(
@@ -228,7 +228,7 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 		$image = $this->createImage();
 		$face1 = $this->createFace($image->getId(), $person1->getId());
 		$face2 = $this->createFace($image->getId(), $person2->getId());
-		self::$personMapper->invalidatePersons($image->getId());
+		self::$personMapper->invalidatePersons($image->getId(), self::$user->getUID());
 
 		self::$personMapper->mergeClusterToDatabase(self::$user->getUid(),
 			array(
@@ -257,7 +257,7 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 		$image = $this->createImage();
 		$face1 = $this->createFace($image->getId(), $person1->getId());
 		$face2 = $this->createFace($image->getId(), $person2->getId());
-		self::$personMapper->invalidatePersons($image->getId());
+		self::$personMapper->invalidatePersons($image->getId(), self::$user->getUID());
 
 		self::$personMapper->mergeClusterToDatabase(self::$user->getUid(),
 			array(
@@ -286,7 +286,7 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 		$image = $this->createImage();
 		$face1 = $this->createFace($image->getId(), $person1->getId());
 		$face2 = $this->createFace($image->getId(), $person2->getId());
-		self::$personMapper->invalidatePersons($image->getId());
+		self::$personMapper->invalidatePersons($image->getId(), self::$user->getUID());
 
 		self::$personMapper->mergeClusterToDatabase(self::$user->getUid(),
 			array(
@@ -327,7 +327,7 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 		$image = $this->createImage();
 		$face1 = $this->createFace($image->getId(), $person1->getId());
 		$face2 = $this->createFace($image->getId(), $person2->getId());
-		self::$personMapper->invalidatePersons($image->getId());
+		self::$personMapper->invalidatePersons($image->getId(), self::$user->getUID());
 
 		self::$personMapper->mergeClusterToDatabase(self::$user->getUid(),
 			array(
@@ -396,7 +396,7 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 		$face19 = $this->createFace($image->getId());
 		$face20 = $this->createFace($image->getId());
 		$face21 = $this->createFace($image->getId());
-		self::$personMapper->invalidatePersons($image->getId());
+		self::$personMapper->invalidatePersons($image->getId(), self::$user->getUID());
 
 		// First person is not invalid (it will remain same, so change it back to valid)
 		$person1->setIsValid(true);
@@ -493,7 +493,7 @@ class MergeClusterToDatabaseTest extends IntegrationTestCase {
 		$face19 = $this->createFace($image->getId());
 		$face20 = $this->createFace($image->getId());
 		$face21 = $this->createFace($image->getId());
-		self::$personMapper->invalidatePersons($image->getId());
+		self::$personMapper->invalidatePersons($image->getId(), self::$user->getUID());
 
 		self::$personMapper->mergeClusterToDatabase(self::$user->getUid(),
 			array(

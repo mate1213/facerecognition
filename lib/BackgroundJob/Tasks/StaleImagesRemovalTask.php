@@ -222,7 +222,7 @@ class StaleImagesRemovalTask extends FaceRecognitionBackgroundTask {
 		// note that invalidatePersons depends on existence of faces for a given image,
 		// and we must invalidate before we delete faces!
 		// TODO: this is same method as in Watcher, find where to unify them.
-		$this->personMapper->invalidatePersons($image->id);
+		$this->personMapper->invalidatePersons($image->id, $userId);
 		$this->imageMapper->delete($image);
 	}
 }
