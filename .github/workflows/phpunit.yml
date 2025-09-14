@@ -43,7 +43,7 @@ jobs:
 
     steps:
       - name: Checkout server
-        uses: actions/checkout@v2
+        uses: actions/checkout@master
         with:
           repository: nextcloud/server
           ref: ${{ matrix.server-versions }}
@@ -56,13 +56,13 @@ jobs:
           git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
 
       - name: Checkout app
-        uses: actions/checkout@v2
+        uses: actions/checkout@master
         with:
           path: apps/${{ env.APP_NAME }}
           fetch-depth: 2
 
       - name: Set up php ${{ matrix.php-versions }}
-        uses: shivammathur/setup-php@v2
+        uses: shivammathur/setup-php@master
         with:
           php-version: ${{ matrix.php-versions }}
           tools: phpunit
