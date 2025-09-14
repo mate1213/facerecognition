@@ -436,7 +436,6 @@ class PersonMapperTest extends UnitBaseTestCase
         }
     }
 
-    //MTODO: Undestand this function
     #[DataProviderExternal(className: PersonDataProvider::class, methodName: 'findDistinctNamesSelected_Provider')]
     public function test_findDistinctNamesSelected(string $userId, int $modelId, string $faceName, int $expectedCount): void
     {
@@ -455,7 +454,6 @@ class PersonMapperTest extends UnitBaseTestCase
         }
     }
 
-    //MTODO: Undestand this function
     #[DataProviderExternal(className: PersonDataProvider::class, methodName: 'findPersonsLike_Provider')]
     public function test_findPersonsLike(string $userId, int $modelId, string $faceName, ?int $offset, ?int $limit, int $expectedCount): void
     {

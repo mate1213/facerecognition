@@ -174,30 +174,13 @@ class StaleImagesRemovalTask extends FaceRecognitionBackgroundTask {
 
 			// Delete image doesn't exist anymore in filesystem or it is under .nomedia
 			if ($file === null) {
-				//MTODO: remove this duplication
-				$isSharedFile = $this->imageMapper->otherUserStilHasConnection($image->id);
-				if ($isSharedFile){
-					$this->imageMapper->removeUserImageConnection($image);
-				}
-				else{
-					$this->deleteImage($image, $userId);
-				}
+				$this->handleImages($image, $userId);
 				$imagesRemoved++;
 			}
-			else{
-				if (!$this->fileService->isAllowedNode($file) ||
-			    	$this->fileService->isUnderNoDetection($file))
-				{
-					//MTODO: remove this duplication
-					$isSharedFile = $this->imageMapper->otherUserStilHasConnection($image->id);
-					if ($isSharedFile){
-						$this->imageMapper->removeUserImageConnection($image);
-					}
-					else{
-						$this->deleteImage($image, $userId);
-					}
-					$imagesRemoved++;
-				}
+			else if (!$this->fileService->isAllowedNode($file) ||
+			    	$this->fileService->isUnderNoDetection($file)){
+				$this->handleImages($image, $userId);
+				$imagesRemoved++;
 			}
 
 			// Remember last processed image
@@ -217,6 +200,17 @@ class StaleImagesRemovalTask extends FaceRecognitionBackgroundTask {
 		return $imagesRemoved;
 	}
 	
+	private function handleImages(Image $image, string $userId):void
+	{
+				$isSharedFile = $this->imageMapper->otherUserStilHasConnection($image->id);
+				if ($isSharedFile){
+					$this->imageMapper->removeUserImageConnection($image);
+				}
+				else{
+					$this->deleteImage($image, $userId);
+				}
+
+	}
 	private function deleteImage(Image $image, string $userId): void {
 		$this->logInfo(sprintf('Removing stale image %d for user %s', $image->id, $userId));
 		// note that invalidatePersons depends on existence of faces for a given image,
@@ -225,4 +219,5 @@ class StaleImagesRemovalTask extends FaceRecognitionBackgroundTask {
 		$this->personMapper->invalidatePersons($image->id, $userId);
 		$this->imageMapper->delete($image);
 	}
+
 }

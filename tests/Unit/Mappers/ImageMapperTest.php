@@ -283,18 +283,6 @@ class ImageMapperTest extends UnitBaseTestCase
 		}
 	}
 
-	#[DataProviderExternal(ImageDataProvider::class, 'findFromPersonLike_Provider')]
-	public function test_findFromPersonLike(string $user, int $model, string $nameLike, ?int $offset, ?int $limit, int $expectedCount): void{
-		//Act
-		$images = self::$imageMapper->findFromPersonLike($user, $model, $nameLike, $offset, $limit);
-
-		//Assert
-		$this->assertNotNull($images);
-		$this->assertIsArray($images);
-		$this->assertContainsOnlyInstancesOf(Image::class, $images);
-		$this->assertCount($expectedCount, $images);
-	}
-
 	#[DataProviderExternal(ImageDataProvider::class, 'findFromPerson_Provider')]
 	public function test_findFromPerson(string $user, int $model, string $name, ?int $offset, ?int $limit, int $expectedCount): void{
 		//Act
@@ -728,21 +716,6 @@ class ImageDataProvider
 			["user1", 3, 0], // non existing model
 			["user3", 1, 0], // non existing user
 			["user3", 3, 0], // non existing user and model
-		];
-	}
-
-	public static function findFromPersonLike_Provider(): array{
-		return [
-			["user1", 1, "Al", null, null, 1],
-			["user1", 1, "al", null, null, 1],
-			["user2", 1, "Al", null, null, 0],
-			["user2", 2, "Al", null, null, 0],
-			["user2", 2, "Bob", null, null, 2],
-			["user2", 2, "Bob", 1, 1, 1],
-			["user2", 2, "Bob", 0, 1, 1],
-			["user1", 3, "Al", null, null, 0], // non existing model
-			["user3", 1, "Al", null, null, 0], // non existing user
-			["user3", 3, "Al", null, null, 0], // non existing user and model
 		];
 	}
 

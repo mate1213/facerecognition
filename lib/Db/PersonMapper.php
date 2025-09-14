@@ -272,7 +272,6 @@ class PersonMapper extends QBMapper
 	 *
 	 * @return Person[]
 	 */
-	//MTODO: Understand this function
 	public function findDistinctNamesSelected(string $userId, int $modelId, $faceNames): array{
 		$qb = $this->db->getQueryBuilder();
 		$qb->selectDistinct('p.name')
@@ -386,7 +385,6 @@ class PersonMapper extends QBMapper
 	 *
 	 * @return void
 	 */
-	//MTODO: extend with userID; 
 	public function invalidatePersons(int $imageId, string $userId): void{
 		$sub = $this->db->getQueryBuilder();
 		$sub->select('c.id')

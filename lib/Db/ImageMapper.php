@@ -337,29 +337,6 @@ class ImageMapper extends QBMapper
 		return $images;
 	}
 
-	//MTODO: NEVER called
-	public function findFromPersonLike(string $userId, int $model, string $name, $offset = null, $limit = null): array{
-		$qb = $this->db->getQueryBuilder();
-		$qb->select('i.id', 'ui.user', 'i.model', 'i.nc_file_id as file', 'i.is_processed', 'i.error', 'i.last_processed_time', 'i.processing_duration')
-			->from($this->getTableName(), 'i')
-			->innerJoin('i', 'facerecog_user_images', 'ui', $qb->expr()->eq('ui.image_id', 'i.id'))
-			->innerJoin('i', 'facerecog_faces', 'f', $qb->expr()->eq('f.image_id', 'i.id'))
-			->innerJoin('i', 'facerecog_cluster_faces', 'cf', $qb->expr()->eq('cf.face_id', 'f.id'))
-			->innerJoin('i', 'facerecog_person_clusters', 'pc', $qb->expr()->eq('pc.cluster_id', 'cf.cluster_id'))
-			->innerJoin('i', 'facerecog_persons', 'p', $qb->expr()->eq('pc.person_id', 'p.id'))
-			->where($qb->expr()->eq('ui.user', $qb->createNamedParameter($userId)))
-			->andWhere($qb->expr()->eq('i.model', $qb->createNamedParameter($model)))
-			->andWhere($qb->expr()->eq('i.is_processed', $qb->createNamedParameter(True)))
-			->andWhere($qb->expr()->like($qb->func()->lower('p.name'), $qb->createParameter('query')));
-
-		$query = '%' . $this->db->escapeLikeParameter(strtolower($name)) . '%';
-		$qb->setParameter('query', $query);
-
-		$qb->setFirstResult($offset);
-		$qb->setMaxResults($limit);
-
-		return $this->findEntities($qb);
-	}
 
 	public function findFromPerson(string $userId, int $modelId, string $name, $offset = null, $limit = null): array{
 		$qb = $this->db->getQueryBuilder();
