@@ -178,7 +178,7 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 			// Get the batches.
 			$facesSliced = array_slice($faces, $i * $sliceSize, $sliceSize);
 			// Get the indices, obtain the partial clusters and incorporate them.
-			$faceIds = array_map(function ($face) { return $face['id']; }, $facesSliced);
+			$faceIds = array_map(function ($face) { return $face->getId(); }, $facesSliced);
 			$facesDescripted = $this->faceMapper->findDescriptorsBathed($faceIds);
 			$newClusters = array_merge($newClusters, $this->getNewClusters($facesDescripted));
 			// Discard variables aggressively to improve memory consumption.
@@ -211,9 +211,8 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 		// NOTE: we will do this for all models, not just for current one, but this is not problem.
 		$orphansDeleted = $this->personMapper->deleteOrphaned($userId);
 		if ($orphansDeleted > 0) {
-			$this->logInfo('Deleted ' . $orphansDeleted . ' persons without faces');
+			$this->logInfo('Deleted ' . count($orphansDeleted) . ' persons without faces');
 		}
-
 		// Prevents not create/recreate the clusters unnecessarily.
 
 		$this->settingsService->setNeedRecreateClusters(false, $userId);
@@ -296,11 +295,11 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 	private function getCurrentClusters(array $faces): array {
 		$chineseClusters = array();
 		foreach($faces as $face) {
-			if ($face['person'] !== null) {
-				if (!isset($chineseClusters[$face['person']])) {
-					$chineseClusters[$face['person']] = array();
+			if ($face->getPerson() !== null) {
+				if (!isset($chineseClusters[$face->getPerson()])) {
+					$chineseClusters[$face->getPerson()] = array();
 				}
-				$chineseClusters[$face['person']][] = $face['id'];
+				$chineseClusters[$face->getPerson()][] = $face->getId();
 			}
 		}
 		return $chineseClusters;
@@ -310,7 +309,7 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 		$newClusters = array();
 		for ($i = 0, $c = count($faces); $i < $c; $i++) {
 			$fakeCluster = [];
-			$fakeCluster[] = $faces[$i]['id'];
+			$fakeCluster[] = $faces[$i]->getId();
 			$newClusters[] = $fakeCluster;
 		}
 		return $newClusters;

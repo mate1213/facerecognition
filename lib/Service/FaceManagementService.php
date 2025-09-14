@@ -128,8 +128,8 @@ class FaceManagementService {
 	 * @return void
 	 */
 	public function resetAllForUser(string $userId): void {
-		$this->faceMapper->deleteUserFaces($userId);
 		$this->personMapper->deleteUserPersons($userId);
+		//faces will be deleted with image foreign key cascade on delete action
 		$this->imageMapper->deleteUserImages($userId);
 
 		$this->settingsService->setUserFullScanDone(false, $userId);

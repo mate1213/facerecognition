@@ -23,48 +23,55 @@
  */
 namespace OCA\FaceRecognition\Tests\Integration;
 
-use OC;
 use OC\Files\View;
 
-use OCP\IConfig;
 use OCP\IUser;
-use OCP\AppFramework\App;
-use OCP\AppFramework\IAppContainer;
-
-use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
-use OCA\FaceRecognition\BackgroundJob\FaceRecognitionLogger;
 use OCA\FaceRecognition\BackgroundJob\Tasks\AddMissingImagesTask;
 use OCA\FaceRecognition\BackgroundJob\Tasks\DisabledUserRemovalTask;
 
-use OCA\FaceRecognition\Db\Image;
-
 use OCA\FaceRecognition\Model\ModelManager;
 
-use Test\TestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 
+#[CoversClass(DisabledUserRemovalTask::class)]
+#[UsesClass(\OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext::class)]
+#[UsesClass(\OCA\FaceRecognition\BackgroundJob\FaceRecognitionLogger::class)]
+#[UsesClass(\OCA\FaceRecognition\BackgroundJob\Tasks\AddMissingImagesTask::class)]
+#[UsesClass(\OCA\FaceRecognition\Db\FaceMapper::class)]
+#[UsesClass(\OCA\FaceRecognition\Db\Image::class)]
+#[UsesClass(\OCA\FaceRecognition\Db\ImageMapper::class)]
+#[UsesClass(\OCA\FaceRecognition\Service\FileService::class)]
+#[UsesClass(\OCA\FaceRecognition\Service\SettingsService::class)]
+#[UsesClass(\OCA\FaceRecognition\Db\PersonMapper::class)]
+#[UsesClass(\OCA\FaceRecognition\Service\FaceManagementService::class)]
 class DisabledUserRemovalTaskTest extends IntegrationTestCase {
 
+	/** @var DisabledUserRemovalTask test instance*/
+	protected static $disabledUserRemovalTask;
+
+	public static function setUpBeforeClass(): void {
+		parent::setUpBeforeClass();
+		self::$disabledUserRemovalTask = new DisabledUserRemovalTask(self::$imageMapper, self::$faceMgmtService, self::$settingsService);
+	}
 	/**
 	 * Test that check when user disable analysis.
 	 */
 	public function testNoMediaImageRemoval() {
 		// Enables the analysis for the user to add images.
-		$this->config->setUserValue($this->user->getUID(), 'facerecognition', 'enabled', 'true');
+		self::$config->setUserValue(self::$user->getUID(), 'facerecognition', 'enabled', 'true');
 
 		// Create foo1.jpg in root and foo2.jpg in child directory
-		$view = new View('/' . $this->user->getUID() . '/files');
-		$view->file_put_contents("foo1.jpg", "content");
-		$view->mkdir('dir_nomedia');
-		$view->file_put_contents("dir_nomedia/foo2.jpg", "content");
+		self::$view->mkdir('files');
+		self::$view->file_put_contents("files/foo1.jpg", "content");
+		self::$view->mkdir('files/dir_nomedia');
+		self::$view->file_put_contents("files/dir_nomedia/foo2.jpg", "content");
 
 		// Create these two images in database by calling add missing images task
-		$this->config->setUserValue($this->user->getUID(), 'facerecognition', AddMissingImagesTask::FULL_IMAGE_SCAN_DONE_KEY, 'false');
-		$imageMapper = $this->container->query('OCA\FaceRecognition\Db\ImageMapper');
-		$fileService = $this->container->query('OCA\FaceRecognition\Service\FileService');
-		$settingsService = $this->container->query('OCA\FaceRecognition\Service\SettingsService');
-		$addMissingImagesTask = new AddMissingImagesTask($imageMapper, $fileService, $settingsService);
-		$this->context->user = $this->user;
-		$generator = $addMissingImagesTask->execute($this->context);
+		self::$config->setUserValue(self::$user->getUID(), 'facerecognition', AddMissingImagesTask::FULL_IMAGE_SCAN_DONE_KEY, 'false');
+		$addMissingImagesTask = new AddMissingImagesTask(self::$imageMapper, self::$fileService, self::$settingsService);
+		self::$context->user = self::$user;
+		$generator = $addMissingImagesTask->execute(self::$context);
 		foreach ($generator as $_) {
 		}
 
@@ -72,16 +79,16 @@ class DisabledUserRemovalTaskTest extends IntegrationTestCase {
 		// invalidation and face removal when image is removed.
 
 		// We should find 2 images now - foo1.jpg, foo2.png
-		$this->assertEquals(2, count($imageMapper->findImagesWithoutFaces($this->user, ModelManager::DEFAULT_FACE_MODEL_ID)));
+		$this->assertEquals(2, count(self::$imageMapper->findImagesWithoutFaces(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID)));
 
 		// Disable analysis for user
-		$this->config->setUserValue($this->user->getUID(), 'facerecognition', 'enabled', 'false');
+		self::$config->setUserValue(self::$user->getUID(), 'facerecognition', 'enabled', 'false');
 
 		// Perform the removal due user disabling action.
 		$this->doDisabledUserRemoval();
 
 		// Now it must be empty
-		$this->assertEquals(0, count($imageMapper->findImagesWithoutFaces($this->user, ModelManager::DEFAULT_FACE_MODEL_ID)));
+		$this->assertEquals(0, count(self::$imageMapper->findImagesWithoutFaces(self::$user->getUID(), ModelManager::DEFAULT_FACE_MODEL_ID)));
 	}
 
 	/**
@@ -91,24 +98,16 @@ class DisabledUserRemovalTaskTest extends IntegrationTestCase {
 	 * If not given, stale images for all users will be renived.
 	 */
 	private function doDisabledUserRemoval($contextUser = null) {
-		$disabledUserRemovalTask = $this->createDisabledUserRemovalTask();
-		$this->assertNotEquals("", $disabledUserRemovalTask->description());
+		$this->assertNotEquals("", self::$disabledUserRemovalTask->description());
 
 		// Set user for which to do scanning, if any
-		$this->context->user = $contextUser;
+		self::$context->user = $contextUser;
 
 		// Since this task returns generator, iterate until it is done
-		$generator = $disabledUserRemovalTask->execute($this->context);
+		$generator = self::$disabledUserRemovalTask->execute(self::$context);
 		foreach ($generator as $_) {
 		}
 
 		$this->assertEquals(true, $generator->getReturn());
-	}
-
-	private function createDisabledUserRemovalTask() {
-		$imageMapper = $this->container->query('OCA\FaceRecognition\Db\ImageMapper');
-		$faceMgmtService = $this->container->query('OCA\FaceRecognition\Service\FaceManagementService');
-		$settingsService = $this->container->query('OCA\FaceRecognition\Service\SettingsService');
-		return new DisabledUserRemovalTask($imageMapper, $faceMgmtService, $settingsService);
 	}
 }

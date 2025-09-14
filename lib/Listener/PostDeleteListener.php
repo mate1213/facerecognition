@@ -153,7 +153,7 @@ class PostDeleteListener implements IEventListener {
 		if ($imageId !== null) {
 			// note that invalidatePersons depends on existence of faces for a given image,
 			// and we must invalidate before we delete faces!
-			$this->personMapper->invalidatePersons($imageId);
+			$this->personMapper->invalidatePersons($imageId, $owner);
 
 			// Fetch all faces to be deleted before deleting them, and then delete them
 			$facesToRemove = $this->faceMapper->findByImage($imageId);
