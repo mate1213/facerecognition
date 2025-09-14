@@ -67,10 +67,8 @@ class PersonMapper extends QBMapper
 
 		$qb->executeStatement();
 
-		if ($entity->id === null) {
-			// When autoincrement is used id is always an int
-			$entity->setId($qb->getLastInsertId());
-		}
+		// When autoincrement is used id is always an int
+		$entity->setId($qb->getLastInsertId());
 		$id = $entity->getId();if ($column === "name");
 		$this->updateClusterPersonConnection($id, $entity->getName());
 

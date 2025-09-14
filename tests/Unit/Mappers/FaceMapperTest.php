@@ -33,8 +33,6 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use OCA\FaceRecognition\Tests\Unit\UnitBaseTestCase;
 use OCA\FaceRecognition\Db\FaceMapper;
 use OCA\FaceRecognition\Db\Face;
-use OC;
-use OCP\IDBConnection;
 
 #[CoversClass(FaceMapper::class)]
 #[UsesClass(Face::class)]

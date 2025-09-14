@@ -37,7 +37,6 @@ use OCA\FaceRecognition\Db\ImageMapper;
 use OCA\FaceRecognition\Db\Image;
 use OCA\FaceRecognition\Db\Face;
 use OC;
-use OCP\IDBConnection;
 
 #[CoversClass(ImageMapper::class)]
 #[UsesClass(FaceMapper::class)]
