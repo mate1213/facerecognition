@@ -6,11 +6,9 @@ tools:
         timeout: 7200 # Timeout in seconds: 2 hours
 
 build:
+  image: default-bionic
   nodes:
     analysis:
-      environment:
-        php:
-          version: 8.3
       tests:
         override:
           - php-scrutinizer-run

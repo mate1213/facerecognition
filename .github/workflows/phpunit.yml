@@ -17,9 +17,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php-versions: ['8.3']
+        php-versions: ['8.1', '8.2', '8.3', '8.4']
         databases: ['sqlite', 'mysql', 'pgsql']
-        server-versions: ['dev-stable31']
+        server-versions: ['stable31']
 
     name: php${{ matrix.php-versions }}-${{ matrix.databases }}-${{ matrix.server-versions }}
 
@@ -43,7 +43,7 @@ jobs:
 
     steps:
       - name: Checkout server
-        uses: actions/checkout@master
+        uses: actions/checkout@v2
         with:
           repository: nextcloud/server
           ref: ${{ matrix.server-versions }}
@@ -56,13 +56,13 @@ jobs:
           git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
 
       - name: Checkout app
-        uses: actions/checkout@master
+        uses: actions/checkout@v2
         with:
           path: apps/${{ env.APP_NAME }}
           fetch-depth: 2
 
       - name: Set up php ${{ matrix.php-versions }}
-        uses: shivammathur/setup-php@master
+        uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php-versions }}
           tools: phpunit
