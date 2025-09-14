@@ -5,7 +5,6 @@ node_modules
 clover.xml
 translationtool.phar
 translationfiles
-composer.lock
 .vscode/*
 .phpunit.cache/*
 tests/results/*
