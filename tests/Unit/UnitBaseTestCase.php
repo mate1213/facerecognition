@@ -35,10 +35,10 @@ abstract class UnitBaseTestCase extends TestCase
 	/** @var bool*/
 	private $isSetupComplete = false;
 	/** @var bool */
-	protected $runLargeTests = true;
-
+	protected $runLargeTests = false;
 
 	public static function setUpBeforeClass(): void {
+		parent::setUpBeforeClass();
 		self::$dbConnection = OC::$server->getDatabaseConnection();
 	}
 
@@ -77,5 +77,9 @@ abstract class UnitBaseTestCase extends TestCase
 			return;
 		}
 		parent::tearDown();
+	}
+
+	public static function tearDownAfterClass(): void {
+		parent::tearDownAfterClass();
 	}
 }

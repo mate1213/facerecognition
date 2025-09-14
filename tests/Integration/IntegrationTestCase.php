@@ -153,6 +153,7 @@ abstract class IntegrationTestCase extends TestCase {
 	public static function tearDownAfterClass(): void {
 		self::$settingsService->setCurrentFaceModel(self::$originalModel);
 		self::$user->delete();
+		self::cleanInstaces();
 		parent::tearDownAfterClass();
 	}
 
@@ -160,6 +161,7 @@ abstract class IntegrationTestCase extends TestCase {
 		$sql = file_get_contents("tests/DatabaseInserts/00_emptyDatabase.sql");
 		self::$dbConnection->executeStatement($sql);
 	}
+
 	private static function getInstaces() : void{
 		self::$config = self::$container->get('OCP\IConfig');
 		self::$appConfig = self::$container->get('OCP\IAppConfig');
@@ -172,5 +174,19 @@ abstract class IntegrationTestCase extends TestCase {
 		self::$faceMapper = self::$container->get('OCA\FaceRecognition\Db\FaceMapper');
 		self::$addMissingImagesTask = self::$container->get('OCA\FaceRecognition\BackgroundJob\Tasks\AddMissingImagesTask');
 		self::$staleImagesRemovalTask = self::$container->get('OCA\FaceRecognition\BackgroundJob\Tasks\StaleImagesRemovalTask');
+	}
+
+	private static function cleanInstaces() : void{
+		self::$config = null;
+		self::$appConfig = null;
+		self::$userManager = null;
+		self::$settingsService = null;
+		self::$fileService = null;
+		self::$faceMgmtService = null;
+		self::$imageMapper = null;
+		self::$personMapper =  null;
+		self::$faceMapper = null;
+		self::$addMissingImagesTask = null;
+		self::$staleImagesRemovalTask = null;
 	}
 }

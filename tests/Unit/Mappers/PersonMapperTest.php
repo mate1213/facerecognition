@@ -43,28 +43,26 @@ use OCP\DB\QueryBuilder\IQueryBuilder;
 class PersonMapperTest extends UnitBaseTestCase
 {
     /** @var PersonMapper test instance*/
-    private $personMapper;
+    private static $personMapper;
 
     /**
      * {@inheritDoc}
      */
-    public function setUp(): void
-    {
-        parent::setUp();
-        $this->personMapper = new PersonMapper(self::$dbConnection);
-    }
-
+	public static function setUpBeforeClass(): void {
+		parent::setUpBeforeClass();
+        self::$personMapper = new PersonMapper(self::$dbConnection);
+	}
 
     public function test_Update_notUpdated(): void
     {
-        $cluster = $this->personMapper->find('user1', 1);
+        $cluster =self::$personMapper->find('user1', 1);
         $cluster->resetUpdatedFields();
 
         //Act
-        $cluster = $this->personMapper->update($cluster);
+        $cluster =self::$personMapper->update($cluster);
 
         //Assert
-        $cluster = $this->personMapper->find('user1', 1);
+        $cluster =self::$personMapper->find('user1', 1);
         $this->assertNotNull($cluster);
         $this->assertInstanceOf(Person::class, $cluster);
         $this->assertEquals(1, $cluster->getId());
@@ -78,14 +76,14 @@ class PersonMapperTest extends UnitBaseTestCase
 
     public function test_Update_user(): void
     {
-        $cluster = $this->personMapper->find('user1', 1);
+        $cluster =self::$personMapper->find('user1', 1);
         $cluster->setUser('user2');
 
         //Act
-        $cluster = $this->personMapper->update($cluster);
+        $cluster =self::$personMapper->update($cluster);
 
         //Assert
-        $cluster = $this->personMapper->find('user2', 1);
+        $cluster =self::$personMapper->find('user2', 1);
         $this->assertNotNull($cluster);
         $this->assertInstanceOf(Person::class, $cluster);
         $this->assertEquals(1, $cluster->getId());
@@ -99,14 +97,14 @@ class PersonMapperTest extends UnitBaseTestCase
 
     public function test_Update_changePerson(): void
     {
-        $cluster = $this->personMapper->find('user1', 1);
+        $cluster =self::$personMapper->find('user1', 1);
         $cluster->setName('Dummy');
 
         //Act
-        $cluster = $this->personMapper->update($cluster);
+        $cluster =self::$personMapper->update($cluster);
 
         //Assert
-        $cluster = $this->personMapper->find('user1', 1);
+        $cluster =self::$personMapper->find('user1', 1);
         $this->assertNotNull($cluster);
         $this->assertInstanceOf(Person::class, $cluster);
         $this->assertEquals(1, $cluster->getId());
@@ -120,14 +118,14 @@ class PersonMapperTest extends UnitBaseTestCase
 
     public function test_Update_addToPerson(): void
     {
-        $cluster = $this->personMapper->find('user1', 3);
+        $cluster =self::$personMapper->find('user1', 3);
         $cluster->setName('Dummy');
 
         //Act
-        $cluster = $this->personMapper->update($cluster);
+        $cluster =self::$personMapper->update($cluster);
 
         //Assert
-        $cluster = $this->personMapper->find('user1', 3);
+        $cluster =self::$personMapper->find('user1', 3);
         $this->assertNotNull($cluster);
         $this->assertInstanceOf(Person::class, $cluster);
         $this->assertEquals(3, $cluster->getId());
@@ -141,14 +139,14 @@ class PersonMapperTest extends UnitBaseTestCase
 
     public function test_Update_removeFromPerson(): void
     {
-        $cluster = $this->personMapper->find('user1', 1);
+        $cluster =self::$personMapper->find('user1', 1);
         $cluster->setName(null);
 
         //Act
-        $cluster = $this->personMapper->update($cluster);
+        $cluster =self::$personMapper->update($cluster);
 
         //Assert
-        $cluster = $this->personMapper->find('user1', 1);
+        $cluster =self::$personMapper->find('user1', 1);
         $this->assertNotNull($cluster);
         $this->assertInstanceOf(Person::class, $cluster);
         $this->assertEquals(1, $cluster->getId());
@@ -162,14 +160,14 @@ class PersonMapperTest extends UnitBaseTestCase
 
     public function test_Update_LinkedUser(): void
     {
-        $cluster = $this->personMapper->find('user1', 1);
+        $cluster =self::$personMapper->find('user1', 1);
         $cluster->setLinkedUser('TestUser1');
 
         //Act
-        $cluster = $this->personMapper->update($cluster);
+        $cluster =self::$personMapper->update($cluster);
 
         //Assert
-        $cluster = $this->personMapper->find('user1', 1);
+        $cluster =self::$personMapper->find('user1', 1);
         $this->assertNotNull($cluster);
         $this->assertInstanceOf(Person::class, $cluster);
         $this->assertEquals(1, $cluster->getId());
@@ -183,14 +181,14 @@ class PersonMapperTest extends UnitBaseTestCase
 
     public function test_Update_IsVisible(): void
     {
-        $cluster = $this->personMapper->find('user1', 1);
+        $cluster =self::$personMapper->find('user1', 1);
         $cluster->setIsVisible(false);
 
         //Act
-        $cluster = $this->personMapper->update($cluster);
+        $cluster =self::$personMapper->update($cluster);
 
         //Assert
-        $cluster = $this->personMapper->find('user1', 1);
+        $cluster =self::$personMapper->find('user1', 1);
         $this->assertNotNull($cluster);
         $this->assertInstanceOf(Person::class, $cluster);
         $this->assertEquals(1, $cluster->getId());
@@ -204,14 +202,14 @@ class PersonMapperTest extends UnitBaseTestCase
 
     public function test_Update_IsValid(): void
     {
-        $cluster = $this->personMapper->find('user1', 1);
+        $cluster =self::$personMapper->find('user1', 1);
         $cluster->setIsValid(false);
 
         //Act
-        $cluster = $this->personMapper->update($cluster);
+        $cluster =self::$personMapper->update($cluster);
 
         //Assert
-        $cluster = $this->personMapper->find('user1', 1);
+        $cluster =self::$personMapper->find('user1', 1);
         $this->assertNotNull($cluster);
         $this->assertInstanceOf(Person::class, $cluster);
         $this->assertEquals(1, $cluster->getId());
@@ -225,14 +223,14 @@ class PersonMapperTest extends UnitBaseTestCase
 
     public function test_Update_LastGenerationTime(): void
     {
-        $cluster = $this->personMapper->find('user1', 1);
+        $cluster =self::$personMapper->find('user1', 1);
         $cluster->setLastGenerationTime(DateTime::createFromFormat('Y-m-d H:i:s', '2020-01-01 00:00:00'));
 
         //Act
-        $cluster = $this->personMapper->update($cluster);
+        $cluster =self::$personMapper->update($cluster);
 
         //Assert
-        $cluster = $this->personMapper->find('user1', 1);
+        $cluster =self::$personMapper->find('user1', 1);
         $this->assertNotNull($cluster);
         $this->assertInstanceOf(Person::class, $cluster);
         $this->assertEquals(1, $cluster->getId());
@@ -246,14 +244,14 @@ class PersonMapperTest extends UnitBaseTestCase
 
     public function test_Update_IdNotUpdated(): void
     {
-        $cluster = $this->personMapper->find('user1', 1);
+        $cluster =self::$personMapper->find('user1', 1);
         $cluster->setId(1000);
 
         //Act
-        $cluster = $this->personMapper->update($cluster);
+        $cluster =self::$personMapper->update($cluster);
 
         //Assert
-        $cluster = $this->personMapper->find('user1', 1);
+        $cluster =self::$personMapper->find('user1', 1);
         $this->assertNotNull($cluster);
         $this->assertInstanceOf(Person::class, $cluster);
         $this->assertEquals(1, $cluster->getId());
@@ -267,20 +265,20 @@ class PersonMapperTest extends UnitBaseTestCase
 
     public function test_Update_IdIsNull_ExpectException(): void
     {
-        $cluster = $this->personMapper->find('user1', 1);
+        $cluster =self::$personMapper->find('user1', 1);
         $cluster->setId(null);
 
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Entity which should be updated has no id');
 
         //Act
-        $cluster = $this->personMapper->update($cluster);
+        $cluster =self::$personMapper->update($cluster);
     }
 
     public function test_Find_nameExists(): void
     {
         //Act
-        $cluster = $this->personMapper->find('user1', 1);
+        $cluster =self::$personMapper->find('user1', 1);
 
         //Assert
         $this->assertNotNull($cluster);
@@ -297,7 +295,7 @@ class PersonMapperTest extends UnitBaseTestCase
     public function test_Find_noNameExists(): void
     {
         //Act
-        $cluster = $this->personMapper->find('user1', 3);
+        $cluster =self::$personMapper->find('user1', 3);
 
         //Assert
         $this->assertNotNull($cluster);
@@ -317,7 +315,7 @@ class PersonMapperTest extends UnitBaseTestCase
         $this->expectExceptionMessage('Did expect one result but found none when executing: query "SELECT `c`.`id`, `user`, `p`.`name`, `is_visible`, `is_valid`, `last_generation_time`, `linked_user` FROM `*PREFIX*facerecog_clusters` `c` LEFT JOIN `*PREFIX*facerecog_person_clusters` `pc` ON `pc`.`cluster_id` = `c`.`id` LEFT JOIN `*PREFIX*facerecog_persons` `p` ON (`pc`.`person_id` = `p`.`id`) AND (`pc`.`cluster_id` IS NOT NULL) WHERE (`c`.`id` = :dcValue1) AND (`c`.`user` = :dcValue2)"');
 
         //Act
-        $cluster = $this->personMapper->find('user1', 8);
+        $cluster =self::$personMapper->find('user1', 8);
 
         //Assert
         $this->assertNull($cluster);
@@ -327,7 +325,7 @@ class PersonMapperTest extends UnitBaseTestCase
     public function test_FindByName(string $userId, int $modelId, string $personName, int $expectedCount): void
     {
         //Act
-        $people = $this->personMapper->findByName($userId, $modelId, $personName);
+        $people =self::$personMapper->findByName($userId, $modelId, $personName);
 
         //Assert
         $this->assertNotNull($people);
@@ -346,7 +344,7 @@ class PersonMapperTest extends UnitBaseTestCase
     public function test_getPersonsByFlagsWithoutName(string $userId, int $modelId, bool $isValid, bool $isVisible, int $expectedCount): void
     {
         //Act
-        $people = $this->personMapper->getPersonsByFlagsWithoutName($userId, $modelId, $isValid, $isVisible);
+        $people =self::$personMapper->getPersonsByFlagsWithoutName($userId, $modelId, $isValid, $isVisible);
 
         //Assert
         $this->assertNotNull($people);
@@ -366,7 +364,7 @@ class PersonMapperTest extends UnitBaseTestCase
     public function test_findIgnored(string $userId, int $modelId, int $expectedCount): void
     {
         //Act
-        $people = $this->personMapper->findIgnored($userId, $modelId);
+        $people =self::$personMapper->findIgnored($userId, $modelId);
 
         //Assert
         $this->assertNotNull($people);
@@ -386,7 +384,7 @@ class PersonMapperTest extends UnitBaseTestCase
     public function test_findUnassigned(string $userId, int $modelId, int $expectedCount): void
     {
         //Act
-        $people = $this->personMapper->findUnassigned($userId, $modelId);
+        $people =self::$personMapper->findUnassigned($userId, $modelId);
 
         //Assert
         $this->assertNotNull($people);
@@ -406,7 +404,7 @@ class PersonMapperTest extends UnitBaseTestCase
     public function test_findAll(string $userId, int $modelId, int $expectedCount): void
     {
         //Act
-        $people = $this->personMapper->findAll($userId, $modelId);
+        $people =self::$personMapper->findAll($userId, $modelId);
 
         //Assert
         $this->assertNotNull($people);
@@ -424,7 +422,7 @@ class PersonMapperTest extends UnitBaseTestCase
     public function test_findDistinctNames(string $userId, int $modelId, int $expectedCount): void
     {
         //Act
-        $people = $this->personMapper->findDistinctNames($userId, $modelId);
+        $people =self::$personMapper->findDistinctNames($userId, $modelId);
 
         //Assert
         $this->assertNotNull($people);
@@ -443,7 +441,7 @@ class PersonMapperTest extends UnitBaseTestCase
     public function test_findDistinctNamesSelected(string $userId, int $modelId, string $faceName, int $expectedCount): void
     {
         //Act
-        $people = $this->personMapper->findDistinctNamesSelected($userId, $modelId, $faceName);
+        $people =self::$personMapper->findDistinctNamesSelected($userId, $modelId, $faceName);
 
         //Assert
         $this->assertNotNull($people);
@@ -462,7 +460,7 @@ class PersonMapperTest extends UnitBaseTestCase
     public function test_findPersonsLike(string $userId, int $modelId, string $faceName, ?int $offset, ?int $limit, int $expectedCount): void
     {
         //Act
-        $people = $this->personMapper->findPersonsLike($userId, $modelId, $faceName, $offset, $limit);
+        $people =self::$personMapper->findPersonsLike($userId, $modelId, $faceName, $offset, $limit);
 
         //Assert
         $this->assertNotNull($people);
@@ -480,7 +478,7 @@ class PersonMapperTest extends UnitBaseTestCase
     public function test_countPersons(string $userId, int $modelId, int $expectedCount): void
     {
         //Act
-        $people = $this->personMapper->countPersons($userId, $modelId);
+        $people =self::$personMapper->countPersons($userId, $modelId);
 
         //Assert
         $this->assertNotNull($people);
@@ -491,7 +489,7 @@ class PersonMapperTest extends UnitBaseTestCase
     public function test_countClusters(string $userId, int $modelId, bool $onlyInvalid, int $expectedCount): void
     {
         //Act
-        $people = $this->personMapper->countClusters($userId, $modelId, $onlyInvalid);
+        $people =self::$personMapper->countClusters($userId, $modelId, $onlyInvalid);
 
         //Assert
         $this->assertNotNull($people);
@@ -504,7 +502,7 @@ class PersonMapperTest extends UnitBaseTestCase
     public function test_invalidatePersons(int $imageId): void
     {
         //Act
-        $this->personMapper->invalidatePersons($imageId);
+       self::$personMapper->invalidatePersons($imageId);
 
         //Assert
         $sub = self::$dbConnection->getQueryBuilder();
@@ -527,7 +525,7 @@ class PersonMapperTest extends UnitBaseTestCase
     public function test_deleteUserPersons(string $userId): void
     {
         //Act
-        $this->personMapper->deleteUserPersons($userId);
+       self::$personMapper->deleteUserPersons($userId);
 
         //Assert
         $sub = self::$dbConnection->getQueryBuilder();
@@ -545,7 +543,7 @@ class PersonMapperTest extends UnitBaseTestCase
     public function test_deleteUserModel(string $userId, int $modelId): void
     {
         //Act
-        $this->personMapper->deleteUserModel($userId, $modelId);
+       self::$personMapper->deleteUserModel($userId, $modelId);
 
         //Assert
         $sub = self::$dbConnection->getQueryBuilder();
@@ -568,7 +566,7 @@ class PersonMapperTest extends UnitBaseTestCase
     public function test_removeIfEmpty(int $clusterId, bool $isDeleted): void
     {
         //Act
-        $this->personMapper->removeIfEmpty($clusterId);
+       self::$personMapper->removeIfEmpty($clusterId);
 
         //Assert
         $sub = self::$dbConnection->getQueryBuilder();
@@ -590,7 +588,7 @@ class PersonMapperTest extends UnitBaseTestCase
     public function test_deleteOrphaned(string $userId, int $expected): void
     {
         //Act
-        $deletedEntries = $this->personMapper->deleteOrphaned($userId);
+        $deletedEntries =self::$personMapper->deleteOrphaned($userId);
 
         //Assert
         $this->assertEquals($expected, count($deletedEntries));
@@ -600,7 +598,7 @@ class PersonMapperTest extends UnitBaseTestCase
     public function test_deleteOrphaned_withDB(string $userId, int $expected): void
     {
         //Act
-        $deletedEntries = $this->personMapper->deleteOrphaned($userId, self::$dbConnection);
+        $deletedEntries =self::$personMapper->deleteOrphaned($userId, self::$dbConnection);
 
         //Assert
         $this->assertEquals($expected, count($deletedEntries));
@@ -610,7 +608,7 @@ class PersonMapperTest extends UnitBaseTestCase
     public function test_setVisibility(int $clusterId, bool $visible): void
     {
         //Act
-        $this->personMapper->setVisibility($clusterId, $visible);
+       self::$personMapper->setVisibility($clusterId, $visible);
 
         //Assert
         $sub = self::$dbConnection->getQueryBuilder();
@@ -637,7 +635,7 @@ class PersonMapperTest extends UnitBaseTestCase
     public function test_detachFace(int $clusterId, int $faceId, ?string $name): void
     {
         //Act
-        $cluster = $this->personMapper->detachFace($clusterId, $faceId, $name);
+        $cluster =self::$personMapper->detachFace($clusterId, $faceId, $name);
 
         //Assert
         $this->assertNotNull($cluster);
@@ -647,7 +645,7 @@ class PersonMapperTest extends UnitBaseTestCase
     public function test_insertPersonIfNotExists(string $personName, int $expectedId): void
     {
         //Act
-        $personId = $this->personMapper->insertPersonIfNotExists($personName);
+        $personId =self::$personMapper->insertPersonIfNotExists($personName);
 
         //Assert
 
@@ -671,7 +669,7 @@ class PersonMapperTest extends UnitBaseTestCase
     public function test_insertPersonIfNotExists_withDb(string $personName, int $expectedId): void
     {
         //Act
-        $personId = $this->personMapper->insertPersonIfNotExists($personName, self::$dbConnection);
+        $personId =self::$personMapper->insertPersonIfNotExists($personName, self::$dbConnection);
 
         //Assert
         $qb = self::$dbConnection->getQueryBuilder();
@@ -694,7 +692,7 @@ class PersonMapperTest extends UnitBaseTestCase
     public function test_updateClusterPersonConnections(int $clusterId, ?string $personName, int $expectedId, int $expectedpersonCount): void
     {
         //Act
-        $this->personMapper->updateClusterPersonConnection($clusterId, $personName);
+       self::$personMapper->updateClusterPersonConnection($clusterId, $personName);
 
         //Assert
         $qb = self::$dbConnection->getQueryBuilder();
@@ -735,7 +733,7 @@ class PersonMapperTest extends UnitBaseTestCase
     public function test_updateClusterPersonConnections_withDb(int $clusterId, ?string $personName, int $expectedId, int $expectedpersonCount): void
     {
         //Act
-        $this->personMapper->updateClusterPersonConnection($clusterId, $personName, self::$dbConnection);
+       self::$personMapper->updateClusterPersonConnection($clusterId, $personName, self::$dbConnection);
 
         //Assert
         $qb = self::$dbConnection->getQueryBuilder();
@@ -789,7 +787,7 @@ class PersonMapperTest extends UnitBaseTestCase
         $this->expectExceptionMessageMatches("/^Did not expect more than one result when executing: query/");
 
         //Act
-        $this->personMapper->updateClusterPersonConnection($clusterId, $personName);
+       self::$personMapper->updateClusterPersonConnection($clusterId, $personName);
 
         //Assert
         $qb = self::$dbConnection->getQueryBuilder();
@@ -843,7 +841,7 @@ class PersonMapperTest extends UnitBaseTestCase
         $this->expectExceptionMessageMatches("/^Did not expect more than one result when executing: query/");
 
         //Act
-        $this->personMapper->updateClusterPersonConnection($clusterId, $personName, self::$dbConnection);
+       self::$personMapper->updateClusterPersonConnection($clusterId, $personName, self::$dbConnection);
 
         //Assert
         $qb = self::$dbConnection->getQueryBuilder();
@@ -884,7 +882,7 @@ class PersonMapperTest extends UnitBaseTestCase
     public function test_countClusterFaces(int $clusterId, int $expectedcount): void
     {
         //Act
-        $faceCount = $this->personMapper->countClusterFaces($clusterId);
+        $faceCount =self::$personMapper->countClusterFaces($clusterId);
 
         //Assert
         $this->assertNotNull($faceCount);
@@ -899,7 +897,7 @@ class PersonMapperTest extends UnitBaseTestCase
             $this->expectExceptionMessageMatches("/^No clusterId was given to face Id:[0-9]+/");
         }
         //Act
-        $this->personMapper->updateFace($faceId, $oldClusterId, $clusterId, $isGroupable);
+       self::$personMapper->updateFace($faceId, $oldClusterId, $clusterId, $isGroupable);
 
         //Assert
         $qb = self::$dbConnection->getQueryBuilder();
@@ -930,7 +928,7 @@ class PersonMapperTest extends UnitBaseTestCase
     public function test_removeAllFacesFromPersonint(int $clusterId): void
     {
         //Act
-        $this->personMapper->removeAllFacesFromPerson($clusterId);
+       self::$personMapper->removeAllFacesFromPerson($clusterId);
 
         //Assert
         $qb = self::$dbConnection->getQueryBuilder();
@@ -951,7 +949,7 @@ class PersonMapperTest extends UnitBaseTestCase
             $this->expectExceptionMessage($message);
         }
         //Act
-        $this->personMapper->attachFaceToPerson($clusterId, $faceId);
+       self::$personMapper->attachFaceToPerson($clusterId, $faceId);
 
         //Assert
         $qb = self::$dbConnection->getQueryBuilder();
@@ -982,7 +980,7 @@ class PersonMapperTest extends UnitBaseTestCase
         $deletedCount += $initialOrphandClusters;
 
         //Act
-        $countOfActions = $this->personMapper->mergeClusterToDatabase($userId, $currentClusters, $newClusters);
+        $countOfActions =self::$personMapper->mergeClusterToDatabase($userId, $currentClusters, $newClusters);
 
         //Assert
 
@@ -1015,7 +1013,7 @@ class PersonMapperTest extends UnitBaseTestCase
         $this->expectException(DbalException::class);
 
         //Act
-        $countOfActions = $this->personMapper->mergeClusterToDatabase("user1", array(3 => [3]), array(3 => [10000]));
+        $countOfActions = self::$personMapper->mergeClusterToDatabase("user1", array(3 => [3]), array(3 => [10000]));
 
         //Assert
         $qb = self::$dbConnection->getQueryBuilder();
@@ -1044,6 +1042,11 @@ class PersonMapperTest extends UnitBaseTestCase
     {
         parent::tearDown();
     }
+
+	public static function tearDownAfterClass(): void {
+		self::$personMapper = null;
+		parent::tearDownAfterClass();
+	}
 }
 
 class PersonDataProvider
