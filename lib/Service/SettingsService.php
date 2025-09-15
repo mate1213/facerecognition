@@ -29,7 +29,6 @@ use OCA\FaceRecognition\AppInfo\Application;
 use OCA\FaceRecognition\Model\ModelManager;
 
 use OCP\IConfig;
-use OCP\IAppConfig;
 
 class SettingsService {
 
@@ -48,7 +47,7 @@ class SettingsService {
 
 	/* Enabling facial recognition for users */
 	const DEFAULT_USER_ENABLED_KEY = 'default_enabled';
-	const DEFAULT_USER_ENABLED = false;
+	const DEFAULT_USER_ENABLED = 'false';
 
 	/* Assigned memory for image processing */
 	const ASSIGNED_MEMORY_KEY = 'assigned_memory';
@@ -64,38 +63,38 @@ class SettingsService {
 
 	/** Sensitivity used to clustering */
 	const SENSITIVITY_KEY = 'sensitivity';
-	const MINIMUM_SENSITIVITY = 0.2;
-	const DEFAULT_SENSITIVITY = 0.4;
-	const MAXIMUM_SENSITIVITY = 0.6;
+	const MINIMUM_SENSITIVITY = '0.2';
+	const DEFAULT_SENSITIVITY = '0.4';
+	const MAXIMUM_SENSITIVITY = '0.6';
 
 	/** Minimum confidence used to try to clustring faces */
 	const MINIMUM_CONFIDENCE_KEY = 'min_confidence';
-	const MINIMUM_MINIMUM_CONFIDENCE = 0.0;
-	const DEFAULT_MINIMUM_CONFIDENCE = 0.99;
-	const MAXIMUM_MINIMUM_CONFIDENCE = 1.1;
+	const MINIMUM_MINIMUM_CONFIDENCE = '0.0';
+	const DEFAULT_MINIMUM_CONFIDENCE = '0.99';
+	const MAXIMUM_MINIMUM_CONFIDENCE = '1.1';
 
 	/** Minimum face size used to try to clustring faces */
 	const MINIMUM_FACE_SIZE_KEY = 'min_face_size';
-	const MINIMUM_MINIMUM_FACE_SIZE = 0;
-	const DEFAULT_MINIMUM_FACE_SIZE = 40;
-	const MAXIMUM_MINIMUM_FACE_SIZE = 250;
+	const MINIMUM_MINIMUM_FACE_SIZE = '0';
+	const DEFAULT_MINIMUM_FACE_SIZE = '40';
+	const MAXIMUM_MINIMUM_FACE_SIZE = '250';
 
 	/** Minimum of faces in cluster */
 	const MINIMUM_FACES_IN_CLUSTER_KEY = 'min_faces_in_cluster';
-	const MINIMUM_MINIMUM_FACES_IN_CLUSTER = 1;
-	const DEFAULT_MINIMUM_FACES_IN_CLUSTER = 5;
-	const MAXIMUM_MINIMUM_FACES_IN_CLUSTER = 20;
+	const MINIMUM_MINIMUM_FACES_IN_CLUSTER = '1';
+	const DEFAULT_MINIMUM_FACES_IN_CLUSTER = '5';
+	const MAXIMUM_MINIMUM_FACES_IN_CLUSTER = '20';
 
 	/** User setting what indicates if has the analysis enabled */
 	const USER_ENABLED_KEY = 'enabled';
 	// The default is defined by system 'default_enabled' key
 
 	const CLUSTERING_BATCH_SIZE_KEY = 'clustering_batch_size';
-	const DEFAULT_CLUSTERING_BATCH_SIZE = -1;
+	const DEFAULT_CLUSTERING_BATCH_SIZE = '-1';
 
 	/** User setting that remember last images checked */
 	const STALE_IMAGES_LAST_CHECKED_KEY = 'stale_images_last_checked';
-	const DEFAULT_STALE_IMAGES_LAST_CHECKED = 0;
+	const DEFAULT_STALE_IMAGES_LAST_CHECKED = '0';
 
 	/** Define if for some reason need remove old images */
 	const STALE_IMAGES_REMOVAL_NEEDED_KEY = 'stale_images_removal_needed';
@@ -115,33 +114,33 @@ class SettingsService {
 
 	/** Hidden setting that allows to analyze shared files */
 	const HANDLE_SHARED_FILES_KEY = 'handle_shared_files';
-	const DEFAULT_HANDLE_SHARED_FILES = false;
+	const DEFAULT_HANDLE_SHARED_FILES = 'false';
 
 	/** Hidden setting that allows to analyze external files */
 	const HANDLE_EXTERNAL_FILES_KEY = 'handle_external_files';
-	const DEFAULT_HANDLE_EXTERNAL_FILES = false;
+	const DEFAULT_HANDLE_EXTERNAL_FILES = 'false';
 
 	/** Hidden setting that allows to analyze group files */
 	const HANDLE_GROUP_FILES_KEY = 'handle_group_files';
-	const DEFAULT_HANDLE_GROUP_FILES = false;
+	const DEFAULT_HANDLE_GROUP_FILES = 'false';
 
 	/** Hidden setting that indicate minimum large of image to analyze */
 	const MINIMUM_IMAGE_SIZE_KEY = 'min_image_size';
-	const DEFAULT_MINIMUM_IMAGE_SIZE = 512;
+	const DEFAULT_MINIMUM_IMAGE_SIZE = '512';
 
 	/** Hidden setting that indicate maximum area of image to analyze */
 	const MAXIMUM_IMAGE_AREA_KEY = 'max_image_area';
-	const DEFAULT_MAXIMUM_IMAGE_AREA = -1;
+	const DEFAULT_MAXIMUM_IMAGE_AREA = '-1';
 
 	/** Hidden setting that allows obfuscate that faces for security */
 	const OBFUSCATE_FACE_THUMBS_KEY = 'obfuscate_faces';
-	const DEFAULT_OBFUSCATE_FACE_THUMBS = false;
+	const DEFAULT_OBFUSCATE_FACE_THUMBS = 'false';
 
 	/** System setting to enable mimetypes */
 
 	const SYSTEM_ENABLED_MIMETYPES = 'enabledFaceRecognitionMimetype';
 	private $allowedMimetypes = ['image/jpeg', 'image/png'];
-	private $cachedAllowedMimetypes = 'false';
+	private $cachedAllowedMimetypes = false;
 
 	/** System setting to use custom folder for models */
 	const SYSTEM_MODEL_PATH = 'facerecognition.model_path';
@@ -156,8 +155,6 @@ class SettingsService {
 
 	/** @var IConfig Config */
 	private $config;
-	/** @var IAppConfig Config */
-	private $appConfig;
 
 	/**  @var string|null */
 	private $userId;
@@ -167,11 +164,9 @@ class SettingsService {
 	 * @param string $userId
 	 */
 	public function __construct(IConfig $config,
-								IAppConfig $appConfig,
 	                            $userId)
 	{
 		$this->config = $config;
-		$this->appConfig = $appConfig;
 		$this->userId = $userId;
 	}
 
@@ -182,12 +177,13 @@ class SettingsService {
 	 * @param null|string $userId
 	 */
 	public function getUserEnabled (?string $userId = null): bool {
-		$enabled = $this->config->getUserValue($userId ?? $this->userId, Application::APP_NAME, self::USER_ENABLED_KEY, $this->getDefaultUserEnabled());
-		return ($enabled == "true");
+		$enabled = $this->config->getUserValue($userId ?? $this->userId, Application::APP_NAME, self::USER_ENABLED_KEY,
+		                                       $this->getDefaultUserEnabled());
+		return ($enabled === 'true');
 	}
 
-	public function setUserEnabled (bool $enabled, ?string $userId = null): void {
-		$this->config->setUserValue($userId ?? $this->userId, Application::APP_NAME, self::USER_ENABLED_KEY, $enabled ? 'true' : 'false');
+	public function setUserEnabled (bool $enabled, $userId = null): void {
+		$this->config->setUserValue($userId ?? $this->userId, Application::APP_NAME, self::USER_ENABLED_KEY, $enabled ? "true" : "false");
 	}
 
 	/**
@@ -195,26 +191,26 @@ class SettingsService {
 	 */
 	public function getUserFullScanDone (?string $userId = null): bool {
 		$fullScanDone = $this->config->getUserValue($userId ?? $this->userId, Application::APP_NAME, self::FULL_IMAGE_SCAN_DONE_KEY, self::DEFAULT_FULL_IMAGE_SCAN_DONE);
-		return ($fullScanDone == "true");
+		return ($fullScanDone === 'true');
 	}
 
 	/**
 	 * @param null|string $userId
 	 */
 	public function setUserFullScanDone (bool $fullScanDone, ?string $userId = null): void {
-		$this->config->setUserValue($userId ?? $this->userId, Application::APP_NAME, self::FULL_IMAGE_SCAN_DONE_KEY, $fullScanDone ? 'true' : 'false');
+		$this->config->setUserValue($userId ?? $this->userId, Application::APP_NAME, self::FULL_IMAGE_SCAN_DONE_KEY, $fullScanDone ? "true" : "false");
 	}
 
-	public function getNeedRemoveStaleImages (?string $userId = null): bool {
+	public function getNeedRemoveStaleImages ($userId = null): bool {
 		$needRemoval = $this->config->getUserValue($userId ?? $this->userId, Application::APP_NAME, self::STALE_IMAGES_REMOVAL_NEEDED_KEY, self::DEFAULT_STALE_IMAGES_REMOVAL_NEEDED);
-		return ($needRemoval == "true");
+		return ($needRemoval === 'true');
 	}
 
 	/**
 	 * @param null|string $userId
 	 */
 	public function setNeedRemoveStaleImages (bool $needRemoval, ?string $userId = null): void {
-		$this->config->setUserValue($userId ?? $this->userId, Application::APP_NAME, self::STALE_IMAGES_REMOVAL_NEEDED_KEY, $needRemoval ? 'true' : 'false');
+		$this->config->setUserValue($userId ?? $this->userId, Application::APP_NAME, self::STALE_IMAGES_REMOVAL_NEEDED_KEY, $needRemoval ? "true" : "false");
 	}
 
 	/**
@@ -228,7 +224,7 @@ class SettingsService {
 	 * @param null|string $userId
 	 */
 	public function setLastStaleImageChecked (int $lastCheck, ?string $userId = null): void {
-		$this->config->setUserValue($userId ?? $this->userId, Application::APP_NAME, self::STALE_IMAGES_LAST_CHECKED_KEY, $lastCheck);
+		$this->config->setUserValue($userId ?? $this->userId, Application::APP_NAME, self::STALE_IMAGES_LAST_CHECKED_KEY, strval($lastCheck));
 	}
 
 	/**
@@ -236,14 +232,14 @@ class SettingsService {
 	 */
 	public function getNeedRecreateClusters (?string $userId = null): bool {
 		$needRecreate = $this->config->getUserValue($userId ?? $this->userId, Application::APP_NAME, self::USER_RECREATE_CLUSTERS_KEY, self::DEFAULT_USER_RECREATE_CLUSTERS);
-		return ($needRecreate == "true");
+		return ($needRecreate === 'true');
 	}
 
 	/**
 	 * @param null|string $userId
 	 */
 	public function setNeedRecreateClusters (bool $needRecreate, ?string $userId = null): void {
-		$this->config->setUserValue($userId ?? $this->userId, Application::APP_NAME, self::USER_RECREATE_CLUSTERS_KEY, $needRecreate ? 'true' : 'false');
+		$this->config->setUserValue($userId ?? $this->userId, Application::APP_NAME, self::USER_RECREATE_CLUSTERS_KEY, $needRecreate ? "true" : "false");
 	}
 
 	// Private function used only on tests
@@ -252,7 +248,7 @@ class SettingsService {
 	 */
 	public function _getForceCreateClusters (?string $userId = null): bool {
 		$forceCreate = $this->config->getUserValue($userId ?? $this->userId, Application::APP_NAME, self::FORCE_CREATE_CLUSTERS_KEY, self::DEFAULT_FORCE_CREATE_CLUSTERS);
-		return ($forceCreate == "true");
+		return ($forceCreate === 'true');
 	}
 
 	// Private function used only on tests
@@ -260,54 +256,54 @@ class SettingsService {
 	 * @param null|string $userId
 	 */
 	public function _setForceCreateClusters (bool $forceCreate, ?string $userId = null): void {
-		$this->config->setUserValue($userId ?? $this->userId, Application::APP_NAME, self::FORCE_CREATE_CLUSTERS_KEY, $forceCreate ? 'true' : 'false');
+		$this->config->setUserValue($userId ?? $this->userId, Application::APP_NAME, self::FORCE_CREATE_CLUSTERS_KEY, $forceCreate ? "true" : "false");
 	}
 
 	/*
 	 * Admin and process settings.
 	 */
 	public function getCurrentFaceModel(): int {
-		return intval($this->appConfig->getValueInt(Application::APP_NAME, self::CURRENT_MODEL_KEY, self::FALLBACK_CURRENT_MODEL));
+		return intval($this->config->getAppValue(Application::APP_NAME, self::CURRENT_MODEL_KEY, strval(self::FALLBACK_CURRENT_MODEL)));
 	}
 
 	public function setCurrentFaceModel(int $model): void {
-		$this->appConfig->setValueInt(Application::APP_NAME, self::CURRENT_MODEL_KEY, $model);
+		$this->config->setAppValue(Application::APP_NAME, self::CURRENT_MODEL_KEY, strval($model));
 	}
 
 	public function getAnalysisImageArea(): int {
-		return intval($this->appConfig->getValueInt(Application::APP_NAME, self::ANALYSIS_IMAGE_AREA_KEY, self::DEFAULT_ANALYSIS_IMAGE_AREA));
+		return intval($this->config->getAppValue(Application::APP_NAME, self::ANALYSIS_IMAGE_AREA_KEY, strval(self::DEFAULT_ANALYSIS_IMAGE_AREA)));
 	}
 
 	public function setAssignedMemory(int $assignedMemory): void {
-		$this->appConfig->getValueInt(Application::APP_NAME, self::ASSIGNED_MEMORY_KEY, $assignedMemory);
+		$this->config->setAppValue(Application::APP_NAME, self::ASSIGNED_MEMORY_KEY, strval($assignedMemory));
 	}
 
 	public function setAnalysisImageArea(int $imageArea): void {
-		$this->appConfig->getValueInt(Application::APP_NAME, self::ANALYSIS_IMAGE_AREA_KEY, $imageArea);
+		$this->config->setAppValue(Application::APP_NAME, self::ANALYSIS_IMAGE_AREA_KEY, strval($imageArea));
 	}
 
 	public function getSensitivity(): float {
-		return floatval($this->appConfig->getValueFloat(Application::APP_NAME, self::SENSITIVITY_KEY, self::DEFAULT_SENSITIVITY));
+		return floatval($this->config->getAppValue(Application::APP_NAME, self::SENSITIVITY_KEY, self::DEFAULT_SENSITIVITY));
 	}
 
-	public function setSensitivity(float $sensitivity): void {
-		$this->appConfig->setValueFloat(Application::APP_NAME, self::SENSITIVITY_KEY, $sensitivity);
+	public function setSensitivity($sensitivity): void {
+		$this->config->setAppValue(Application::APP_NAME, self::SENSITIVITY_KEY, $sensitivity);
 	}
 
 	public function getMinimumConfidence(): float {
-		return floatval($this->appConfig->getValueFloat(Application::APP_NAME, self::MINIMUM_CONFIDENCE_KEY, self::DEFAULT_MINIMUM_CONFIDENCE));
+		return floatval($this->config->getAppValue(Application::APP_NAME, self::MINIMUM_CONFIDENCE_KEY, self::DEFAULT_MINIMUM_CONFIDENCE));
 	}
 
-	public function setMinimumConfidence(float $confidence): void {
-		$this->appConfig->setValueFloat(Application::APP_NAME, self::MINIMUM_CONFIDENCE_KEY, $confidence);
+	public function setMinimumConfidence($confidence): void {
+		$this->config->setAppValue(Application::APP_NAME, self::MINIMUM_CONFIDENCE_KEY, $confidence);
 	}
 
 	public function getMinimumFacesInCluster(): int {
-		return intval($this->appConfig->getValueInt(Application::APP_NAME, self::MINIMUM_FACES_IN_CLUSTER_KEY, self::DEFAULT_MINIMUM_FACES_IN_CLUSTER));
+		return intval($this->config->getAppValue(Application::APP_NAME, self::MINIMUM_FACES_IN_CLUSTER_KEY, self::DEFAULT_MINIMUM_FACES_IN_CLUSTER));
 	}
 
-	public function setMinimumFacesInCluster(int $no_faces): void {
-		$this->appConfig->setValueInt(Application::APP_NAME, self::MINIMUM_FACES_IN_CLUSTER_KEY, $no_faces);
+	public function setMinimumFacesInCluster($no_faces): void {
+		$this->config->setAppValue(Application::APP_NAME, self::MINIMUM_FACES_IN_CLUSTER_KEY, $no_faces);
 	}
 
 	/**
@@ -315,52 +311,57 @@ class SettingsService {
 	 * See: https://github.com/matiasdelellis/facerecognition/wiki/Settings#hidden-settings
 	 */
 	public function getDefaultUserEnabled (): bool {
-		return $this->appConfig->getValueBool(Application::APP_NAME, self::DEFAULT_USER_ENABLED_KEY, self::DEFAULT_USER_ENABLED);
+		$enabled = $this->config->getAppValue(Application::APP_NAME, self::DEFAULT_USER_ENABLED_KEY, self::DEFAULT_USER_ENABLED);
+		return ($enabled === 'true');
 	}
 
 	public function getClusterigBatchSize(): int {
 		if ($this->config->getSystemValue('dbtype', 'sqlite') === 'oci')
 			return 1000;
-		return $this->appConfig->getValueInt(Application::APP_NAME, self::CLUSTERING_BATCH_SIZE_KEY, self::DEFAULT_CLUSTERING_BATCH_SIZE);
+		return intval($this->config->getAppValue(Application::APP_NAME, self::CLUSTERING_BATCH_SIZE_KEY, self::DEFAULT_CLUSTERING_BATCH_SIZE));
 	}
 
 	public function getHandleSharedFiles(): bool {
-		return $this->appConfig->getValueBool(Application::APP_NAME, self::HANDLE_SHARED_FILES_KEY, self::DEFAULT_HANDLE_SHARED_FILES);
+		$handle = $this->config->getAppValue(Application::APP_NAME, self::HANDLE_SHARED_FILES_KEY, self::DEFAULT_HANDLE_SHARED_FILES);
+		return ($handle === 'true');
 	}
 
 	public function getHandleExternalFiles(): bool {
-		return $this->appConfig->getValueBool(Application::APP_NAME, self::HANDLE_EXTERNAL_FILES_KEY, self::DEFAULT_HANDLE_EXTERNAL_FILES);
+		$handle = $this->config->getAppValue(Application::APP_NAME, self::HANDLE_EXTERNAL_FILES_KEY, self::DEFAULT_HANDLE_EXTERNAL_FILES);
+		return ($handle === 'true');
 	}
 
 	public function getHandleGroupFiles(): bool {
-		return$this->appConfig->getValueBool(Application::APP_NAME, self::HANDLE_GROUP_FILES_KEY, self::DEFAULT_HANDLE_GROUP_FILES);
+		$handle = $this->config->getAppValue(Application::APP_NAME, self::HANDLE_GROUP_FILES_KEY, self::DEFAULT_HANDLE_GROUP_FILES);
+		return ($handle === 'true');
 	}
 
 	public function getMinimumImageSize(): int {
-		return $this->appConfig->getValueInt(Application::APP_NAME, self::MINIMUM_IMAGE_SIZE_KEY, self::DEFAULT_MINIMUM_IMAGE_SIZE);
+		return intval($this->config->getAppValue(Application::APP_NAME, self::MINIMUM_IMAGE_SIZE_KEY, self::DEFAULT_MINIMUM_IMAGE_SIZE));
 	}
 
 	public function getMinimumFaceSize(): int {
-		$minFaceSize = $this->appConfig->getValueInt(Application::APP_NAME, self::MINIMUM_FACE_SIZE_KEY, self::DEFAULT_MINIMUM_FACE_SIZE);
+		$minFaceSize = intval($this->config->getAppValue(Application::APP_NAME, self::MINIMUM_FACE_SIZE_KEY, self::DEFAULT_MINIMUM_FACE_SIZE));
 		$minFaceSize = max(self::MINIMUM_MINIMUM_FACE_SIZE, $minFaceSize);
 		$minFaceSize = min($minFaceSize, self::MAXIMUM_MINIMUM_FACE_SIZE);
-		return $minFaceSize;
+		return intval($minFaceSize);
 	}
 
 	public function getMaximumImageArea(): int {
-		return $this->appConfig->getValueInt(Application::APP_NAME, self::MAXIMUM_IMAGE_AREA_KEY, self::DEFAULT_MAXIMUM_IMAGE_AREA);
+		return intval($this->config->getAppValue(Application::APP_NAME, self::MAXIMUM_IMAGE_AREA_KEY, self::DEFAULT_MAXIMUM_IMAGE_AREA));
 	}
 
 	public function getAssignedMemory(): int {
-		return $this->appConfig->getValueInt(Application::APP_NAME, self::ASSIGNED_MEMORY_KEY, self::DEFAULT_ASSIGNED_MEMORY);
+		return intval($this->config->getAppValue(Application::APP_NAME, self::ASSIGNED_MEMORY_KEY, strval(self::DEFAULT_ASSIGNED_MEMORY)));
 	}
 
 	public function getObfuscateFaces(): bool {
-		return  $this->appConfig->getValueBool(Application::APP_NAME, self::OBFUSCATE_FACE_THUMBS_KEY, self::DEFAULT_OBFUSCATE_FACE_THUMBS);
+		$obfuscate = $this->config->getAppValue(Application::APP_NAME, self::OBFUSCATE_FACE_THUMBS_KEY, self::DEFAULT_OBFUSCATE_FACE_THUMBS);
+		return ($obfuscate === 'true');
 	}
 
 	public function setObfuscateFaces(bool $obfuscate): void {
-		$this->appConfig->setValueBool(Application::APP_NAME, self::OBFUSCATE_FACE_THUMBS_KEY, $obfuscate);
+		$this->config->setAppValue(Application::APP_NAME, self::OBFUSCATE_FACE_THUMBS_KEY, $obfuscate ? 'true' : 'false');
 	}
 
 	/**
