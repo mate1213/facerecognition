@@ -184,11 +184,11 @@ class SettingsService {
 	public function getUserEnabled (?string $userId = null): bool {
 		$enabled = $this->config->getUserValue($userId ?? $this->userId, Application::APP_NAME, self::USER_ENABLED_KEY,
 		                                       $this->getDefaultUserEnabled());
-		return ($enabled == 'true');
+		return ($enabled == true);
 	}
 
 	public function setUserEnabled (bool $enabled, ?string $userId = null): void {
-		$this->config->setUserValue($userId ?? $this->userId, Application::APP_NAME, self::USER_ENABLED_KEY, $enabled ? "true" : "false");
+		$this->config->setUserValue($userId ?? $this->userId, Application::APP_NAME, self::USER_ENABLED_KEY, $enabled);
 	}
 
 	/**
@@ -196,26 +196,26 @@ class SettingsService {
 	 */
 	public function getUserFullScanDone (?string $userId = null): bool {
 		$fullScanDone = $this->config->getUserValue($userId ?? $this->userId, Application::APP_NAME, self::FULL_IMAGE_SCAN_DONE_KEY, self::DEFAULT_FULL_IMAGE_SCAN_DONE);
-		return ($fullScanDone === 'true');
+		return ($fullScanDone === true);
 	}
 
 	/**
 	 * @param null|string $userId
 	 */
 	public function setUserFullScanDone (bool $fullScanDone, ?string $userId = null): void {
-		$this->config->setUserValue($userId ?? $this->userId, Application::APP_NAME, self::FULL_IMAGE_SCAN_DONE_KEY, $fullScanDone ? "true" : "false");
+		$this->config->setUserValue($userId ?? $this->userId, Application::APP_NAME, self::FULL_IMAGE_SCAN_DONE_KEY, $fullScanDone);
 	}
 
 	public function getNeedRemoveStaleImages (?string $userId = null): bool {
 		$needRemoval = $this->config->getUserValue($userId ?? $this->userId, Application::APP_NAME, self::STALE_IMAGES_REMOVAL_NEEDED_KEY, self::DEFAULT_STALE_IMAGES_REMOVAL_NEEDED);
-		return ($needRemoval === 'true');
+		return ($needRemoval === true);
 	}
 
 	/**
 	 * @param null|string $userId
 	 */
 	public function setNeedRemoveStaleImages (bool $needRemoval, ?string $userId = null): void {
-		$this->config->setUserValue($userId ?? $this->userId, Application::APP_NAME, self::STALE_IMAGES_REMOVAL_NEEDED_KEY, $needRemoval ? "true" : "false");
+		$this->config->setUserValue($userId ?? $this->userId, Application::APP_NAME, self::STALE_IMAGES_REMOVAL_NEEDED_KEY, $needRemoval);
 	}
 
 	/**
@@ -237,14 +237,14 @@ class SettingsService {
 	 */
 	public function getNeedRecreateClusters (?string $userId = null): bool {
 		$needRecreate = $this->config->getUserValue($userId ?? $this->userId, Application::APP_NAME, self::USER_RECREATE_CLUSTERS_KEY, self::DEFAULT_USER_RECREATE_CLUSTERS);
-		return ($needRecreate === 'true');
+		return ($needRecreate === true);
 	}
 
 	/**
 	 * @param null|string $userId
 	 */
 	public function setNeedRecreateClusters (bool $needRecreate, ?string $userId = null): void {
-		$this->config->setUserValue($userId ?? $this->userId, Application::APP_NAME, self::USER_RECREATE_CLUSTERS_KEY, $needRecreate ? "true" : "false");
+		$this->config->setUserValue($userId ?? $this->userId, Application::APP_NAME, self::USER_RECREATE_CLUSTERS_KEY, $needRecreate);
 	}
 
 	// Private function used only on tests
@@ -253,7 +253,7 @@ class SettingsService {
 	 */
 	public function _getForceCreateClusters (?string $userId = null): bool {
 		$forceCreate = $this->config->getUserValue($userId ?? $this->userId, Application::APP_NAME, self::FORCE_CREATE_CLUSTERS_KEY, self::DEFAULT_FORCE_CREATE_CLUSTERS);
-		return ($forceCreate === 'true');
+		return ($forceCreate === true);
 	}
 
 	// Private function used only on tests
@@ -261,7 +261,7 @@ class SettingsService {
 	 * @param null|string $userId
 	 */
 	public function _setForceCreateClusters (bool $forceCreate, ?string $userId = null): void {
-		$this->config->setUserValue($userId ?? $this->userId, Application::APP_NAME, self::FORCE_CREATE_CLUSTERS_KEY, $forceCreate ? "true" : "false");
+		$this->config->setUserValue($userId ?? $this->userId, Application::APP_NAME, self::FORCE_CREATE_CLUSTERS_KEY, $forceCreate);
 	}
 
 	/*
@@ -317,7 +317,7 @@ class SettingsService {
 	 */
 	public function getDefaultUserEnabled (): bool {
 		$enabled = $this->appConfig->getValueBool(Application::APP_NAME, self::DEFAULT_USER_ENABLED_KEY, self::DEFAULT_USER_ENABLED);
-		return ($enabled === 'true');
+		return ($enabled === true);
 	}
 
 	public function getClusterigBatchSize(): int {
@@ -328,17 +328,17 @@ class SettingsService {
 
 	public function getHandleSharedFiles(): bool {
 		$handle = $this->appConfig->getValueBool(Application::APP_NAME, self::HANDLE_SHARED_FILES_KEY, self::DEFAULT_HANDLE_SHARED_FILES);
-		return ($handle === 'true');
+		return ($handle === true);
 	}
 
 	public function getHandleExternalFiles(): bool {
 		$handle = $this->appConfig->getValueBool(Application::APP_NAME, self::HANDLE_EXTERNAL_FILES_KEY, self::DEFAULT_HANDLE_EXTERNAL_FILES);
-		return ($handle === 'true');
+		return ($handle === true);
 	}
 
 	public function getHandleGroupFiles(): bool {
 		$handle = $this->appConfig->getValueBool(Application::APP_NAME, self::HANDLE_GROUP_FILES_KEY, self::DEFAULT_HANDLE_GROUP_FILES);
-		return ($handle === 'true');
+		return ($handle === true);
 	}
 
 	public function getMinimumImageSize(): int {
@@ -362,7 +362,7 @@ class SettingsService {
 
 	public function getObfuscateFaces(): bool {
 		$obfuscate = $this->appConfig->getValueBool(Application::APP_NAME, self::OBFUSCATE_FACE_THUMBS_KEY, self::DEFAULT_OBFUSCATE_FACE_THUMBS);
-		return ($obfuscate === 'true');
+		return ($obfuscate === true);
 	}
 
 	public function setObfuscateFaces(bool $obfuscate): void {
