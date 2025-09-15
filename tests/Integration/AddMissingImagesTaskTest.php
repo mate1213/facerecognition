@@ -47,6 +47,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(\OCA\FaceRecognition\Listener\UserDeletedListener::class)]
 #[UsesClass(\OCA\FaceRecognition\Service\FaceManagementService::class)]
 #[UsesClass(\OCA\FaceRecognition\Service\FileService::class)]
+#[UsesClass(\OCA\FaceRecognition\BackgroundJob\FaceRecognitionBackgroundTask::class)]
 class AddMissingImagesTaskTest extends IntegrationTestCase {
 
 	public function setup(): void {

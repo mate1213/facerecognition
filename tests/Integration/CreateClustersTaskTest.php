@@ -51,6 +51,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[CoversClass(SettingsService::class)]
 #[UsesClass(\OCA\FaceRecognition\Helper\Requirements::class)]
 #[UsesClass(\OCA\FaceRecognition\Listener\UserDeletedListener::class)]
+#[UsesClass(\OCA\FaceRecognition\BackgroundJob\FaceRecognitionBackgroundTask::class)]
 #[UsesClass(FaceRecognitionContext::class)]
 #[UsesClass(FaceRecognitionLogger::class)]
 #[UsesClass(FaceManagementService::class)]
