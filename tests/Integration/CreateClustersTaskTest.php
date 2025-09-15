@@ -145,7 +145,7 @@ class CreateClustersTaskTest extends IntegrationTestCase {
 	 * @param IUser|null $contextUser Optional user to create clusters for.
 	 * If not given, clusters for all users will be processed.
 	 */
-	private function doCreateClustersTask($personMapper, $imageMapper, $faceMapper, $settingsService, $contextUser = null) {
+	private function doCreateClustersTask($personMapper, $imageMapper, $faceMapper, $settingsService,?IUser  $contextUser = null) {
 		$createClustersTask = new CreateClustersTask($personMapper, $imageMapper, $faceMapper, $settingsService);
 		$this->assertNotEquals("", $createClustersTask->description());
 

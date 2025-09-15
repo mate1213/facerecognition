@@ -160,7 +160,7 @@ class ImageProcessingTaskTest extends IntegrationTestCase {
 	 * @param IUser|null $contextUser Optional user to process images for.
 	 * If not given, images for all users will be processed.
 	 */
-	private function doImageProcessing($imgData, $contextUser = null) {
+	private function doImageProcessing($imgData,?IUser  $contextUser = null) {
 		// Create ImageProcessingTask
 		$modelManager =self::$container->get('OCA\FaceRecognition\Model\ModelManager');
 		$lockingProvider =self::$container->get('OCP\Lock\ILockingProvider');
@@ -190,7 +190,7 @@ class ImageProcessingTaskTest extends IntegrationTestCase {
 	 *
 	 * @param IUser|null $contextUser Optional user to scan for. If not given, images for all users will be scanned.
 	 */
-	private function doMissingImageScan($contextUser = null) {
+	private function doMissingImageScan(?IUser $contextUser = null) {
 		// Reset config that full scan is done, to make sure we are scanning again
 		self::$config->setUserValue(self::$user->getUID(), 'facerecognition', AddMissingImagesTask::FULL_IMAGE_SCAN_DONE_KEY, 'false');
 

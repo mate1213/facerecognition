@@ -123,7 +123,7 @@ class AddMissingImagesTaskTest extends IntegrationTestCase {
 	 *
 	 * @param IUser|null $contextUser Optional user to scan for. If not given, images for all users will be scanned.
 	 */
-	private function doMissingImageScan($contextUser = null) {
+	private function doMissingImageScan(?IUser $contextUser = null) {
 		// Reset config that full scan is done, to make sure we are scanning again
 		$this->assertNotEquals("", self::$addMissingImagesTask->description());
 

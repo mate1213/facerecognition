@@ -35,7 +35,7 @@ abstract class UnitBaseTestCase extends TestCase
 	/** @var bool*/
 	private $isSetupComplete = false;
 	/** @var bool */
-	protected $runLargeTests = false;
+	protected $runLargeTests = true;
 
 	public static function setUpBeforeClass(): void {
 		parent::setUpBeforeClass();

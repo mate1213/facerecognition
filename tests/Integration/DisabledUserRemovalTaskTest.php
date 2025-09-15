@@ -97,7 +97,7 @@ class DisabledUserRemovalTaskTest extends IntegrationTestCase {
 	 * @param IUser|null $contextUser Optional user to scan for.
 	 * If not given, stale images for all users will be renived.
 	 */
-	private function doDisabledUserRemoval($contextUser = null) {
+	private function doDisabledUserRemoval(?IUser $contextUser = null) {
 		$this->assertNotEquals("", self::$disabledUserRemovalTask->description());
 
 		// Set user for which to do scanning, if any
