@@ -35,10 +35,10 @@
 			<a :title='addNamePersonTitle' rel="noreferrer noopener" style="width: 48px;height: 48px;" v-on:click="nameEdit">
 				<img class='face-preview unknown-name' :src='person.thumb_url' width="48" height="48"/>
 			</a>
-			<a :title='addNamePersonTitle' rel="noreferrer noopener" class="face-name unknown-name" v-on:click="nameEdit">
+			<a :title='addNamePersonTitle' rel="noreferrer noopener" class="face-name unknown-name" v-on:click="nameEdit" v-on:key-down="AutoComplete" v-on:input="AutoComplete">
 				<h5>{{ t('facerecognition', 'Add name') }}</h5>
 			</a>
-			<a :title='addNamePersonTitle' rel="noreferrer noopener" target="_blank" class="icon-action icon-rename" v-on:click="nameEdit"/>
+			<a :title='addNamePersonTitle' rel="noreferrer noopener" target="_blank" class="icon-action icon-rename" v-on:click="nameEdit" />
 		</template>
 		<template v-else>
 			<a :title='addNamePersonTitle' rel="noreferrer noopener" style="width: 48px;height: 48px;">
@@ -121,6 +121,14 @@ export default {
 				}
 			)
 		},
+		
+		AutoComplete(){
+				return new Promise(resolve => {
+					$.get(OC.generateUrl('/apps/facerecognition/autocomplete/' + this.newName)).done(function (names) {
+						resolve(names);
+					});
+				});
+			},
 
 		doDetachFace(person) {
 			Axios.put(OC.generateUrl('/apps/facerecognition/cluster/' + person.person_id + '/detach'), {

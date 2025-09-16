@@ -469,7 +469,7 @@ const FrDialogs = {
 		});
 	},
 
-	assignNameBulk: function (clusters, callback) {
+	assignNameBulk: function (clusters, top10Name, callback) {
 		return $.when(this._getMessageTemplate()).then(function ($tmpl) {
 			var dialogName = 'fr-assign-dialog-bulk';
 			var dialogId = '#' + dialogName;
