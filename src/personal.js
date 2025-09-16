@@ -268,7 +268,7 @@ View.prototype = {
                 self.reload();
             return;
         }
-        FrDialogs.assignName(cluster.faces,
+        FrDialogs.assignName(cluster.faces, unassignedClusters.length,
             function(result, name) {
                 if (result === true) {
                     if (name !== null) {

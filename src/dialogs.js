@@ -271,7 +271,7 @@ const FrDialogs = {
 		});
 	},
 
-	assignName: function (faces, callback) {
+	assignName: function (faces, clusterLenght, callback) {
 		return $.when(this._getMessageTemplate()).then(function ($tmpl) {
 			var dialogName = 'fr-assign-dialog';
 			var dialogId = '#' + dialogName;
@@ -284,6 +284,10 @@ const FrDialogs = {
 
 			$dlg.append($('<br/>'));
 
+			var div2 = $('<div/>').attr('style', 'text-align: center');
+			$dlg.append(div2);
+			div2.append($('<p>' + t('facerecognition', 'Unassigned groups left to rename:')+' ' +clusterLenght+'</p>'));
+
 			var div = $('<div/>').attr('style', 'text-align: center');
 			$dlg.append(div);
 
@@ -294,7 +298,6 @@ const FrDialogs = {
 					div.append($('<img class="face-preview-dialog" src="' + face['thumbUrl'] + '" width="50" height="50"/>'));
 				}
 			}
-
 			var input = $('<input/>').attr('type', 'text').attr('id', dialogName + '-input').attr('placeholder', t('facerecognition', 'Please assign a name to this person.'));
 			$dlg.append(input);
 
