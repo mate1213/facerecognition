@@ -30,10 +30,8 @@ use OCP\IDBConnection;
 
 use OCP\AppFramework\Db\QBMapper;
 use OCP\AppFramework\Db\Entity;
-use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\DB\QueryBuilder\IQueryBuilder;
-use OC\DB\QueryBuilder\Literal;
 
 class PersonMapper extends QBMapper
 {
