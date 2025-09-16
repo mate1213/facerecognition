@@ -338,7 +338,7 @@ class ImageMapper extends QBMapper
 	}
 
 
-	public function findFromPerson(string $userId, int $modelId, string $name, $offset = null, $limit = null): array{
+	public function findFromPerson(string $userId, int $modelId, string $name, ?int $offset = null, ?int $limit = null): array{
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('i.id', 'ui.user', 'i.model', 'i.nc_file_id as file', 'i.is_processed', 'i.error', 'i.last_processed_time', 'i.processing_duration')
 			->from($this->getTableName(), 'i')
@@ -392,7 +392,7 @@ class ImageMapper extends QBMapper
 	 *
 	 * @return void
 	 */
-	public function imageProcessed(int $imageId, array $faces, int $duration, \Exception $e = null): void{
+	public function imageProcessed(int $imageId, array $faces, int $duration, ?\Exception $e = null): void{
 		$this->db->beginTransaction();
 		try {
 			// Update image itself
@@ -406,7 +406,7 @@ class ImageMapper extends QBMapper
 			$qb->update($this->getTableName())
 				->set("is_processed", $qb->createNamedParameter(true, IQueryBuilder::PARAM_BOOL))
 				->set("error", $qb->createNamedParameter($error))
-				->set("last_processed_time", $qb->createNamedParameter(new \DateTime(), IQueryBuilder::PARAM_DATE))
+				->set("last_processed_time", $qb->createNamedParameter(new \DateTime(), IQueryBuilder::PARAM_DATE_MUTABLE))
 				->set("processing_duration", $qb->createNamedParameter($duration))
 				->where($qb->expr()->eq('id', $qb->createNamedParameter($imageId)))
 				->executeStatement();

@@ -120,7 +120,7 @@ class StaleImagesRemovalTaskTest extends IntegrationTestCase {
 	 * @param IUser|null $contextUser Optional user to scan for.
 	 * If not given, stale images for all users will be renived.
 	 */
-	private function doStaleImagesRemoval($contextUser = null) {
+	private function doStaleImagesRemoval(?IUser $contextUser = null) {
 		// Set config that stale image removal is needed
 		self::$config->setUserValue(self::$user->getUID(), 'facerecognition', SettingsService::STALE_IMAGES_REMOVAL_NEEDED_KEY, 'true');
 

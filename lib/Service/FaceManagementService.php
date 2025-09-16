@@ -80,7 +80,7 @@ class FaceManagementService {
 	 *
 	 * @return bool
 	 */
-	public function hasData(IUser $user = null, int $modelId = -1): bool {
+	public function hasData(?IUser $user = null, int $modelId = -1): bool {
 		if ($modelId === -1) {
 			$modelId = $this->settingsService->getCurrentFaceModel();
 		}
@@ -113,7 +113,7 @@ class FaceManagementService {
 	 *
 	 * @return void
 	 */
-	public function resetAll(IUser $user = null): void {
+	public function resetAll(?IUser $user = null): void {
 		$eligible_users = $this->getEligiblesUserId($user);
 		foreach($eligible_users as $user) {
 			$this->resetAllForUser($user);
@@ -143,7 +143,7 @@ class FaceManagementService {
 	 *
 	 * @return void
 	 */
-	public function resetModel(IUser $user = null, int $modelId = -1): void {
+	public function resetModel(?IUser $user = null, int $modelId = -1): void {
 		if ($modelId === -1) {
 			$modelId = $this->settingsService->getCurrentFaceModel();
 		}
@@ -177,7 +177,7 @@ class FaceManagementService {
 	 *
 	 * @return void
 	 */
-	public function resetImageErrors(IUser $user = null): void {
+	public function resetImageErrors(?IUser $user = null): void {
 		$eligible_users = $this->getEligiblesUserId($user);
 		foreach($eligible_users as $userId) {
 			$this->imageMapper->resetErrors($userId);
@@ -193,7 +193,7 @@ class FaceManagementService {
 	 *
 	 * @return void
 	 */
-	public function resetClusters(IUser $user = null): void {
+	public function resetClusters(?IUser $user = null): void {
 		$eligible_users = $this->getEligiblesUserId($user);
 		foreach($eligible_users as $user) {
 			$this->resetClustersForUser($user);
@@ -220,7 +220,7 @@ class FaceManagementService {
 	 *
 	 * @param IUser|null $user Optional user to get specific user.
 	 */
-	private function getEligiblesUserId(IUser $user = null): array {
+	private function getEligiblesUserId(?IUser $user = null): array {
 		$eligible_users = array();
 		if (is_null($user)) {
 			$this->userManager->callForAllUsers(function (IUser $user) use (&$eligible_users) {

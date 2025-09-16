@@ -47,6 +47,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(\OCA\FaceRecognition\Listener\UserDeletedListener::class)]
 #[UsesClass(\OCA\FaceRecognition\Service\FaceManagementService::class)]
 #[UsesClass(\OCA\FaceRecognition\Service\FileService::class)]
+#[UsesClass(\OCA\FaceRecognition\BackgroundJob\FaceRecognitionBackgroundTask::class)]
 class AddMissingImagesTaskTest extends IntegrationTestCase {
 
 	public function setup(): void {
@@ -122,7 +123,7 @@ class AddMissingImagesTaskTest extends IntegrationTestCase {
 	 *
 	 * @param IUser|null $contextUser Optional user to scan for. If not given, images for all users will be scanned.
 	 */
-	private function doMissingImageScan($contextUser = null) {
+	private function doMissingImageScan(?IUser $contextUser = null) {
 		// Reset config that full scan is done, to make sure we are scanning again
 		$this->assertNotEquals("", self::$addMissingImagesTask->description());
 

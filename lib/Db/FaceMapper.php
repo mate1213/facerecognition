@@ -295,7 +295,7 @@ class FaceMapper extends QBMapper
 	 *
 	 * @return Face[]
 	 */
-	public function findFromCluster(string $userId, int $clusterId, int $model, ?int $limit = null, $offset = null): array{
+	public function findFromCluster(string $userId, int $clusterId, int $model, ?int $limit = null, ?int $offset = null): array{
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('f.id', 'cf.cluster_id as person', 'image_id as image', 'x', 'y', 'width', 'height', 'landmarks', 'descriptor', 'confidence', 'creation_time')
 			->from($this->getTableName(), 'f')
@@ -316,7 +316,7 @@ class FaceMapper extends QBMapper
 	/**
 	 * @param int|null $limit
 	 */
-	public function findFromPerson(string $userId, string $personId, int $model, ?int $limit = null, $offset = null): array{
+	public function findFromPerson(string $userId, string $personId, int $model, ?int $limit = null, ?int $offset = null): array{
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('f.id', 'cf.cluster_id as person', 'image_id as image', 'x', 'y', 'width', 'height', 'landmarks', 'descriptor', 'confidence', 'creation_time')
 			->from($this->getTableName(), 'f')

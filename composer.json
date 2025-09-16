@@ -10,13 +10,18 @@
             "name": "Branko Kokanovic"
         }
     ],
+    "config": {
+        "platform": {
+            "php": "8.3"
+        }
+    },
     "require": {
-        "php": ">=8.3",
+        "php": ">=8.1",
         "doctrine/dbal": "*"
     },
     "require-dev": {
         "nextcloud/ocp": "dev-stable31",
-        "phpunit/phpunit": "^12",
+        "phpunit/phpunit": "^10",
         "psalm/phar": "^4",
         "scrutinizer/ocular": "^1.8",
         "psr/log": "^3"
