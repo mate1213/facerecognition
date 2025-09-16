@@ -32,7 +32,6 @@ use OCP\AppFramework\Db\QBMapper;
 use OCP\AppFramework\Db\Entity;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\DB\QueryBuilder\IQueryBuilder;
-use OCP\DB\QueryBuilder\IFunctionBuilder;
 
 class ImageMapper extends QBMapper
 {
