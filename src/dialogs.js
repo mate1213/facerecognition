@@ -466,6 +466,23 @@ const FrDialogs = {
 		});
 	},
 
+
+	
+	assignNameBulk: function (clusters, callback) {
+		return $.when(this._getMessageTemplate()).then(function ($tmpl) {
+			var dialogName = 'fr-assign-dialog-bulk';
+			var dialogId = '#' + dialogName;
+			var $dlg = $tmpl.octemplate({
+				dialog_name: dialogName,
+				title: t('facerecognition', 'Add name in bulk'),
+				message: t('facerecognition', 'Please assign a name to this person.'),
+				type: 'none'
+			});
+
+			$dlg.append($('<br/>'));
+		});
+	},
+
 	_getMessageTemplate: function () {
 		var defer = $.Deferred();
 		if (!this.$messageTemplate) {
