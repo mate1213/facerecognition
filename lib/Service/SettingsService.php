@@ -159,6 +159,7 @@ class SettingsService {
 
 	/** @var IAppConfig Config */
 	private $appConfig;
+	
 	/**  @var string|null */
 	private $userId;
 
@@ -167,9 +168,11 @@ class SettingsService {
 	 * @param string $userId
 	 */
 	public function __construct(IConfig $config,
+								IAppConfig $appConfig,
 	                            $userId)
 	{
 		$this->config = $config;
+		$this->appConfig = $appConfig;
 		$this->userId = $userId;
 	}
 
