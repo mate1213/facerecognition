@@ -307,7 +307,7 @@ View.prototype = {
                 self.reload();
             return;
         }
-        FrDialogs.assignIgnored(cluster.faces,
+        FrDialogs.assignIgnored(cluster.faces, ignoredClusters.length,
             function(result, name) {
                 if (result === true) {
                     if (name !== null) {

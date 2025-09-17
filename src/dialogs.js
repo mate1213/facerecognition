@@ -376,7 +376,7 @@ const FrDialogs = {
 		});
 	},
 
-	assignIgnored: function (faces, callback) {
+	assignIgnored: function (faces, clusterLenght, callback) {
 		return $.when(this._getMessageTemplate()).then(function ($tmpl) {
 			var dialogName = 'fr-assign-dialog';
 			var dialogId = '#' + dialogName;
@@ -388,6 +388,10 @@ const FrDialogs = {
 			});
 
 			$dlg.append($('<br/>'));
+
+			var div2 = $('<div/>').attr('style', 'text-align: center');
+			$dlg.append(div2);
+			div2.append($('<p>' + t('facerecognition', 'Unassigned groups left to rename:')+' ' +clusterLenght+'</p>'));
 
 			var div = $('<div/>').attr('style', 'text-align: center');
 			$dlg.append(div);
