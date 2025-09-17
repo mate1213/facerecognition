@@ -268,7 +268,7 @@ View.prototype = {
                 self.reload();
             return;
         }
-        FrDialogs.assignName(cluster.faces, unassignedClusters.length+1,
+        FrDialogs.assignName(cluster.faces, unassignedClusters.length,
             function(result, name) {
                 if (result === true) {
                     if (name !== null) {
@@ -308,6 +308,41 @@ View.prototype = {
             return;
         }
         FrDialogs.assignIgnored(cluster.faces, ignoredClusters.length,
+            function(result, name) {
+                if (result === true) {
+                    if (name !== null) {
+                        if (name.length > 0) {
+                            self._persons.renameCluster(cluster.id, name).done(function () {
+                                self.renameIgnoredClusterDialog();
+                            }).fail(function () {
+                                OC.Notification.showTemporary(t('facerecognition', 'There was an error renaming this person'));
+                            });
+                        } else {
+                            self.renameIgnoredClusterDialog();
+                        }
+                    } else {
+                        self.renameIgnoredClusterDialog();
+                    }
+                } else {
+                    // Cancelled
+                    if (self._persons.mustReload())
+                        self.reload();
+                }
+            }
+        );
+    },
+    renameIgnoredClusterBulkDialog: function () {
+        var self = this;
+        var ignoredClusters = this._persons.getIgnoredClusters();
+        var cluster = ignoredClusters.shift();
+        if (cluster === undefined) {
+            OC.Notification.showTemporary(t('facerecognition', 'You no longer have people ignored'));
+            self.renderContent();
+            if (self._persons.mustReload())
+                self.reload();
+            return;
+        }
+        FrDialogs.assignIgnoredBulk(ignoredClusters, ignoredClusters,
             function(result, name) {
                 if (result === true) {
                     if (name !== null) {
@@ -428,7 +463,10 @@ View.prototype = {
             button.css("cursor", "wait");
             self._persons.loadIgnoredClusters().done(function () {
                 button.css("cursor", "");
-                if (self._persons.getIgnoredClusters().length > 0) {
+                if (self._persons.getIgnoredClusters().length > 10) {
+                    console.log("CallBulkDialog");
+                    self.renameIgnoredClusterBulkDialog();
+                } else  if (self._persons.getIgnoredClusters().length > 0) {
                     self.renameIgnoredClusterDialog();
                 } else {
                     OC.Notification.showTemporary(t('facerecognition', 'You no longer have people ignored'));

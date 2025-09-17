@@ -286,7 +286,7 @@ const FrDialogs = {
 
 			var div2 = $('<div/>').attr('style', 'text-align: center');
 			$dlg.append(div2);
-			div2.append($('<p>' + t('facerecognition', 'Unassigned groups left to rename:')+' ' +clusterLenght+'</p>'));
+			div2.append($('<p>' + t('facerecognition', 'Unassigned groups left to rename:')+' ' + (clusterLenght+1) +'</p>'));
 
 			var div = $('<div/>').attr('style', 'text-align: center');
 			$dlg.append(div);
@@ -391,7 +391,7 @@ const FrDialogs = {
 
 			var div2 = $('<div/>').attr('style', 'text-align: center');
 			$dlg.append(div2);
-			div2.append($('<p>' + t('facerecognition', 'Unassigned groups left to rename:')+' ' +clusterLenght+'</p>'));
+			div2.append($('<p>' + t('facerecognition', 'Unassigned groups left to rename:')+' ' + (clusterLenght+1) +'</p>'));
 
 			var div = $('<div/>').attr('style', 'text-align: center');
 			$dlg.append(div);
@@ -473,7 +473,8 @@ const FrDialogs = {
 		});
 	},
 
-	assignNameBulk: function (clusters, top10Name, callback) {
+	assignIgnoredBulk: function (clusters, top10Name, callback) {
+		console.log("assignIgnoredBulk called");
 		return $.when(this._getMessageTemplate()).then(function ($tmpl) {
 			var dialogName = 'fr-assign-dialog-bulk';
 			var dialogId = '#' + dialogName;
@@ -481,10 +482,51 @@ const FrDialogs = {
 				dialog_name: dialogName,
 				title: t('facerecognition', 'Add name in bulk'),
 				message: t('facerecognition', 'Please assign a name to this person.'),
-				type: 'none'
+				type: 'none',
+				innerWidth: 1000,
+				outerWidth:1000
 			});
 
-			$dlg.append($('<br/>'));
+			$dlg.append($('<br/>')).attr('style', 'overflow: auto');
+			$('body').append($dlg);
+			// wrap callback in _.once():
+			// only call callback once and not twice (button handler and close
+			// event) but call it for the close event, if ESC or the x is hit
+			if (callback !== undefined) {
+				callback = _.once(callback);
+			}
+
+			var buttonlist = [{
+				text: t('facerecognition', 'Keep ignored'),
+				click: function () {
+					$(dialogId).ocdialog('close');
+					if (callback !== undefined) {
+						callback(true, null);
+					}
+				},
+			}, {
+				text: t('facerecognition', 'Save'),
+				click: function () {
+					$(dialogId).ocdialog('close');
+					if (callback !== undefined) {
+						callback(true, input.val().trim());
+					}
+				},
+				defaultButton: true
+			}];
+
+			$(dialogId).ocdialog({
+				closeOnEscape: true,
+				modal: true,
+				buttons: buttonlist,
+				close: function () {
+					// callback is already fired if Yes/No is clicked directly
+					if (callback !== undefined) {
+						callback(false, '');
+					}
+				}
+			});
+
 		});
 	},
 
