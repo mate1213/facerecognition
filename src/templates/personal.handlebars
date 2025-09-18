@@ -1,6 +1,7 @@
 <div class="section" id="facerecognition">
 
 {{#if clustersByName}}
+		<span class="title-name">clustersByName</span>
 	<h2 style="display: flex;">
 		<a class="title-icon icon-back"></a>
 		<span class="title-name">{{personName}}</span>
@@ -21,7 +22,107 @@
 			</div>
 		{{/each}}
 	</div>
+{{else if bulkAction}}
+	<span class="title-name">bulkAction</span>
+	<!-- Wrapper – flex container + relative positioning -->
+	<div class="layout-wrapper"
+		style="
+			display:flex;
+			gap:0;          /* no space between panes divider will be the separator */
+			position:relative;
+			overflow:hidden;
+		">
+	
+		<!-- ================== CLOSE BUTTON (top‑right) ================== -->
+		<button id="close-bulk-widget"
+				title="Close"
+				type="button"
+				class="primary"
+				style="
+					position:absolute;
+					top:8px;
+					right:8px;
+					width:28px; height:28px;
+					border:none; background:#fff; color:#333;
+					font-size:18px; line-height:1;
+					cursor:pointer;
+					border-radius:4px;
+					box-shadow:0 2px 6px rgba(0,0,0,.15);
+				">
+			&times;
+		</button>
+
+		<!-- ================== LEFT SIDE (original content) ================== -->
+		<div class="left-pane"
+			style="
+				flex:1;
+				overflow-y:auto;            /* scroll if needed */
+			">
+			<h2>
+				{{appName}}
+			</h2>
+			<input id="enableFacerecognition" name="enableFacerecognition" type="checkbox" class="checkbox" value="1" {{#if enabled}}checked{{/if}}>
+			<label for="enableFacerecognition">{{enableDescription}}</label><br>
+			<div id="optional-buttons-div">
+				{{#if hasUnamed}}
+					<button id="show-more-clusters" type="button" class="primary">{{reviewPeopleMsg}}</button>
+				{{/if}}
+				{{#if hasHidden}}
+					<button id="show-ignored-clusters" type="button" class="primary">{{reviewIgnoredMsg}}</button>
+				{{/if}}
+			</div>
+			<div class="persons-previews">
+				{{#each persons}}
+					<div class="person-box" data-id="{{name}}">
+						<div class="face-preview-big lozad" data-background-image="{{thumbUrl}}" width="128" height="128"></div>
+						<p class="person-name">
+							<span>{{name}}</span>
+						</p>
+						<p class="person-desc">{{noPhotos count}}</p>
+					</div>
+				{{/each}}
+			</div>
+		</div>
+
+		<!-- ================== DIVIDER ================== -->
+		<div style="
+			width:1px;
+			background:#e0e0e0;
+			margin:0; /* no gap – divider sits between panes */
+			"></div>
+
+		<!-- ================== RIGHT SIDE (dynamic table) ================== -->
+		<div class="right-pane"
+			style="
+				flex:1; padding:16px;
+				overflow-y:auto; background:#fafafa;
+			">
+			<table id="dynamic-table"
+				border="0"
+				cellpadding="8"
+				cellspacing="0"
+				width="100%"
+				style="border-collapse:collapse;">
+				<thead>
+					<tr>
+						<th>Column 1</th>
+						<th>Column 2</th>
+					</tr>
+				</thead>
+
+				<tbody>
+					{{#each clustersByName}}
+					<tr>
+						<td>{{this.name}}</td>
+						<td>{{this.id}}</td>
+					</tr>
+					{{/each}}
+				</tbody>
+			</table>
+		</div>
+	</div>
 {{else if personName}}
+		<span class="title-name">personName</span>
 	<h2 style="display: flex;">
 		<a class="title-icon icon-back"></a>
 		<span class="title-name">{{personName}}</span>
@@ -40,6 +141,7 @@
 		{{/each}}
 	</div>
 {{else if persons}}
+		<span class="title-name">persons</span>
 	<h2>
 		{{appName}}
 	</h2>
@@ -65,6 +167,7 @@
 		{{/each}}
 	</div>
 {{else if loaded}}
+		<span class="title-name">loaded</span>
 	<h2>
 		{{appName}}
 	</h2>
@@ -88,6 +191,7 @@
 		</p>
 	</div>
 {{else}}
+		<span class="title-name">else</span>
 	<h2>
 		{{appName}}
 	</h2>

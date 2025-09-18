@@ -226,6 +226,7 @@ var View = function (persons) {
 
     this._persons = persons;
     this._observer = lozad('.lozad');
+    this._bulkAction = undefined;
 };
 
 View.prototype = {
@@ -387,6 +388,7 @@ View.prototype = {
             context.hasUnamed = this._hasUnamed;
             context.hasHidden = this._hasHidden;
             context.persons = this._persons.getPersons();
+            context.bulkAction = this._bulkAction;
 
             context.reviewPeopleMsg = t('facerecognition', 'Review people found');
             context.reviewIgnoredMsg = t('facerecognition', 'Review ignored people');
@@ -450,7 +452,11 @@ View.prototype = {
             button.css("cursor", "wait");
             self._persons.loadUnassignedClusters().done(function () {
                 button.css("cursor", "");
-                if (self._persons.getUnassignedClusters().length > 0) {
+                if (self._persons.getUnassignedClusters().length > 10) {
+                    //TODO: Add logic to open table
+                    self._bulkAction = true;
+                    self.renderContent();
+                } else if (self._persons.getUnassignedClusters().length > 0) {
                     self.renameUnassignedClusterDialog();
                 } else {
                     OC.Notification.showTemporary(t('facerecognition', 'You dont have more people to recognize.'));
@@ -464,8 +470,10 @@ View.prototype = {
             self._persons.loadIgnoredClusters().done(function () {
                 button.css("cursor", "");
                 if (self._persons.getIgnoredClusters().length > 10) {
+                    //TODO: Add logic to open table
                     console.log("CallBulkDialog");
-                    self.renameIgnoredClusterBulkDialog();
+                    self._bulkAction = true;
+                    self.renderContent();
                 } else  if (self._persons.getIgnoredClusters().length > 0) {
                     self.renameIgnoredClusterDialog();
                 } else {
@@ -474,8 +482,15 @@ View.prototype = {
             });
         });
 
+        $('#close-bulk-widget').click(function () {
+            console.log("close hit");
+            self._bulkAction = undefined;
+            self.renderContent();
+        });
+
         $('#facerecognition .file-preview-big').click(function () {
             var filename = $(this).data('id');
+            self._bulkAction = false;
             if (window.event.ctrlKey) {
                 var file = self._persons.getActivePerson().images.find(function(element) {
                     return element.filename == filename;
@@ -499,6 +514,7 @@ View.prototype = {
         $('#facerecognition .face-preview-big').click(function () {
             $(this).css("cursor", "wait");
             var name = $(this).parent().data('id');
+            self._bulkAction = false;
             self._persons.loadPerson(name).done(function () {
                 self.renderContent();
             }).fail(function () {
@@ -525,6 +541,7 @@ View.prototype = {
 
         $('#facerecognition #hide-person').click(function () {
             var person = self._persons.getActivePerson();
+            self._bulkAction = false;
             FrDialogs.hide(
                 [person],
                 function(result) {
@@ -542,6 +559,7 @@ View.prototype = {
 
         $('#facerecognition #rename-cluster').click(function () {
             var id = $(this).data('id');
+            self._bulkAction = false;
             var person = self._persons.getNamedClusterById(id);
             FrDialogs.rename(
                 person.name,
@@ -560,6 +578,7 @@ View.prototype = {
 
         $('#facerecognition #hide-cluster').click(function () {
             var id = $(this).data('id');
+            self._bulkAction = false;
             var person = self._persons.getNamedClusterById(id);
             FrDialogs.hide(
                 [person.faces[0]],
@@ -577,6 +596,7 @@ View.prototype = {
 
         $('#facerecognition #review-person-clusters').click(function () {
             $(this).css("cursor", "wait");
+            self._bulkAction = false;
             var person = self._persons.getActivePerson();
             self._persons.loadClustersByName(person.name).done(function () {
                 self.renderContent();
@@ -586,6 +606,7 @@ View.prototype = {
         });
 
         $('#facerecognition .icon-back').click(function () {
+            self._bulkAction = false;
             self._persons.unsetActive();
             self.renderContent();
             if (self._persons.mustReload() || !self._persons.isLoaded()) {
