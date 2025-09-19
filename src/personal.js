@@ -333,41 +333,6 @@ View.prototype = {
             }
         );
     },
-    renameIgnoredClusterBulkDialog: function () {
-        var self = this;
-        var ignoredClusters = this._persons.getIgnoredClusters();
-        var cluster = ignoredClusters.shift();
-        if (cluster === undefined) {
-            OC.Notification.showTemporary(t('facerecognition', 'You no longer have people ignored'));
-            self.renderContent();
-            if (self._persons.mustReload())
-                self.reload();
-            return;
-        }
-        FrDialogs.assignIgnoredBulk(ignoredClusters, ignoredClusters,
-            function(result, name) {
-                if (result === true) {
-                    if (name !== null) {
-                        if (name.length > 0) {
-                            self._persons.renameCluster(cluster.id, name).done(function () {
-                                self.renameIgnoredClusterDialog();
-                            }).fail(function () {
-                                OC.Notification.showTemporary(t('facerecognition', 'There was an error renaming this person'));
-                            });
-                        } else {
-                            self.renameIgnoredClusterDialog();
-                        }
-                    } else {
-                        self.renameIgnoredClusterDialog();
-                    }
-                } else {
-                    // Cancelled
-                    if (self._persons.mustReload())
-                        self.reload();
-                }
-            }
-        );
-    },
     renderContent: function () {
         var context = {
             loaded: this._persons.isLoaded(),
@@ -381,7 +346,9 @@ View.prototype = {
             emptyHint: t('facerecognition', 'Enable it to find your loved ones'),
             renameHint: t('facerecognition', 'Rename'),
             hideHint: t('facerecognition', 'Hide it'),
-            loadingIcon: OC.imagePath('core', 'loading.gif')
+            loadingIcon: OC.imagePath('core', 'loading.gif'),
+            bulkAssignNameHint: t('facerecognition', 'Please assign a name to this person.'),
+            bulkSave: t('facerecognition', 'Save')
         };
 
         if (this._enabled === true) {
@@ -473,9 +440,8 @@ View.prototype = {
                 button.css("cursor", "");
                 if (self._persons.getIgnoredClusters().length > 10) {
                     //TODO: Add logic to open table
-                    console.log("CallBulkDialog");
                     self._bulkAction = true;
-                    self._hiddenClusters = self._persons.getIgnoredClusters();
+                    self._hiddenClusters = self._persons.getIgnoredClusters().slice(0,10);
                     self.renderContent();
                 } else  if (self._persons.getIgnoredClusters().length > 0) {
                     self.renameIgnoredClusterDialog();
@@ -488,6 +454,7 @@ View.prototype = {
         $('#close-bulk-widget').click(function () {
             console.log("close hit");
             self._bulkAction = undefined;
+            self._hiddenClusters = undefined;
             self.renderContent();
         });
 

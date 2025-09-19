@@ -92,36 +92,60 @@
 		<!-- ================== RIGHT SIDE (dynamic table) ================== -->
 		<div class="right-pane"
 			style="
-				flex:1; padding:16px;
-				overflow-y:auto;
+				flex:1;
+				overflow-y:auto;          /* vertical scrolling only */
+				overflow-x:hidden;        /* keep everything inside the column width   */
+				/* optional - give a bit of breathing room when content is very wide   */
+				min-width:0;              /* allow flex-box to shrink it */
 			">
 			<table id="dynamic-table"
 				border="0"
 				cellpadding="8"
 				cellspacing="0"
 				width="100%"
-				style="border-collapse:collapse;">
+				style="
+					border-collapse:collapse;
+					table-layout:auto;      /* let the browser decide column widths   */
+					word-wrap:break-word;   /* wrap long words inside cells          */
+					white-space:normal;     /* allow wrapping, don't keep everything on one line */
+				">
 				<tbody>
 					{{#each hidden}}
-						<tr>
-							<td>
-								<div class="face-box" data-id="{{id}}" style="text-align: center">
+						<tr data-id="{{id}}" style="border-bottom: 1px solid #e0e0e0;">
+							<td data-id="{{id}}" style="padding:0;">
+								<div data-id="{{id}}" class="face-box" style="text-align:center;">
 									{{#each faces}}
 										{{#if fileUrl}}
 											<a href="{{fileUrl}}" target="_blank">
-												<img class="face-preview-dialog" src="{{thumbUrl}}" width="50" height="50"/>
+												<img class="face-preview-dialog"
+													src="{{thumbUrl}}"
+													width="50" height="50"/>
 											</a>
 										{{else}}
-											<img class="face-preview-dialog" src="{{thumbUrl}}" width="50" height="50"/>
+											<img class="face-preview-dialog"
+												src="{{thumbUrl}}"
+												width="50" height="50"/>
 										{{/if}}
 									{{/each}}
 								</div>
 							</td>
-							<td>{{this.id}}</td>
+							<td data-id="{{id}}" width="30%" style="padding:0;">
+								<input data-id="{{id}}" 
+									type="text" 
+									id="{{id}}-name-input" 
+									placeholder="{{../bulkAssignNameHint}}" 
+									style="width:100%;"/>
+							</td>
 						</tr>
 					{{/each}}
 				</tbody>
 			</table>
+			<button id="save-bulk-widget"
+				title="Close"
+				type="button"
+				class="primary">
+				{{bulkSave}}
+			</button>
 		</div>
 	</div>
 {{else if personName}}
