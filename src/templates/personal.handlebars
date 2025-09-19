@@ -1,7 +1,6 @@
 <div class="section" id="facerecognition">
 
 {{#if clustersByName}}
-		<span class="title-name">clustersByName</span>
 	<h2 style="display: flex;">
 		<a class="title-icon icon-back"></a>
 		<span class="title-name">{{personName}}</span>
@@ -23,14 +22,13 @@
 		{{/each}}
 	</div>
 {{else if bulkAction}}
-	<span class="title-name">bulkAction</span>
 	<!-- Wrapper – flex container + relative positioning -->
 	<div class="layout-wrapper"
 		style="
 			display:flex;
 			gap:0;          /* no space between panes divider will be the separator */
 			position:relative;
-			overflow:hidden;
+			overflow: auto;
 		">
 	
 		<!-- ================== CLOSE BUTTON (top‑right) ================== -->
@@ -43,11 +41,11 @@
 					top:8px;
 					right:8px;
 					width:28px; height:28px;
-					border:none; background:#fff; color:#333;
+					border:none;
 					font-size:18px; line-height:1;
 					cursor:pointer;
 					border-radius:4px;
-					box-shadow:0 2px 6px rgba(0,0,0,.15);
+					box-shadow:0 2px 6px;
 				">
 			&times;
 		</button>
@@ -86,16 +84,16 @@
 
 		<!-- ================== DIVIDER ================== -->
 		<div style="
-			width:1px;
+			width:2px;
 			background:#e0e0e0;
-			margin:0; /* no gap – divider sits between panes */
+			margin:0; /* no gap divider sits between panes */
 			"></div>
 
 		<!-- ================== RIGHT SIDE (dynamic table) ================== -->
 		<div class="right-pane"
 			style="
 				flex:1; padding:16px;
-				overflow-y:auto; background:#fafafa;
+				overflow-y:auto;
 			">
 			<table id="dynamic-table"
 				border="0"
@@ -103,26 +101,30 @@
 				cellspacing="0"
 				width="100%"
 				style="border-collapse:collapse;">
-				<thead>
-					<tr>
-						<th>Column 1</th>
-						<th>Column 2</th>
-					</tr>
-				</thead>
-
 				<tbody>
-					{{#each clustersByName}}
-					<tr>
-						<td>{{this.name}}</td>
-						<td>{{this.id}}</td>
-					</tr>
+					{{#each hidden}}
+						<tr>
+							<td>
+								<div class="face-box" data-id="{{id}}" style="text-align: center">
+									{{#each faces}}
+										{{#if fileUrl}}
+											<a href="{{fileUrl}}" target="_blank">
+												<img class="face-preview-dialog" src="{{thumbUrl}}" width="50" height="50"/>
+											</a>
+										{{else}}
+											<img class="face-preview-dialog" src="{{thumbUrl}}" width="50" height="50"/>
+										{{/if}}
+									{{/each}}
+								</div>
+							</td>
+							<td>{{this.id}}</td>
+						</tr>
 					{{/each}}
 				</tbody>
 			</table>
 		</div>
 	</div>
 {{else if personName}}
-		<span class="title-name">personName</span>
 	<h2 style="display: flex;">
 		<a class="title-icon icon-back"></a>
 		<span class="title-name">{{personName}}</span>
@@ -141,7 +143,6 @@
 		{{/each}}
 	</div>
 {{else if persons}}
-		<span class="title-name">persons</span>
 	<h2>
 		{{appName}}
 	</h2>
@@ -167,7 +168,6 @@
 		{{/each}}
 	</div>
 {{else if loaded}}
-		<span class="title-name">loaded</span>
 	<h2>
 		{{appName}}
 	</h2>
@@ -191,7 +191,6 @@
 		</p>
 	</div>
 {{else}}
-		<span class="title-name">else</span>
 	<h2>
 		{{appName}}
 	</h2>

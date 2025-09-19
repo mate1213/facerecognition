@@ -227,6 +227,7 @@ var View = function (persons) {
     this._persons = persons;
     this._observer = lozad('.lozad');
     this._bulkAction = undefined;
+    this._hiddenClusters = undefined;
 };
 
 View.prototype = {
@@ -389,6 +390,7 @@ View.prototype = {
             context.hasHidden = this._hasHidden;
             context.persons = this._persons.getPersons();
             context.bulkAction = this._bulkAction;
+            context.hidden = this._hiddenClusters;
 
             context.reviewPeopleMsg = t('facerecognition', 'Review people found');
             context.reviewIgnoredMsg = t('facerecognition', 'Review ignored people');
@@ -473,6 +475,7 @@ View.prototype = {
                     //TODO: Add logic to open table
                     console.log("CallBulkDialog");
                     self._bulkAction = true;
+                    self._hiddenClusters = self._persons.getIgnoredClusters();
                     self.renderContent();
                 } else  if (self._persons.getIgnoredClusters().length > 0) {
                     self.renameIgnoredClusterDialog();
