@@ -390,6 +390,24 @@ View.prototype = {
             setPersonNameUrl();
         }
 
+        if (this._hiddenClusters != undefined) {
+            this._hiddenClusters.forEach(cluster => {
+                console.log(cluster.id);
+                new AutoComplete({
+                    input: document.getElementById(cluster.id + "-name-input"),
+                    lookup (query) {
+                        return new Promise(resolve => {
+                            $.get(OC.generateUrl('/apps/facerecognition/autocomplete/' + query)).done(function (names) {
+                                resolve(names);
+                            });
+                        });
+                    },
+                    silent: true,
+                    highlight: false
+                });
+            });
+        }
+
         // Share View context
         var self = this;
 
@@ -452,7 +470,6 @@ View.prototype = {
         });
 
         $('#close-bulk-widget').click(function () {
-            console.log("close hit");
             self._bulkAction = undefined;
             self._hiddenClusters = undefined;
             self.renderContent();

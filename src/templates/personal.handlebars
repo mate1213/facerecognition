@@ -32,12 +32,13 @@
 		">
 	
 		<!-- ================== CLOSE BUTTON (top‑right) ================== -->
+		{{!-- TODO: FIX POSOTION --}}
 		<button id="close-bulk-widget"
 				title="Close"
 				type="button"
 				class="primary"
 				style="
-					position:absolute;
+					position:relative;
 					top:8px;
 					right:8px;
 					width:28px; height:28px;
@@ -92,6 +93,7 @@
 		<!-- ================== RIGHT SIDE (dynamic table) ================== -->
 		<div class="right-pane"
 			style="
+				position:relative;
 				flex:1;
 				overflow-y:auto;          /* vertical scrolling only */
 				overflow-x:hidden;        /* keep everything inside the column width   */
@@ -104,12 +106,13 @@
 				cellspacing="0"
 				width="100%"
 				style="
+					position:relative;
 					border-collapse:collapse;
 					table-layout:auto;      /* let the browser decide column widths   */
 					word-wrap:break-word;   /* wrap long words inside cells          */
 					white-space:normal;     /* allow wrapping, don't keep everything on one line */
 				">
-				<tbody>
+				<tbody style="position:relative;">
 					{{#each hidden}}
 						<tr data-id="{{id}}" style="border-bottom: 1px solid #e0e0e0;">
 							<td data-id="{{id}}" style="padding:0;">
@@ -129,12 +132,17 @@
 									{{/each}}
 								</div>
 							</td>
-							<td data-id="{{id}}" width="30%" style="padding:0;">
+							<td data-id="{{id}}"
+								width="30%" 
+								style="position:relative;">
 								<input data-id="{{id}}" 
 									type="text" 
 									id="{{id}}-name-input" 
 									placeholder="{{../bulkAssignNameHint}}" 
-									style="width:100%;"/>
+									style="
+										width:100%;
+										position:relative;
+									"/>
 							</td>
 						</tr>
 					{{/each}}
