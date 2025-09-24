@@ -18,5 +18,34 @@ webpackConfig.module.rules.push({
     },
 })
 
+webpackConfig.module.rules.push({
+    test: /\.m?js$/,
+    exclude: /(node_modules|bower_components)/,
+    use: {
+        loader: 'babel-loader',
+        options: {
+            presets: [
+                [
+                    '@babel/preset-env',
+                    {
+                        targets: '> 0.25%, not dead',
+                        useBuiltIns: 'usage',
+                        corejs: 3,
+                    },
+                ],
+            ],
+        },
+    },
+})
+
+webpackConfig.resolve = {
+    alias: {
+        '@partials': path.resolve(__dirname, 'src/partials'),
+        '@helpers': path.resolve(__dirname, 'src/helpers'),
+    },
+    extensions: ['.js', '.json', '.vue', '.handlebars'],
+}
+
+
 
 module.exports = webpackConfig
