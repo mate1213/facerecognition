@@ -1,0 +1,17 @@
+<h2 style="display: flex;">
+    <a class="title-icon icon-back"></a>
+    <span class="title-name">{{personName}}</span>
+    <a id="rename-person" title="{{renameHint}}" class="title-icon icon-rename" data-id="{{personName}}"></a>
+    <a id="hide-person" title="{{hideHint}}" class="title-icon icon-disabled-user" data-id="{{personName}}"></a>
+</h2>
+<button id="review-person-clusters" type="button" class="primary">
+    {{showMoreButton}}
+</button>
+<div id="optional-buttons-div"></div>
+<div class="persons-previews">
+    {{#each personImages}}
+        <div class="image-box">
+            <div class="file-preview-big lozad" data-background-delimiter="\" data-background-image="{{{thumbUrl}}}" width="128" height="128" data-id="{{filename}}"></div>
+        </div>
+    {{/each}}
+</div>

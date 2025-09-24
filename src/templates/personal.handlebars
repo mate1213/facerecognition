@@ -1,238 +1,81 @@
 <div class="section" id="facerecognition">
 
 {{#if clustersByName}}
-	<h2 style="display: flex;">
-		<a class="title-icon icon-back"></a>
-		<span class="title-name">{{personName}}</span>
-	</h2>
-	<div id="persons-navigation">
-		{{#each clustersByName}}
-			<h2 class="cluster-title" style="display: flex;">
-				<span class="title-name">{{this.name}}</span>
-				<a id="rename-cluster" title="{{renameHint}}" class="title-icon icon-rename" data-id="{{this.id}}"></a>
-				<a id="hide-cluster" title="{{hideHint}}" class="title-icon icon-disabled-user" data-id="{{this.id}}"></a>
-			</h2>
-			<div class="faces-previews">
-				{{#each this.faces}}
-					<a target="_blank" href="{{fileUrl}}">
-						<div class="face-preview lozad" data-background-image="{{thumbUrl}}" width="50" height="50"></div>
-					</a>
-				{{/each}}
-			</div>
-		{{/each}}
-	</div>
+	{{> clustersByNamePart
+			clustersByName=clustersByName
+			personName=personName
+			renameHint=renameHint
+			hideHint=hideHint
+	}}
 {{else if bulkAction}}
 	<!-- Wrapper – flex container + relative positioning -->
-	<div class="layout-wrapper"
-		style="
-			display:flex;
-			gap:0;          /* no space between panes divider will be the separator */
-			position:relative;
-			overflow: auto;
-		">
+	<div class="layout-wrapper">
 	
 		<!-- ================== CLOSE BUTTON (top‑right) ================== -->
-		{{!-- TODO: FIX POSOTION --}}
 		<button id="close-bulk-widget"
 				title="Close"
 				type="button"
-				class="primary"
-				style="
-					position:relative;
-					top:8px;
-					right:8px;
-					width:28px; height:28px;
-					border:none;
-					font-size:18px; line-height:1;
-					cursor:pointer;
-					border-radius:4px;
-					box-shadow:0 2px 6px;
-				">
+				class="primary close-btn"
+				aria-label="Close">
 			&times;
 		</button>
 
 		<!-- ================== LEFT SIDE (original content) ================== -->
-		<div class="left-pane"
-			style="
-				flex:1;
-				overflow-y:auto;            /* scroll if needed */
-			">
-			<h2>
-				{{appName}}
-			</h2>
-			<input id="enableFacerecognition" name="enableFacerecognition" type="checkbox" class="checkbox" value="1" {{#if enabled}}checked{{/if}}>
-			<label for="enableFacerecognition">{{enableDescription}}</label><br>
-			<div id="optional-buttons-div">
-				{{#if hasUnamed}}
-					<button id="show-more-clusters" type="button" class="primary">{{reviewPeopleMsg}}</button>
-				{{/if}}
-				{{#if hasHidden}}
-					<button id="show-ignored-clusters" type="button" class="primary">{{reviewIgnoredMsg}}</button>
-				{{/if}}
-			</div>
-			<div class="persons-previews">
-				{{#each persons}}
-					<div class="person-box" data-id="{{name}}">
-						<div class="face-preview-big lozad" data-background-image="{{thumbUrl}}" width="128" height="128"></div>
-						<p class="person-name">
-							<span>{{name}}</span>
-						</p>
-						<p class="person-desc">{{noPhotos count}}</p>
-					</div>
-				{{/each}}
-			</div>
+		<div class="left-pane">
+			{{> peoplePart 
+					appName=appName
+					enabled=enabled 
+					enableDescription=enableDescription
+					hasHidden=hasHidden 
+					hasUnamed=hasUnamed 
+					reviewIgnoredMsg=reviewIgnoredMsg
+					reviewPeopleMsg=reviewPeopleMsg
+					persons=persons 
+					noPhotos=noPhotos
+					count=count
+			}}
 		</div>
-
 		<!-- ================== DIVIDER ================== -->
-		<div style="
-			width:2px;
-			background:#e0e0e0;
-			margin:0; /* no gap divider sits between panes */
-			"></div>
+    	<div class="divider"></div>
 
 		<!-- ================== RIGHT SIDE (dynamic table) ================== -->
-		<div class="right-pane"
-			style="
-				position:relative;
-				flex:1;
-				overflow-y:auto;          /* vertical scrolling only */
-				overflow-x:hidden;        /* keep everything inside the column width   */
-				/* optional - give a bit of breathing room when content is very wide   */
-				min-width:0;              /* allow flex-box to shrink it */
-			">
-			<table id="dynamic-table"
-				border="0"
-				cellpadding="8"
-				cellspacing="0"
-				width="100%"
-				style="
-					position:relative;
-					border-collapse:collapse;
-					table-layout:auto;      /* let the browser decide column widths   */
-					word-wrap:break-word;   /* wrap long words inside cells          */
-					white-space:normal;     /* allow wrapping, don't keep everything on one line */
-				">
-				<tbody style="position:relative;">
-					{{#each hidden}}
-						<tr data-id="{{id}}" style="border-bottom: 1px solid #e0e0e0;">
-							<td data-id="{{id}}" style="padding:0;">
-								<div data-id="{{id}}" class="face-box" style="text-align:center;">
-									{{#each faces}}
-										{{#if fileUrl}}
-											<a href="{{fileUrl}}" target="_blank">
-												<img class="face-preview-dialog"
-													src="{{thumbUrl}}"
-													width="50" height="50"/>
-											</a>
-										{{else}}
-											<img class="face-preview-dialog"
-												src="{{thumbUrl}}"
-												width="50" height="50"/>
-										{{/if}}
-									{{/each}}
-								</div>
-							</td>
-							<td data-id="{{id}}"
-								width="30%" 
-								style="position:relative;">
-								<input data-id="{{id}}" 
-									type="text" 
-									id="{{id}}-name-input" 
-									placeholder="{{../bulkAssignNameHint}}" 
-									style="
-										width:100%;
-										position:relative;
-									"/>
-							</td>
-						</tr>
-					{{/each}}
-				</tbody>
-			</table>
-			<button id="save-bulk-widget"
-				title="Close"
-				type="button"
-				class="primary">
-				{{bulkSave}}
-			</button>
-		</div>
+		{{> bulkAssignerPart hidden=hidden bulkSave=bulkSave bulkAssignNameHint=bulkAssignNameHint}}
 	</div>
 {{else if personName}}
-	<h2 style="display: flex;">
-		<a class="title-icon icon-back"></a>
-		<span class="title-name">{{personName}}</span>
-		<a id="rename-person" title="{{renameHint}}" class="title-icon icon-rename" data-id="{{personName}}"></a>
-		<a id="hide-person" title="{{hideHint}}" class="title-icon icon-disabled-user" data-id="{{personName}}"></a>
-	</h2>
-	<button id="review-person-clusters" type="button" class="primary">
-		{{showMoreButton}}
-	</button>
-	<div id="optional-buttons-div"></div>
-	<div class="persons-previews">
-		{{#each personImages}}
-			<div class="image-box">
-				<div class="file-preview-big lozad" data-background-delimiter="\" data-background-image="{{{thumbUrl}}}" width="128" height="128" data-id="{{filename}}"></div>
-			</div>
-		{{/each}}
-	</div>
+	{{> singlePersonPart 
+			personName=personName 
+			renameHint=renameHint
+			hideHint=hideHint
+			showMoreButton=showMoreButton
+			personImages=personImages
+	}}
 {{else if persons}}
-	<h2>
-		{{appName}}
-	</h2>
-	<input id="enableFacerecognition" name="enableFacerecognition" type="checkbox" class="checkbox" value="1" {{#if enabled}}checked{{/if}}>
-	<label for="enableFacerecognition">{{enableDescription}}</label><br>
-	<div id="optional-buttons-div">
-		{{#if hasUnamed}}
-			<button id="show-more-clusters" type="button" class="primary">{{reviewPeopleMsg}}</button>
-		{{/if}}
-		{{#if hasHidden}}
-			<button id="show-ignored-clusters" type="button" class="primary">{{reviewIgnoredMsg}}</button>
-		{{/if}}
-	</div>
-	<div class="persons-previews">
-		{{#each persons}}
-			<div class="person-box" data-id="{{name}}">
-				<div class="face-preview-big lozad" data-background-image="{{thumbUrl}}" width="128" height="128"></div>
-				<p class="person-name">
-					<span>{{name}}</span>
-				</p>
-				<p class="person-desc">{{noPhotos count}}</p>
-			</div>
-		{{/each}}
-	</div>
+	{{> peoplePart 
+			appName=appName
+			enabled=enabled 
+			enableDescription=enableDescription
+			hasHidden=hasHidden 
+			hasUnamed=hasUnamed 
+			reviewIgnoredMsg=reviewIgnoredMsg
+			reviewPeopleMsg=reviewPeopleMsg
+			persons=persons 
+			noPhotos=noPhotos
+			count=count
+	}}
 {{else if loaded}}
-	<h2>
-		{{appName}}
-	</h2>
-	<input id="enableFacerecognition" name="enableFacerecognition" type="checkbox" class="checkbox" value="1" {{#if enabled}}checked{{/if}}>
-	<label for="enableFacerecognition">{{enableDescription}}</label><br>
-	<div id="optional-buttons-div">
-		{{#if hasUnamed}}
-			<button id="show-more-clusters" type="button" class="primary">{{reviewPeopleMsg}}</button>
-		{{/if}}
-		{{#if hasHidden}}
-			<button id="show-ignored-clusters" type="button" class="primary">{{reviewIgnoredMsg}}</button>
-		{{/if}}
-	</div>
-	<div class="emptycontent">
-		<div class="icon-contacts-dark svg"></div>
-		<h2>
-			{{emptyMsg}}
-		</h2>
-		<p>
-		{{emptyHint}}
-		</p>
-	</div>
+	{{> loadedPart
+			appName=appName
+			enabled=enabled 
+			enableDescription=enableDescription
+			hasHidden=hasHidden 
+			hasUnamed=hasUnamed 
+			reviewIgnoredMsg=reviewIgnoredMsg
+			reviewPeopleMsg=reviewPeopleMsg
+			emptyMsg=emptyMsg
+			emptyHint=emptyHint
+	}}
 {{else}}
-	<h2>
-		{{appName}}
-	</h2>
-	<div class="emptycontent">
-		<div class="icon-contacts-dark svg"></div>
-		<h2>
-			{{loadingMsg}}
-		</h2>
-		<img class="loadingimport" src="{{loadingIcon}}"/>
-	</div>
+	{{> loadingPart}}
 {{/if}}
 
 </div>

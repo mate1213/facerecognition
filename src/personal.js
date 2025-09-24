@@ -9,6 +9,14 @@ const state = {
     SUCCESS: 2,
     ERROR:  3
 }
+const partials = {
+    'clustersByNamePart': require('./partials/clustersByNamePart.handlebars'),
+    'bulkAssignerPart': require('./partials/bulkAssignerPart.handlebars'),
+    'loadedPart': require('./partials/loadedPart.handlebars'),
+    'loadingPart': require('./partials/loadingPart.handlebars'),
+    'peoplePart': require('./partials/peoplePart.handlebars'),
+    'singlePersonPart': require('./partials/singlePersonPart.handlebars')
+}
 
 /*
  * Faces in memory handlers.
@@ -333,9 +341,16 @@ View.prototype = {
             }
         );
     },
-    renderContent: function () {
+    renderContent: async function () {
         var context = {
             loaded: this._persons.isLoaded(),
+            
+            clustersByNamePart: partials['clustersByNamePart'],
+            bulkAssignerPart: partials['bulkAssignerPart'],
+            loadedPart: partials['loadedPart'],
+            loadingPart: partials['loadingPart'],
+            peoplePart: partials['peoplePart'],
+            singlePersonPart: partials['singlePersonPart'],
             appName: t('facerecognition', 'Face Recognition'),
             welcomeHint: t('facerecognition', 'Here you can see photos of your friends that are recognized'),
             enableDescription: t('facerecognition', 'Analyze my images and group my loved ones with similar faces'),
@@ -350,7 +365,7 @@ View.prototype = {
             bulkAssignNameHint: t('facerecognition', 'Please assign a name to this person.'),
             bulkSave: t('facerecognition', 'Save')
         };
-
+        console.log(context.clustersByNamePart);
         if (this._enabled === true) {
             context.enabled = true;
             context.hasUnamed = this._hasUnamed;
@@ -414,7 +429,7 @@ View.prototype = {
         /*
          * Actions
          */
-        $('#enableFacerecognition').click(function() {
+        $('#enableFacerecognition').off('click').on('click', function() {
             var enabled = $(this).is(':checked');
             if (enabled === false) {
                 OC.dialogs.confirm(
@@ -434,7 +449,7 @@ View.prototype = {
             }
         });
 
-        $('#show-more-clusters').click(function () {
+        $('#show-more-clusters').off('click').on('click', function () {
             let button = $(this);
             button.css("cursor", "wait");
             self._persons.loadUnassignedClusters().done(function () {
@@ -451,7 +466,7 @@ View.prototype = {
             });
         });
 
-        $('#show-ignored-clusters').click(function () {
+        $('#show-ignored-clusters').off('click').on('click', function () {
             let button = $(this);
             button.css("cursor", "wait");
             self._persons.loadIgnoredClusters().done(function () {
@@ -469,13 +484,13 @@ View.prototype = {
             });
         });
 
-        $('#close-bulk-widget').click(function () {
+        $('#close-bulk-widget').off('click').on('click', function () {
             self._bulkAction = undefined;
             self._hiddenClusters = undefined;
             self.renderContent();
         });
 
-        $('#facerecognition .file-preview-big').click(function () {
+        $('#facerecognition .file-preview-big').off('click').on('click', function () {
             var filename = $(this).data('id');
             self._bulkAction = false;
             if (window.event.ctrlKey) {
@@ -498,7 +513,7 @@ View.prototype = {
             }
         });
 
-        $('#facerecognition .face-preview-big').click(function () {
+        $('#facerecognition .face-preview-big').off('click').on('click', function () {
             $(this).css("cursor", "wait");
             var name = $(this).parent().data('id');
             self._bulkAction = false;
@@ -509,7 +524,7 @@ View.prototype = {
             });
         });
 
-        $('#facerecognition #rename-person').click(function () {
+        $('#facerecognition #rename-person').off('click').on('click', function () {
             var person = self._persons.getActivePerson();
             FrDialogs.rename(
                 person.name,
@@ -526,7 +541,7 @@ View.prototype = {
             );
         });
 
-        $('#facerecognition #hide-person').click(function () {
+        $('#facerecognition #hide-person').off('click').on('click', function () {
             var person = self._persons.getActivePerson();
             self._bulkAction = false;
             FrDialogs.hide(
@@ -544,7 +559,7 @@ View.prototype = {
             );
         });
 
-        $('#facerecognition #rename-cluster').click(function () {
+        $('#facerecognition #rename-cluster').off('click').on('click', function () {
             var id = $(this).data('id');
             self._bulkAction = false;
             var person = self._persons.getNamedClusterById(id);
@@ -563,7 +578,7 @@ View.prototype = {
             );
         });
 
-        $('#facerecognition #hide-cluster').click(function () {
+        $('#facerecognition #hide-cluster').off('click').on('click', function () {
             var id = $(this).data('id');
             self._bulkAction = false;
             var person = self._persons.getNamedClusterById(id);
@@ -581,7 +596,7 @@ View.prototype = {
             );
         });
 
-        $('#facerecognition #review-person-clusters').click(function () {
+        $('#facerecognition #review-person-clusters').off('click').on('click', function () {
             $(this).css("cursor", "wait");
             self._bulkAction = false;
             var person = self._persons.getActivePerson();
@@ -592,7 +607,7 @@ View.prototype = {
             });
         });
 
-        $('#facerecognition .icon-back').click(function () {
+        $('#facerecognition .icon-back').off('click').on('click', function () {
             self._bulkAction = false;
             self._persons.unsetActive();
             self.renderContent();
@@ -641,6 +656,9 @@ var setPersonNameUrl = function (personName) {
  */
 Handlebars.registerHelper('noPhotos', function(count) {
     return n('facerecognition', '%n image', '%n images', count);
+});
+Object.entries(partials).forEach(([name, tpl]) => {
+    Handlebars.registerPartial(name, tpl);
 });
 
 /*

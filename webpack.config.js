@@ -7,4 +7,16 @@ webpackConfig.entry = {
     'personal': path.join(__dirname, 'src', 'personal.js'),
 }
 
+// Add rule for handlebars
+webpackConfig.module.rules.push({
+    test: /\.handlebars$/,
+    loader: 'handlebars-loader',
+    options: {
+        // optional: you can add helpers/partials dirs if needed
+        // helperDirs: [path.resolve(__dirname, 'src/helpers')],
+        partialDirs: [path.resolve(__dirname, 'src/partials')],
+    },
+})
+
+
 module.exports = webpackConfig

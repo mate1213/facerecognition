@@ -1,0 +1,51 @@
+<div class="right-pane">
+    <table id="dynamic-table">
+        <tbody>
+            {{#each hidden}}
+                <tr data-id="{{id}}">
+                    <td data-id="{{id}}">
+                        <div data-id="{{id}}" class="face-box" style="text-align:center;">
+                            {{#each faces}}
+                                {{#if fileUrl}}
+                                    <a href="{{fileUrl}}" target="_blank">
+                                        <img class="face-preview-dialog"
+                                            src="{{thumbUrl}}" width="50" height="50"/>
+                                    </a>
+                                {{else}}
+                                    <img class="face-preview-dialog"
+                                        src="{{thumbUrl}}" width="50" height="50"/>
+                                {{/if}}
+                            {{/each}}
+                        </div>
+                    </td>
+                    <td data-id="{{id}}" style="text-align:center;">
+                        <input type="checkbox"
+                            data-id="{{id}}"
+                            id="{{id}}-check"
+                            class="row-check"/>
+                    </td>
+                </tr>
+            {{/each}}
+        </tbody>
+    </table>
+    <div class="paginator" style="margin-top:1em; text-align:center;">
+        {{#if hasPrev}}
+            <button class="page-btn" data-page="{{prevPage}}">&laquo; Prev</button>
+        {{/if}}
+
+        {{#each pages}}
+            <button class="page-btn {{#if active}}active{{/if}}" data-page="{{number}}">
+                {{number}}
+            </button>
+        {{/each}}
+
+        {{#if hasNext}}
+            <button class="page-btn" data-page="{{nextPage}}">Next &raquo;</button>
+        {{/if}}
+    </div>
+    <button id="save-bulk-widget"
+            title="{{bulkSave}}"
+            type="button"
+            class="primary"/>
+
+</div>
