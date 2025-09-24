@@ -1,5 +1,6 @@
 const path = require('path')
 const webpackConfig = require('@nextcloud/webpack-vue-config')
+const webpack = require('webpack'); // <--- this line is required
 
 webpackConfig.entry = {
     'sidebar': path.join(__dirname, 'src', 'sidebarloader.js'),
@@ -46,6 +47,12 @@ webpackConfig.resolve = {
     extensions: ['.js', '.json', '.vue', '.handlebars'],
 }
 
+webpackConfig.plugins.push(
+    new webpack.ProvidePlugin({
+        $: 'jquery',
+        jQuery: 'jquery'
+    })
+);
 
 
 module.exports = webpackConfig
