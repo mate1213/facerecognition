@@ -24,23 +24,31 @@ export class Persons {
     }
 
     load() {
-        const deferred = $.Deferred();
-        $.get(this._baseUrl + '/persons').done((response) => {
+        return $.ajax({
+            url: this._baseUrl + '/persons',
+            type: 'GET',
+            headers: {
+                'OC-RequestToken': OC.requestToken,
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        }).then((response) => {
             this._persons = response.persons.sort((a, b) => b.count - a.count);
             this._loaded = true;
             this._mustReload = false;
-            deferred.resolve();
-        }).fail(() => deferred.reject());
-        return deferred.promise();
+        });
     }
 
     loadPerson(personName) {
         this.unsetActive();
-        const deferred = $.Deferred();
-        $.get(this._baseUrl + '/person/' + encodeURIComponent(personName)).done((person) => {
+        return $.ajax({
+            url: this._baseUrl + '/person/' + encodeURIComponent(personName),
+            type: 'GET',
+            headers: {
+                'OC-RequestToken': OC.requestToken,
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        }).then((person) => {
             this._activePerson = person;
-            deferred.resolve();
-        }).fail(() => deferred.reject());
-        return deferred.promise();
+        });
     }
 }
