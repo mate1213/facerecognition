@@ -1,30 +1,22 @@
-import Handlebars from 'handlebars/runtime'
-
-Handlebars.registerHelper('noPhotos', function(count) {
-    return n('facerecognition', '%n image', '%n images', count)
-})
-
-export const getPersonNameUrl = () => {
-    try {
-        return new URLSearchParams(window.location.search).get('name')
-    } catch {
-        const query = window.location.search.substring(1).split('&')
-        for (const part of query) {
-            const [key, val] = part.split('=')
-            if (key === 'name') return decodeURIComponent(val)
-        }
+export function getPersonNameUrl() {
+    const parser = document.createElement('a');
+    parser.href = window.location.href;
+    const query = parser.search.substring(1);
+    const vars = query.split('&');
+    for (const v of vars) {
+        const pair = v.split('=');
+        if (pair[0] === 'name') return decodeURIComponent(pair[1]);
     }
-    return undefined
+    return undefined;
 }
 
-export const setPersonNameUrl = (personName) => {
-    const cleanUrl = window.location.href.split('?')[0]
-    let newUrl = cleanUrl
-    let title = t('facerecognition', 'Face Recognition')
+export function setPersonNameUrl(personName) {
+    let cleanUrl = window.location.href.split("?")[0];
+    let title = t('facerecognition', 'Face Recognition');
     if (personName) {
-        newUrl = `${cleanUrl}?name=${encodeURIComponent(personName)}`
-        title += ` - ${personName}`
+        cleanUrl += '?name=' + encodeURIComponent(personName);
+        title += ' - ' + personName;
     }
-    window.history.replaceState({}, title, newUrl)
-    document.title = title
+    window.history.replaceState({}, title, cleanUrl);
+    document.title = title;
 }
