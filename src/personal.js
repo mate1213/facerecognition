@@ -6,27 +6,37 @@ const persons = new Persons(OC.generateUrl('/apps/facerecognition'));
 const view = new View(persons);
 
 const personName = getPersonNameUrl();
+view.renderContent();
+
 if (personName !== undefined) {
-    view.renderContent();
-    persons.loadPerson(personName).done(function () {
-        view.renderContent();
-    }).fail(function () {
-        OC.Notification.showTemporary(t('facerecognition', 'There was an error when trying to find photos of your friend'));
-    });
+    persons.loadPerson(personName)
+        .done(() => view.renderContent())
+        .fail(() => {
+            OC.Notification.showTemporary(
+                t('facerecognition', 'There was an error when trying to find photos of your friend')
+            );
+        });
 } else {
-    view.renderContent();
-    persons.load().done(function () {
-        view.renderContent();
-    }).fail(function () {
-        OC.Notification.showTemporary(t('facerecognition', 'There was an error trying to show your friends'));
-    });
+    persons.load()
+        .done(() => view.renderContent())
+        .fail(() => {
+            OC.Notification.showTemporary(
+                t('facerecognition', 'There was an error trying to show your friends')
+            );
+        });
 }
 
+// Konami code toggle
 var egg = new Egg("up,up,down,down,left,right,left,right,b,a", function() {
     if (!OC.isUserAdmin()) {
-        OC.Notification.showTemporary(t('facerecognition', 'You must be administrator to configure this feature'));
+        OC.Notification.showTemporary(
+            t('facerecognition', 'You must be administrator to configure this feature')
+        );
         return;
     }
+
+    const deferred = $.Deferred();
+
     $.ajax({
         type: 'POST',
         url: OC.generateUrl('apps/facerecognition/setappvalue'),
@@ -34,8 +44,19 @@ var egg = new Egg("up,up,down,down,left,right,left,right,b,a", function() {
             'type': 'obfuscate_faces',
             'value': 'toggle'
         },
-        success: function () {
-            location.reload();
+        headers: {
+            'OC-RequestToken': OC.requestToken,
+            'X-Requested-With': 'XMLHttpRequest'
         }
+    }).done(() => {
+        location.reload();
+        deferred.resolve();
+    }).fail(() => {
+        OC.Notification.showTemporary(
+            t('facerecognition', 'Failed to toggle face obfuscation')
+        );
+        deferred.reject();
     });
+
+    return deferred.promise();
 }).listen();
