@@ -286,7 +286,7 @@ const FrDialogs = {
 
 			var div2 = $('<div/>').attr('style', 'text-align: center');
 			$dlg.append(div2);
-			div2.append($('<p>' + t('facerecognition', 'Unassigned groups left to rename:')+' ' + (clusterLenght+1) +'</p>'));
+			div2.append($('<p>' + t('facerecognition', 'Unassigned groups left to rename:')+' ' +clusterLenght+'</p>'));
 
 			var div = $('<div/>').attr('style', 'text-align: center');
 			$dlg.append(div);
@@ -391,7 +391,7 @@ const FrDialogs = {
 
 			var div2 = $('<div/>').attr('style', 'text-align: center');
 			$dlg.append(div2);
-			div2.append($('<p>' + t('facerecognition', 'Unassigned groups left to rename:')+' ' + (clusterLenght+1) +'</p>'));
+			div2.append($('<p>' + t('facerecognition', 'Unassigned groups left to rename:')+' ' +clusterLenght+'</p>'));
 
 			var div = $('<div/>').attr('style', 'text-align: center');
 			$dlg.append(div);
@@ -472,7 +472,22 @@ const FrDialogs = {
 			input.focus();
 		});
 	},
-	
+
+	assignNameBulk: function (clusters, top10Name, callback) {
+		return $.when(this._getMessageTemplate()).then(function ($tmpl) {
+			var dialogName = 'fr-assign-dialog-bulk';
+			var dialogId = '#' + dialogName;
+			var $dlg = $tmpl.octemplate({
+				dialog_name: dialogName,
+				title: t('facerecognition', 'Add name in bulk'),
+				message: t('facerecognition', 'Please assign a name to this person.'),
+				type: 'none'
+			});
+
+			$dlg.append($('<br/>'));
+		});
+	},
+
 	_getMessageTemplate: function () {
 		var defer = $.Deferred();
 		if (!this.$messageTemplate) {
