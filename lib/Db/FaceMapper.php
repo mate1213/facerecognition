@@ -25,13 +25,10 @@
 
 namespace OCA\FaceRecognition\Db;
 
-use OC\DB\QueryBuilder\Literal;
-
 use OCP\IDBConnection;
 use OCP\AppFramework\Db\QBMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\DB\QueryBuilder\IQueryBuilder;
-use OCP\DB\QueryBuilder\IFunctionBuilder;
 
 class FaceMapper extends QBMapper
 {
@@ -346,7 +343,7 @@ class FaceMapper extends QBMapper
 	 */
 	public function findByImage(int $imageId): array{
 		$qb = $this->db->getQueryBuilder();
-		$qb->select('f.id', new Literal('NULL as person'), 'image_id as image', 'x', 'y', 'width', 'height', 'landmarks', 'descriptor', 'confidence', 'creation_time')
+		$qb->select('f.id', $qb->expr()->literal('NULL as person'), 'image_id as image', 'x', 'y', 'width', 'height', 'landmarks', 'descriptor', 'confidence', 'creation_time')
 			->from($this->getTableName(), 'f')
 			->where($qb->expr()->eq('f.image_id', $qb->createNamedParameter($imageId)));
 		$faces = $this->findEntities($qb);
@@ -383,7 +380,7 @@ class FaceMapper extends QBMapper
 	 */
 	public function deleteUserModel(string $userId, $modelId): void{
 		$sub = $this->db->getQueryBuilder();
-		$sub->select(new Literal('1'));
+		$sub->select($sub->expr()->literal('1'));
 		$sub->from('facerecog_images', 'i')
 			->innerJoin('i', 'facerecog_user_images', 'ui', $sub->expr()->eq('ui.image_id', 'i.id'))
 			->where($sub->expr()->eq('i.id', '*PREFIX*' . $this->getTableName() . '.image_id'))
