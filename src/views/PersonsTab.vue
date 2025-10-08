@@ -80,11 +80,9 @@
 </template>
 <script>
 
-import NcAppSidebar from '@nextcloud/vue/dist/Components/NcAppSidebar'
-import NcAppSidebarTab from '@nextcloud/vue/dist/Components/NcAppSidebarTab'
-
 import Axios from '@nextcloud/axios'
 import { subscribe, unsubscribe } from '@nextcloud/event-bus'
+import { NcAppSidebar, NcAppSidebarTab } from '@nextcloud/vue'
 
 import PersonRow from './PersonRow'
 

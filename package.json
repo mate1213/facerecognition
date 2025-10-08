@@ -11,11 +11,11 @@
 		"test": "tests"
 	},
 	"dependencies": {
-		"@nextcloud/axios": "^2.3.0",
-		"@nextcloud/dialogs": "^3.2.0",
-		"@nextcloud/router": "^2.0.1",
-		"@nextcloud/vue": "^7.4.0",
-		"handlebars": "^4.7.7",
+		"@nextcloud/axios": "^2.5.2",
+		"@nextcloud/dialogs": "^6.3.2",
+		"@nextcloud/router": "^3.0.1",
+		"@nextcloud/vue": "^8.0.1",
+		"handlebars": "^4.7.8",
 		"lozad": "^1.16.0",
 		"vue": "^2.7.14"
 	},
@@ -28,10 +28,10 @@
 	},
 	"devDependencies": {
 		"@nextcloud/babel-config": "^1.0.0",
-		"@nextcloud/browserslist-config": "^2.3.0",
+		"@nextcloud/browserslist-config": "^3.0.1",
 		"@nextcloud/eslint-config": "^8.2.1",
 		"@nextcloud/stylelint-config": "^2.3.0",
-		"@nextcloud/webpack-vue-config": "^5.4.0"
+		"@nextcloud/webpack-vue-config": "^5.5.1"
 	},
 	"scripts": {
 		"build": "webpack --node-env production --progress",
