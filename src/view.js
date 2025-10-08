@@ -3,21 +3,23 @@ import { partials } from './partials/index.js';
 import personalTemplate from './templates/personal.handlebars';
 import { setPersonNameUrl } from './helpers.js';
 
-Object.entries(partials).forEach(([name, tpl]) => {
-    Handlebars.registerPartial(name, tpl);
-});
-
-Handlebars.registerHelper('noPhotos', function(count) {
-    return n('facerecognition', '%n image', '%n images', count);
-});
-
 export class View {
-    constructor(persons) {
+    constructor(persons, $) {
         this._persons = persons;
+        this._$ = $; // jQuery for potential future use
         this._enabled = OCP.InitialState.loadState('facerecognition', 'user-enabled');
         this._hasUnamed = OCP.InitialState.loadState('facerecognition', 'has-unamed');
         this._hasHidden = OCP.InitialState.loadState('facerecognition', 'has-hidden');
         this._observer = lozad('.lozad');
+
+        // Register Handlebars partials
+        Object.entries(partials).forEach(([name, tpl]) => {
+            Handlebars.registerPartial(name, tpl);
+        });
+
+        Handlebars.registerHelper('noPhotos', function(count) {
+            return n('facerecognition', '%n image', '%n images', count);
+        });
     }
 
     renderContent() {

@@ -2,8 +2,8 @@ import { Persons } from './persons.js';
 import { View } from './view.js';
 import { getPersonNameUrl } from './helpers.js';
 
-const persons = new Persons(OC.generateUrl('/apps/facerecognition'));
-const view = new View(persons);
+const persons = new Persons(OC.generateUrl('/apps/facerecognition'), jQuery);
+const view = new View(persons, jQuery);
 
 const personName = getPersonNameUrl();
 view.renderContent();
@@ -35,9 +35,9 @@ var egg = new Egg("up,up,down,down,left,right,left,right,b,a", function() {
         return;
     }
 
-    const deferred = $.Deferred();
+    const deferred = jQuery.Deferred();
 
-    $.ajax({
+    jQuery.ajax({
         type: 'POST',
         url: OC.generateUrl('apps/facerecognition/setappvalue'),
         data: {

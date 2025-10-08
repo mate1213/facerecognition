@@ -1,6 +1,7 @@
 export class Persons {
-    constructor(baseUrl) {
+    constructor(baseUrl, $) {
         this._baseUrl = baseUrl;
+        this._$ = $; // injected jQuery
         this._persons = [];
         this._activePerson = undefined;
         this._clustersByName = [];
@@ -24,9 +25,9 @@ export class Persons {
     }
 
     load() {
-        const deferred = $.Deferred();
+        const deferred = this._$.Deferred();
 
-        $.ajax({
+        this._$.ajax({
             url: this._baseUrl + '/persons',
             type: 'GET',
             headers: {
@@ -38,18 +39,16 @@ export class Persons {
             this._loaded = true;
             this._mustReload = false;
             deferred.resolve();
-        }).fail(() => {
-            deferred.reject();
-        });
+        }).fail(() => deferred.reject());
 
         return deferred.promise();
     }
 
     loadPerson(personName) {
         this.unsetActive();
-        const deferred = $.Deferred();
+        const deferred = this._$.Deferred();
 
-        $.ajax({
+        this._$.ajax({
             url: this._baseUrl + '/person/' + encodeURIComponent(personName),
             type: 'GET',
             headers: {
@@ -59,9 +58,7 @@ export class Persons {
         }).done((person) => {
             this._activePerson = person;
             deferred.resolve();
-        }).fail(() => {
-            deferred.reject();
-        });
+        }).fail(() => deferred.reject());
 
         return deferred.promise();
     }
