@@ -43,11 +43,17 @@ class Version001000Date20250611141100 extends SimpleMigrationStep {
 
 		//Start with table and column renaming
 		if ($schema->hasTable('facerecog_faces')) {
-			$this->connection->executeStatement('ALTER TABLE `*PREFIX*facerecog_faces` RENAME COLUMN `image` TO `image_id`;');
+			$faceTable = $schema->getTable('facerecog_faces');
+			if ($faceTable->hasColumn('image')){
+				$this->connection->executeStatement('ALTER TABLE `*PREFIX*facerecog_faces` RENAME COLUMN `image` TO `image_id`;');
+			}
         }
 		
 		if ($schema->hasTable('facerecog_images')) {
-			$this->connection->executeStatement('ALTER TABLE `*PREFIX*facerecog_images` RENAME COLUMN `file` TO `nc_file_id`;');
+			$faceTable = $schema->getTable('facerecog_images');
+			if ($faceTable->hasColumn('file')){
+				$this->connection->executeStatement('ALTER TABLE `*PREFIX*facerecog_images` RENAME COLUMN `file` TO `nc_file_id`;');
+			}
         }
 
 		if ($schema->hasTable('facerecog_persons')) {
@@ -290,7 +296,9 @@ class Version001000Date20250611141100 extends SimpleMigrationStep {
 			]);
 
 		$queryFaces = $this->connection->getQueryBuilder();
-		$queryFaces->select('person','id', 'is_groupable')->from('facerecog_faces');
+		$queryFaces->select('person','id', 'is_groupable')
+		->from('facerecog_faces')
+			->Where($queryFaces->expr()->isNotNull('person'));;
 
 		$resultFaces = $queryFaces->executeQuery();
 		while ($row = $resultFaces->fetch()) {
