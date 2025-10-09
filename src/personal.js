@@ -257,7 +257,7 @@ View.prototype = {
             }
         });
     },
-    renameUnassignedClusterDialog: function () {
+    renameUnassignedClusterDialog: function (personName) {
         var self = this;
         var unassignedClusters = this._persons.getUnassignedClusters();
         var cluster = unassignedClusters.shift();
@@ -268,35 +268,60 @@ View.prototype = {
                 self.reload();
             return;
         }
-        FrDialogs.assignName(cluster.faces, unassignedClusters.length+1,
-            function(result, name) {
-                if (result === true) {
-                    if (name !== null) {
-                        if (name.length > 0) {
-                            self._persons.renameCluster(cluster.id, name).done(function () {
+        if (personName !== undefined) {
+            FrDialogs.assignToSelectedPerson(cluster.faces, unassignedClusters.length+1, personName,
+                function(result, name) {
+                    if (result === true) {
+                        if (name !== null) {
+                            if (name.length > 0) {
+                                self._persons.renameCluster(cluster.id, name).done(function () {
+                                    self.renameUnassignedClusterDialog(personName);
+                                }).fail(function () {
+                                    OC.Notification.showTemporary(t('facerecognition', 'There was an error renaming this person'));
+                                });
+                            } 
+                        }
+                        self.renameUnassignedClusterDialog(personName);
+                    } else {
+                        // Cancelled
+                        if (self._persons.mustReload())
+                            self.reload();
+                    }
+                }
+            );
+
+        }
+        else{
+            FrDialogs.assignName(cluster.faces, unassignedClusters.length+1,
+                function(result, name) {
+                    if (result === true) {
+                        if (name !== null) {
+                            if (name.length > 0) {
+                                self._persons.renameCluster(cluster.id, name).done(function () {
+                                    self.renameUnassignedClusterDialog();
+                                }).fail(function () {
+                                    OC.Notification.showTemporary(t('facerecognition', 'There was an error renaming this person'));
+                                });
+                            } else {
+                                self.renameUnassignedClusterDialog();
+                            }
+                        } else {
+                            self._persons.setClusterVisibility(cluster.id, false).done(function () {
                                 self.renameUnassignedClusterDialog();
                             }).fail(function () {
-                                OC.Notification.showTemporary(t('facerecognition', 'There was an error renaming this person'));
+                                OC.Notification.showTemporary(t('facerecognition', 'There was an error ignoring this person'));
                             });
-                        } else {
-                            self.renameUnassignedClusterDialog();
                         }
                     } else {
-                        self._persons.setClusterVisibility(cluster.id, false).done(function () {
-                            self.renameUnassignedClusterDialog();
-                        }).fail(function () {
-                            OC.Notification.showTemporary(t('facerecognition', 'There was an error ignoring this person'));
-                        });
+                        // Cancelled
+                        if (self._persons.mustReload())
+                            self.reload();
                     }
-                } else {
-                    // Cancelled
-                    if (self._persons.mustReload())
-                        self.reload();
                 }
-            }
-        );
+            );
+        }
     },
-    renameIgnoredClusterDialog: function () {
+    renameIgnoredClusterDialog: function (personName) {
         var self = this;
         var ignoredClusters = this._persons.getIgnoredClusters();
         var cluster = ignoredClusters.shift();
@@ -307,29 +332,57 @@ View.prototype = {
                 self.reload();
             return;
         }
-        FrDialogs.assignIgnored(cluster.faces, ignoredClusters.length,
-            function(result, name) {
-                if (result === true) {
-                    if (name !== null) {
-                        if (name.length > 0) {
-                            self._persons.renameCluster(cluster.id, name).done(function () {
+        if (personName !== undefined) {
+            // If we come from a person, we propose that name
+            FrDialogs.assignToSelectedPerson(cluster.faces, ignoredClusters.length+1, personName,
+                function(result, name) {
+                    if (result === true) {
+                        if (name !== null) {
+                            if (name.length > 0) {
+                                self._persons.renameCluster(cluster.id, name).done(function () {
+                                    self.renameIgnoredClusterDialog(personName);
+                                }).fail(function () {
+                                    OC.Notification.showTemporary(t('facerecognition', 'There was an error renaming this person'));
+                                });
+                            } else {
+                                self.renameIgnoredClusterDialog(personName);
+                            }
+                        } else {
+                            self.renameIgnoredClusterDialog(personName);
+                        }
+                    } else {
+                        // Cancelled
+                        if (self._persons.mustReload())
+                            self.reload();
+                    }
+                }
+            );
+        }
+        else {
+            FrDialogs.assignIgnored(cluster.faces, ignoredClusters.length+1,
+                function(result, name) {
+                    if (result === true) {
+                        if (name !== null) {
+                            if (name.length > 0) {
+                                self._persons.renameCluster(cluster.id, name).done(function () {
+                                    self.renameIgnoredClusterDialog();
+                                }).fail(function () {
+                                    OC.Notification.showTemporary(t('facerecognition', 'There was an error renaming this person'));
+                                });
+                            } else {
                                 self.renameIgnoredClusterDialog();
-                            }).fail(function () {
-                                OC.Notification.showTemporary(t('facerecognition', 'There was an error renaming this person'));
-                            });
+                            }
                         } else {
                             self.renameIgnoredClusterDialog();
                         }
                     } else {
-                        self.renameIgnoredClusterDialog();
+                        // Cancelled
+                        if (self._persons.mustReload())
+                            self.reload();
                     }
-                } else {
-                    // Cancelled
-                    if (self._persons.mustReload())
-                        self.reload();
                 }
-            }
-        );
+            );
+        }
     },
     renderContent: function () {
         var context = {
@@ -416,7 +469,7 @@ View.prototype = {
             self._persons.loadUnassignedClusters().done(function () {
                 button.css("cursor", "");
                 if (self._persons.getUnassignedClusters().length > 0) {
-                    self.renameUnassignedClusterDialog();
+                    self.renameUnassignedClusterDialog(self._persons.getActivePerson()?.name);
                 } else {
                     OC.Notification.showTemporary(t('facerecognition', 'You dont have more people to recognize.'));
                 };
@@ -429,7 +482,7 @@ View.prototype = {
             self._persons.loadIgnoredClusters().done(function () {
                 button.css("cursor", "");
                 if (self._persons.getIgnoredClusters().length > 0) {
-                    self.renameIgnoredClusterDialog();
+                    self.renameIgnoredClusterDialog(self._persons.getActivePerson()?.name);
                 } else {
                     OC.Notification.showTemporary(t('facerecognition', 'You no longer have people ignored'));
                 };

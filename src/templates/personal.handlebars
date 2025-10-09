@@ -24,9 +24,17 @@
 {{else if personName}}
 	<h2 style="display: flex;">
 		<a class="title-icon icon-back"></a>
-		<span class="title-name">{{personName}}</span>
+		<span class="title-name" style="margin: 0 1rem;">{{personName}}</span>
 		<a id="rename-person" title="{{renameHint}}" class="title-icon icon-rename" data-id="{{personName}}"></a>
 		<a id="hide-person" title="{{hideHint}}" class="title-icon icon-disabled-user" data-id="{{personName}}"></a>
+		<div id="optional-buttons-div" style="position: absolute; right: 0; display: flex; gap: 0.5rem;">
+			{{#if hasUnamed}}
+			<button id="show-more-clusters" type="button" class="primary">{{reviewPeopleMsg}}</button>
+			{{/if}}
+			{{#if hasHidden}}
+			<button id="show-ignored-clusters" type="button" class="primary">{{reviewIgnoredMsg}}</button>
+			{{/if}}
+		</div>
 	</h2>
 	<button id="review-person-clusters" type="button" class="primary">
 		{{showMoreButton}}
