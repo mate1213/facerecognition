@@ -64,19 +64,23 @@ class EnumerateImagesMissingFacesTask extends FaceRecognitionBackgroundTask {
 	/**
 	 * @inheritdoc
 	 */
+	//MTODO: check original implementation. There is a difference in the result
 	public function execute(FaceRecognitionContext $context) {
 		$this->setContext($context);
 
 		$modelId = $this->settingsService->getCurrentFaceModel();
-
+		$allimages = [];
 		$eligable_users = $this->context->getEligibleUsers();
 		foreach($eligable_users as $user) {
 			$images = $this->imageMapper->findImagesWithoutFaces($user, $modelId);
-			yield;
+			if ($images !== null) {
+				$allimages = array_merge($allimages, $images);
+			}
+		// yield;
 
-			shuffle($images);
-			$this->context->propertyBag['images'] = $images;
 		}
+		shuffle($allimages);
+		$this->context->propertyBag['images'] = $allimages;
 		return true;
 	}
 }

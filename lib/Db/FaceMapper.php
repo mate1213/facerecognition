@@ -343,7 +343,7 @@ class FaceMapper extends QBMapper
 	 */
 	public function findByImage(int $imageId): array{
 		$qb = $this->db->getQueryBuilder();
-		$qb->select('f.id', $qb->expr()->literal('NULL as person'), 'image_id as image', 'x', 'y', 'width', 'height', 'landmarks', 'descriptor', 'confidence', 'creation_time')
+		$qb->select('f.id', 'image_id as image', 'x', 'y', 'width', 'height', 'landmarks', 'descriptor', 'confidence', 'creation_time')
 			->from($this->getTableName(), 'f')
 			->where($qb->expr()->eq('f.image_id', $qb->createNamedParameter($imageId)));
 		$faces = $this->findEntities($qb);
