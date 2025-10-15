@@ -211,17 +211,33 @@ class FaceMapper extends QBMapper
 	 */
 	public function getGroupableFaces(string $userId, int $model, int $minSize, float $minConfidence): array{
 		$qb = $this->db->getQueryBuilder();
-		$qb->select('f.id', 'cf.cluster_id as person', 'f.image_id as image', 'x', 'y', 'width', 'height', 'landmarks', 'descriptor', 'confidence', 'creation_time', $qb->createFunction("COALESCE(cf.is_groupable, 'true') as is_groupable"))
+		$qb->select(
+				'f.id',
+				$qb->createFunction("CASE WHEN c.user = " . $qb->createParameter('user') . " THEN cf.cluster_id ELSE NULL END AS person"),
+				'f.image_id as image', 
+				'x', 
+				'y',
+				'width',
+				'height', 
+				'landmarks', 
+				'descriptor', 
+				'confidence', 
+				'creation_time', $qb->createFunction("COALESCE(cf.is_groupable, TRUE) as is_groupable")
+			)
 			->from($this->getTableName(), 'f')
 			->innerJoin('f', 'facerecog_images', 'i', $qb->expr()->eq('f.image_id', 'i.id'))
 			->innerJoin('f', 'facerecog_user_images', 'ui', $qb->expr()->eq('ui.image_id', 'i.id'))
 			->leftJoin('f', 'facerecog_cluster_faces', 'cf', $qb->expr()->eq('f.id', 'cf.face_id'))
-			->leftJoin('f', 'facerecog_clusters', 'p', $qb->expr()->eq('p.id', 'cf.cluster_id'))
+			->leftJoin(
+					'f', 
+					'facerecog_clusters', 
+					'c', 
+					$qb->expr()->andX(
+						$qb->expr()->eq('c.id', 'cf.cluster_id'),
+						$qb->expr()->eq('c.user', $qb->createParameter('user'))
+					)
+				)
 			->where($qb->expr()->eq('ui.user', $qb->createParameter('user')))
-			->andWhere($qb->expr()->orX(
-				$qb->expr()->eq('p.user', $qb->createParameter('user')),
-				$qb->expr()->isNull('p.user')
-			))
 			->andWhere($qb->expr()->eq('i.model', $qb->createParameter('model')))
 			->andWhere($qb->expr()->gte('f.width', $qb->createParameter('min_size')))
 			->andWhere($qb->expr()->gte('f.height', $qb->createParameter('min_size')))
@@ -253,17 +269,33 @@ class FaceMapper extends QBMapper
 	 */
 	public function getNonGroupableFaces(string $userId, int $model, int $minSize, float $minConfidence): array{
 		$qb = $this->db->getQueryBuilder();
-		$qb->select('f.id', 'cf.cluster_id as person', 'f.image_id as image', 'x', 'y', 'width', 'height', 'landmarks', 'descriptor', 'confidence', 'creation_time', $qb->createFunction("COALESCE(cf.is_groupable, 'true') as is_groupable"))
+		$qb->select(
+				'f.id',
+				$qb->createFunction("CASE WHEN c.user = " . $qb->createParameter('user') . " THEN cf.cluster_id ELSE NULL END AS person"),
+				'f.image_id as image', 
+				'x', 
+				'y',
+				'width',
+				'height', 
+				'landmarks', 
+				'descriptor', 
+				'confidence', 
+				'creation_time', $qb->createFunction("COALESCE(cf.is_groupable, TRUE) as is_groupable")
+			)
 			->from($this->getTableName(), 'f')
 			->innerJoin('f', 'facerecog_images', 'i', $qb->expr()->eq('f.image_id', 'i.id'))
 			->innerJoin('f', 'facerecog_user_images', 'ui', $qb->expr()->eq('ui.image_id', 'i.id'))
 			->leftJoin('f', 'facerecog_cluster_faces', 'cf', $qb->expr()->eq('f.id', 'cf.face_id'))
-			->leftJoin('f', 'facerecog_clusters', 'p', $qb->expr()->eq('p.id', 'cf.cluster_id'))
+			->leftJoin(
+					'f', 
+					'facerecog_clusters', 
+					'c', 
+					$qb->expr()->andX(
+						$qb->expr()->eq('c.id', 'cf.cluster_id'),
+						$qb->expr()->eq('c.user', $qb->createParameter('user'))
+					)
+				)
 			->where($qb->expr()->eq('ui.user', $qb->createParameter('user')))
-			->andWhere($qb->expr()->orX(
-				$qb->expr()->eq('p.user', $qb->createParameter('user')),
-				$qb->expr()->isNull('p.user')
-			))
 			->andWhere($qb->expr()->eq('i.model', $qb->createParameter('model')))
 			->andWhere($qb->expr()->orX(
 				$qb->expr()->lt('f.width', $qb->createParameter('min_size')),
@@ -278,7 +310,7 @@ class FaceMapper extends QBMapper
 			->setParameter('min_confidence', $minConfidence)
 			->setParameter('is_groupable', false, IQueryBuilder::PARAM_BOOL);
 
-		return $this->findEntities($qb);;
+		return $this->findEntities($qb);
 	}
 
 	/**
