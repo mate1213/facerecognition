@@ -64,6 +64,38 @@ class ImageMapper extends QBMapper
 	}
 
 	/**
+	 * @param int $imageId Id of Image to get
+	 *
+	 */
+	public function findFromImageId(int $imageId): ?Image{
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('i.id', 'i.model', 'i.nc_file_id as file', 'i.is_processed', 'i.error', 'i.last_processed_time', 'i.processing_duration')
+			->from($this->getTableName(), 'i')
+			->Where($qb->expr()->eq('i.id', $qb->createNamedParameter($imageId)));
+		try {
+			return $this->findEntity($qb);
+		} catch (DoesNotExistException $e) {
+			return null;
+		}
+	}
+	/**
+	 * @param int $imageId Id of Image to get
+	 *
+	 */
+	public function findUsersForImageId(int $imageId): ?array{
+		$qb = $this->db->getQueryBuilder();
+		$resultStatement = $qb->select('ui.user')
+			->from('facerecog_user_images', 'ui')
+			->Where($qb->expr()->eq('ui.image_id', $qb->createNamedParameter($imageId)))
+			->executeQuery();
+
+		$data = $resultStatement->fetchAll(\PDO::FETCH_COLUMN);
+		$resultStatement->closeCursor();
+
+		return $data;
+	}
+
+	/**
 	 * @param string $userId Id of user
 	 * @param int $modelId Id of model to get
 	 *
@@ -312,14 +344,15 @@ class ImageMapper extends QBMapper
 	 */
 	public function findImagesWithoutFaces(?string $user, int $modelId): array{
 		$qb = $this->db->getQueryBuilder();
-		$qb->select('i.id', 'ui.user', 'i.model', 'i.nc_file_id as file', 'i.is_processed', 'i.error', 'i.last_processed_time', 'i.processing_duration')
+		$qb->select('i.id', 'i.model', 'i.nc_file_id as file', 'i.is_processed', 'i.error', 'i.last_processed_time', 'i.processing_duration')
 			->from($this->getTableName(), 'i')
-			->innerJoin('i', 'facerecog_user_images', 'ui', $qb->expr()->eq('ui.image_id', 'i.id'))
 			->where($qb->expr()->eq('i.is_processed',  $qb->createParameter('is_processed')))
 			->andWhere($qb->expr()->eq('i.model', $qb->createNamedParameter($modelId)))
 			->setParameter('is_processed', false, IQueryBuilder::PARAM_BOOL);
 		if (!is_null($user)) {
-			$qb->andWhere($qb->expr()->eq('ui.user', $qb->createNamedParameter($user)));
+			$qb->select('ui.user')
+				->innerJoin('i', 'facerecog_user_images', 'ui', $qb->expr()->eq('ui.image_id', 'i.id'))
+				->andWhere($qb->expr()->eq('ui.user', $qb->createNamedParameter($user)));
 		}
 		return $this->findEntities($qb);
 	}
