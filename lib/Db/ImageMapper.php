@@ -233,6 +233,7 @@ class ImageMapper extends QBMapper
 	}
 
 	#[\Override]
+	//MTODO: refactor to support multiple users
 	public function delete(Entity $entity): Entity{
 		return parent::delete($entity);
 	}
