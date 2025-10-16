@@ -258,11 +258,7 @@ class ImageMapperTest extends UnitBaseTestCase
 		$this->assertContainsOnlyInstancesOf(Image::class, $images);
 		$this->assertCount($expectedCount, $images);
 		foreach ($images as $image) {
-			if ($user !== null) {
-				$this->assertEquals($user, $image->getUser());
-			} else {
-				$this->assertNotNull($image->getUser());
-			}
+			$this->assertEquals($user, $image->getUser());
 			$this->assertEquals($model, $image->getModel());
 		}
 	}

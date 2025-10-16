@@ -344,15 +344,22 @@ class ImageMapper extends QBMapper
 	 */
 	public function findImagesWithoutFaces(?string $user, int $modelId): array{
 		$qb = $this->db->getQueryBuilder();
-		$qb->select('i.id', 'i.model', 'i.nc_file_id as file', 'i.is_processed', 'i.error', 'i.last_processed_time', 'i.processing_duration')
-			->from($this->getTableName(), 'i')
-			->where($qb->expr()->eq('i.is_processed',  $qb->createParameter('is_processed')))
-			->andWhere($qb->expr()->eq('i.model', $qb->createNamedParameter($modelId)))
-			->setParameter('is_processed', false, IQueryBuilder::PARAM_BOOL);
+
 		if (!is_null($user)) {
-			$qb->select('ui.user')
+			$qb->select('i.id', 'ui.user', 'i.model', 'i.nc_file_id as file', 'i.is_processed', 'i.error', 'i.last_processed_time', 'i.processing_duration')
+				->from($this->getTableName(), 'i')
 				->innerJoin('i', 'facerecog_user_images', 'ui', $qb->expr()->eq('ui.image_id', 'i.id'))
-				->andWhere($qb->expr()->eq('ui.user', $qb->createNamedParameter($user)));
+				->Where($qb->expr()->eq('ui.user', $qb->createNamedParameter($user)))
+				->andWhere($qb->expr()->eq('i.is_processed',  $qb->createParameter('is_processed')))
+				->andWhere($qb->expr()->eq('i.model', $qb->createNamedParameter($modelId)))
+				->setParameter('is_processed', false, IQueryBuilder::PARAM_BOOL);
+		}
+		else {
+			$qb->select('i.id', 'i.model', 'i.nc_file_id as file', 'i.is_processed', 'i.error', 'i.last_processed_time', 'i.processing_duration')
+				->from($this->getTableName(), 'i')
+				->Where($qb->expr()->eq('i.is_processed',  $qb->createParameter('is_processed')))
+				->andWhere($qb->expr()->eq('i.model', $qb->createNamedParameter($modelId)))
+				->setParameter('is_processed', false, IQueryBuilder::PARAM_BOOL);
 		}
 		return $this->findEntities($qb);
 	}
