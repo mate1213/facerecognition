@@ -198,7 +198,6 @@ class PersonMapper extends QBMapper
 		$qb->select(
 				'c.id', 
 				'c.user', 
-				$qb->createFunction('ANY_VALUE(p.name)'),
 				'c.is_visible', 
 				'c.is_valid', 
 				'c.last_generation_time',
@@ -219,7 +218,6 @@ class PersonMapper extends QBMapper
 			->setParameter('model_id', $modelId, IQueryBuilder::PARAM_INT)
 			->setParameter('is_valid', $isValid, IQueryBuilder::PARAM_BOOL)
 			->setParameter('is_visible', $isVisible, IQueryBuilder::PARAM_BOOL);
-
 		return $this->findEntities($qb);
 	}
 
