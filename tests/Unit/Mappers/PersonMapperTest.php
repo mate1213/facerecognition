@@ -295,18 +295,18 @@ class PersonMapperTest extends UnitBaseTestCase
     public function test_Find_noNameExists(): void
     {
         //Act
-        $cluster =self::$personMapper->find('user1', 3);
+        $cluster =self::$personMapper->find('user1', 5);
 
         //Assert
         $this->assertNotNull($cluster);
         $this->assertInstanceOf(Person::class, $cluster);
-        $this->assertEquals(3, $cluster->getId());
+        $this->assertEquals(5, $cluster->getId());
         $this->assertEquals('user1', $cluster->getUser());
         $this->assertEquals(null, $cluster->getName());
         $this->assertEquals(null, $cluster->getLinkedUser());
-        $this->assertEquals(true, $cluster->getIsVisible());
+        $this->assertEquals(false, $cluster->getIsVisible());
         $this->assertEquals(true, $cluster->getIsValid());
-        $this->assertEquals(DateTime::createFromFormat('Y-m-d H:i:s', '2025-08-26 11:00:00'), $cluster->getLastGenerationTime());
+        $this->assertEquals(DateTime::createFromFormat('Y-m-d H:i:s', '2025-08-26 11:01:00'), $cluster->getLastGenerationTime());
     }
 
     public function test_Find_noneExisting(): void
@@ -1076,7 +1076,7 @@ class PersonDataProvider
             ['user1', 1, false, false, 0],
             ['user1', 1, false, true,  0],
             ['user1', 1, true, false,  4],
-            ['user1', 1, true, true,   1],
+            ['user1', 1, true, true,   0],
             //nonexisting model
             ['user1', 3, false, false, 0],
             ['user1', 3, false, true,  0],
@@ -1119,7 +1119,7 @@ class PersonDataProvider
     {
         return [
             //Existing user and model
-            ['user1', 1, 1],
+            ['user1', 1, 0],
             //nonexisting model
             ['user1', 3, 0],
             //nonexisting user
@@ -1149,7 +1149,7 @@ class PersonDataProvider
     {
         return [
             //Existing user and model
-            ['user1', 1, 1],
+            ['user1', 1, 2],
             //nonexisting model
             ['user1', 3, 0],
             //nonexisting user
@@ -1165,7 +1165,7 @@ class PersonDataProvider
         return [
             //Existing user and model
             ['user1', 1, 'Alice', 1],
-            ['user1', 1, 'Bob', 0],
+            ['user1', 1, 'Bob', 1],
             //nonexisting model
             ['user1', 3, 'Alice', 0],
             //nonexisting user
@@ -1182,7 +1182,7 @@ class PersonDataProvider
             //Existing user and model
             ['user1', 1, 'Alice', null, null, 1],
             ['user1', 1, 'Alice', 0, 1, 1],
-            ['user1', 1, 'Bob', null, null, 0],
+            ['user1', 1, 'Bob', null, null, 1],
             ['user1', 1, 'Alice', 1, 1, 0],
             ['user1', 1, 'Bob', 1, 1, 0],
             ['user1', 1, 'Al', 1, 1, 0],
@@ -1210,7 +1210,7 @@ class PersonDataProvider
     {
         return [
             //Existing user and model
-            ['user1', 1, 1],
+            ['user1', 1, 2],
             //nonexisting model
             ['user1', 3, 0],
             //nonexisting user
