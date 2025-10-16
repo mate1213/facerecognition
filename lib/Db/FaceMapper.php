@@ -222,7 +222,8 @@ class FaceMapper extends QBMapper
 				'landmarks', 
 				'descriptor', 
 				'confidence', 
-				'creation_time', $qb->createFunction("COALESCE(cf.is_groupable, TRUE) as is_groupable")
+				'creation_time',
+				$qb->createFunction("COALESCE(cf.is_groupable, TRUE) as is_groupable")
 			)
 			->from($this->getTableName(), 'f')
 			->innerJoin('f', 'facerecog_images', 'i', $qb->expr()->eq('f.image_id', 'i.id'))
@@ -280,7 +281,8 @@ class FaceMapper extends QBMapper
 				'landmarks', 
 				'descriptor', 
 				'confidence', 
-				'creation_time', $qb->createFunction("COALESCE(cf.is_groupable, TRUE) as is_groupable")
+				'creation_time',
+				$qb->createFunction("COALESCE(cf.is_groupable, TRUE) as is_groupable")
 			)
 			->from($this->getTableName(), 'f')
 			->innerJoin('f', 'facerecog_images', 'i', $qb->expr()->eq('f.image_id', 'i.id'))

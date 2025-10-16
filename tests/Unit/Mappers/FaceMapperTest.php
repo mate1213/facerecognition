@@ -529,7 +529,7 @@ class FaceDataProvider
 			['Alice', null, null, 2],
 			['Alice', 1, 1, 1],
 			['Alice', 1, 0, 1],
-			['Bob', null, null, 0]
+			['Dummy', null, null, 0]
 		];
 	}
 
