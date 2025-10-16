@@ -214,7 +214,7 @@ class PersonMapper extends QBMapper
 			->andWhere($qb->expr()->eq('c.user', $qb->createParameter('user_id')))
 			->andWhere($qb->expr()->eq('i.model', $qb->createParameter('model_id')))
 			->andWhere($qb->expr()->isNull('name'))
-			->groupBy('c.id', 'p.name')
+			->groupBy('c.id')
 			->setParameter('user_id', $userId, IQueryBuilder::PARAM_STR)
 			->setParameter('model_id', $modelId, IQueryBuilder::PARAM_INT)
 			->setParameter('is_valid', $isValid, IQueryBuilder::PARAM_BOOL)
