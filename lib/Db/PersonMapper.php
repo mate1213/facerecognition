@@ -195,7 +195,14 @@ class PersonMapper extends QBMapper
 	 */
 	public function getPersonsByFlagsWithoutName(string $userId, int $modelId, bool $isValid, bool $isVisible): array{
 		$qb = $this->db->getQueryBuilder();
-		$qb->select('c.id', 'c.user', 'p.name', 'c.is_visible', 'c.is_valid', 'c.last_generation_time', 'c.linked_user')
+		$qb->select(
+				'c.id', 
+				'c.user', 
+				$qb->createFunction('ANY_VALUE(p.name)'),
+				'c.is_visible', 
+				'c.is_valid', 
+				'c.last_generation_time',
+				'c.linked_user')
 			->from($this->getTableName(), 'c')
 			->innerJoin('c', 'facerecog_cluster_faces', 'cf', $qb->expr()->eq('cf.cluster_id', 'c.id'))
 			->innerJoin('c', 'facerecog_faces', 'f', $qb->expr()->eq('cf.face_id', 'f.id'))
