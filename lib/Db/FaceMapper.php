@@ -40,13 +40,34 @@ class FaceMapper extends QBMapper
 
 	public function find(int $faceId, string $userId): ?Face{
 		$qb = $this->db->getQueryBuilder();
-		$qb->select('f.id', 'cf.cluster_id as person', 'f.image_id as image', 'x', 'y', 'width', 'height', 'landmarks', 'descriptor', 'confidence', 'creation_time', $qb->createFunction("COALESCE(cf.is_groupable, 'true') as is_groupable"))
+		$qb->select(
+				'f.id', 
+				$qb->createFunction("CASE WHEN c.user = " . $qb->createParameter('user') . " THEN cf.cluster_id ELSE NULL END AS person"), 
+				'f.image_id as image', 
+				'x', 
+				'y', 
+				'width', 
+				'height', 
+				'landmarks', 
+				'descriptor', 
+				'confidence', 
+				'creation_time', 
+				$qb->createFunction("COALESCE(cf.is_groupable, 'true') as is_groupable"))
 			->from($this->getTableName(), 'f')
-			->leftjoin('f', 'facerecog_cluster_faces', 'cf', $qb->expr()->eq('cf.face_id', 'f.id'))
-			->leftJoin('f', 'facerecog_clusters', 'c', $qb->expr()->orX($qb->expr()->eq('cf.cluster_id', 'c.id'), $qb->expr()->isNull('cf.cluster_id')))
-			->where($qb->expr()->eq('f.id', $qb->createNamedParameter($faceId)))
-			->andwhere($qb->expr()->eq('user', $qb->createNamedParameter($userId)))
-			->groupBy('f.id');
+			->leftJoin('f', 'facerecog_cluster_faces', 'cf', $qb->expr()->eq('f.id', 'cf.face_id'))
+			->leftJoin(
+					'f', 
+					'facerecog_clusters', 
+					'c', 
+					$qb->expr()->andX(
+						$qb->expr()->eq('c.id', 'cf.cluster_id'),
+						$qb->expr()->isNotNull('cf.cluster_id')
+					)
+				)
+			->where($qb->expr()->eq('f.id', $qb->createParameter('faceId')))
+			->andwhere($qb->expr()->eq('user', $qb->createParameter('user')))
+			->setParameter('user', $userId)
+			->setParameter('faceId', $faceId);
 		try {
 			return $this->findEntity($qb);
 		} catch (DoesNotExistException $e) {
