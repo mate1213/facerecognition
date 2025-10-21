@@ -43,7 +43,7 @@ use OCA\FaceRecognition\Db\PersonMapper;
 
 use OCA\FaceRecognition\Service\SettingsService;
 use OCA\FaceRecognition\Service\UrlService;
-
+use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 
 class ClusterController extends Controller {
 
@@ -85,10 +85,9 @@ class ClusterController extends Controller {
 	}
 
 	/**
-	 * @NoAdminRequired
-	 *
 	 * @return DataResponse
 	 */
+	#[NoAdminRequired]
 	public function find(int $id): DataResponse {
 		$person = $this->personMapper->find($this->userId, $id);
 
@@ -114,10 +113,9 @@ class ClusterController extends Controller {
 	}
 
 	/**
-	 * @NoAdminRequired
-	 *
 	 * @return DataResponse
 	 */
+	#[NoAdminRequired]
 	public function findByName(string $personName): DataResponse {
 		$userEnabled = $this->settingsService->getUserEnabled($this->userId);
 
@@ -158,10 +156,9 @@ class ClusterController extends Controller {
 	}
 
 	/**
-	 * @NoAdminRequired
-	 *
 	 * @return DataResponse
 	 */
+	#[NoAdminRequired]
 	public function findUnassigned(): DataResponse {
 		$userEnabled = $this->settingsService->getUserEnabled($this->userId);
 
@@ -207,10 +204,9 @@ class ClusterController extends Controller {
 	}
 
 	/**
-	 * @NoAdminRequired
-	 *
 	 * @return DataResponse
 	 */
+	#[NoAdminRequired]
 	Public function findIgnored(): DataResponse {
 		$userEnabled = $this->settingsService->getUserEnabled($this->userId);
 
@@ -256,13 +252,12 @@ class ClusterController extends Controller {
 	}
 
 	/**
-	 * @NoAdminRequired
-	 *
 	 * @param int $id
 	 * @param bool $visible
 	 *
 	 * @return DataResponse
 	 */
+	#[NoAdminRequired]
 	public function setVisibility (int $id, bool $visible): DataResponse {
 		$resp = array();
 		$this->personMapper->setVisibility($id, $visible);
@@ -270,28 +265,26 @@ class ClusterController extends Controller {
 	}
 
 	/**
-	 * @NoAdminRequired
-	 *
 	 * @param int $id if of cluster
 	 * @param int $face id of face.
 	 * @param string|null $name optional name to rename it.
 	 *
 	 * @return DataResponse
 	 */
+	#[NoAdminRequired]
 	public function detachFace (int $id, int $face, $name = null): DataResponse {
 		$person = $this->personMapper->detachFace($id, $face, $name);
 		return new DataResponse($person);
 	}
 
 	/**
-	 * @NoAdminRequired
-	 *
 	 * @param int $id of cluster
 	 * @param string $name to rename them.
 	 * @param int|null $face_id optional face id if you just want to name that face
 	 *
 	 * @return DataResponse new person with that update.
 	 */
+	#[NoAdminRequired]
 	public function updateName($id, $name, $face_id = null): DataResponse {
 		if (is_null($face_id)) {
 			$person = $this->personMapper->find($this->userId, $id);

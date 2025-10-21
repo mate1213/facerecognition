@@ -43,6 +43,7 @@ use OCA\FaceRecognition\Db\PersonMapper;
 
 use OCA\FaceRecognition\Service\SettingsService;
 use OCA\FaceRecognition\Service\UrlService;
+use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 
 class OcsApiController extends OCSController {
 
@@ -99,10 +100,9 @@ class OcsApiController extends OCSController {
 	 * 			- thumbFaceId: Face representing this person
 	 * 			- count: Number of images associated to this person
 	 *
-	 * @NoAdminRequired
-	 *
 	 * @return DataResponse
 	 */
+	#[NoAdminRequired]
 	public function getPersonsV1(): DataResponse {
 		$userEnabled = $this->settingsService->getUserEnabled($this->userId);
 
@@ -148,10 +148,9 @@ class OcsApiController extends OCSController {
 	 * 			- id: Face ID
 	 * 			- fileId: The file where this face was found
 	 *
-	 * @NoAdminRequired
-	 *
 	 * @return DataResponse
 	 */
+	#[NoAdminRequired]
 	public function getFacesByPerson(string $name): DataResponse {
 		$userEnabled = $this->settingsService->getUserEnabled($this->userId);
 

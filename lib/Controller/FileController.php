@@ -19,6 +19,7 @@ use OCA\FaceRecognition\Service\FileService;
 use OCA\FaceRecognition\Service\SettingsService;
 
 use OCA\FaceRecognition\Service\UrlService;
+use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 
 class FileController extends Controller {
 
@@ -65,13 +66,12 @@ class FileController extends Controller {
 	}
 
 	/**
-	 * @NoAdminRequired
-	 *
 	 * Get persons on file.
 	 *
 	 * @param string $fullpath of the file to get persons
 	 * @return JSONResponse
 	 */
+	#[NoAdminRequired]
 	public function getPersonsFromPath(string $fullpath) {
 
 		$resp = array();
@@ -122,13 +122,12 @@ class FileController extends Controller {
 	}
 
 	/**
-	 * @NoAdminRequired
-	 *
 	 * Get if folder if folder is enabled
 	 *
 	 * @param string $fullpath of the folder
 	 * @return JSONResponse
 	 */
+	#[NoAdminRequired]
 	public function getFolderOptions(string $fullpath) {
 		$resp = array();
 
@@ -148,14 +147,13 @@ class FileController extends Controller {
 	}
 
 	/**
-	 * @NoAdminRequired
-	 *
 	 * Apply option to folder to enabled or disable it.
 	 *
 	 * @param string $fullpath of the folder.
 	 * @param bool $detection
 	 * @return JSONResponse
 	 */
+	#[NoAdminRequired]
 	public function setFolderOptions(string $fullpath, bool $detection) {
 		$folder = $this->fileService->getFileByPath($fullpath);
 		$this->fileService->setDescendantDetection($folder, $detection);

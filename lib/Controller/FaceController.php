@@ -42,6 +42,7 @@ use OCA\FaceRecognition\Db\Image;
 use OCA\FaceRecognition\Db\ImageMapper;
 
 use OCA\FaceRecognition\Service\SettingsService;
+use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 
 class FaceController extends Controller {
 
@@ -78,12 +79,11 @@ class FaceController extends Controller {
 	}
 
 	/**
-	 * @NoAdminRequired
-	 *
 	 * @NoCSRFRequired
 	 *
 	 * @return DataDisplayResponse|JSONResponse
 	 */
+	#[NoAdminRequired]
 	public function getThumb ($id, $size) {
 		$face = $this->faceMapper->find($id, $this->userId);
 		if ($face === null) {
@@ -136,12 +136,11 @@ class FaceController extends Controller {
 	}
 
 	/**
-	 * @NoAdminRequired
-	 *
 	 * @NoCSRFRequired
 	 *
 	 * @return DataDisplayResponse|JSONResponse
 	 */
+	#[NoAdminRequired]
 	public function getPersonThumb (string $name, int $size) {
 		$modelId = $this->settingsService->getCurrentFaceModel();
 		$personFace = current($this->faceMapper->findFromPerson($this->userId, $name, $modelId, 1));

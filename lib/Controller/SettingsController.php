@@ -38,6 +38,7 @@ use OCA\FaceRecognition\Model\IModel;
 use OCA\FaceRecognition\Model\ModelManager;
 
 use OCA\FaceRecognition\Service\SettingsService;
+use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 
 class SettingsController extends Controller {
 
@@ -80,11 +81,11 @@ class SettingsController extends Controller {
 	}
 
 	/**
-	 * @NoAdminRequired
 	 * @param $type
 	 * @param $value
 	 * @return JSONResponse
 	 */
+	#[NoAdminRequired]
 	public function setUserValue($type, $value) {
 		$status = self::STATE_SUCCESS;
 
@@ -111,10 +112,10 @@ class SettingsController extends Controller {
 	}
 
 	/**
-	 * @NoAdminRequired
 	 * @param $type
 	 * @return JSONResponse
 	 */
+	#[NoAdminRequired]
 	public function getUserValue($type) {
 		$status = self::STATE_OK;
 		$value ='nodata';

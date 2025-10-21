@@ -43,7 +43,7 @@ use OCA\FaceRecognition\Db\PersonMapper;
 
 use OCA\FaceRecognition\Service\SettingsService;
 use OCA\FaceRecognition\Service\UrlService;
-
+use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 
 class PersonController extends Controller {
 
@@ -85,10 +85,9 @@ class PersonController extends Controller {
 	}
 
 	/**
-	 * @NoAdminRequired
-	 *
 	 * @return DataResponse
 	 */
+	#[NoAdminRequired]
 	public function index(): DataResponse {
 		$userEnabled = $this->settingsService->getUserEnabled($this->userId);
 
@@ -117,10 +116,9 @@ class PersonController extends Controller {
 	}
 
 	/**
-	 * @NoAdminRequired
-	 *
 	 * @return DataResponse
 	 */
+	#[NoAdminRequired]
 	public function find(string $personName): DataResponse {
 		$userEnabled = $this->settingsService->getUserEnabled($this->userId);
 
@@ -158,13 +156,12 @@ class PersonController extends Controller {
 	}
 
 	/**
-	 * @NoAdminRequired
-	 *
 	 * @param string $personName
 	 * @param string $name
 	 *
 	 * @return DataResponse
 	 */
+	#[NoAdminRequired]
 	public function updateName($personName, $name): DataResponse {
 		$modelId = $this->settingsService->getCurrentFaceModel();
 		$clusters = $this->personMapper->findByName($this->userId, $modelId, $personName);
@@ -176,13 +173,12 @@ class PersonController extends Controller {
 	}
 
 	/**
-	 * @NoAdminRequired
-	 *
 	 * @param string $personName
 	 * @param bool $visible
 	 *
 	 * @return DataResponse
 	*/
+	#[NoAdminRequired]
 	public function setVisibility ($personName, bool $visible): DataResponse {
 		$modelId = $this->settingsService->getCurrentFaceModel();
 		$clusters = $this->personMapper->findByName($this->userId, $modelId, $personName);
@@ -193,10 +189,9 @@ class PersonController extends Controller {
 	}
 
 	/**
-	 * @NoAdminRequired
-	 *
 	 * @return DataResponse
 	 */
+	#[NoAdminRequired]
 	public function autocomplete(string $query): DataResponse {
 		$resp = array();
 
