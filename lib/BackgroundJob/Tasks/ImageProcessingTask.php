@@ -132,7 +132,7 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 				$lockType = ILockingProvider::LOCK_EXCLUSIVE;
 				$this->lockingProvider->acquireLock($lockKey, $lockType);
 
-				$dbImage = $this->imageMapper->find($image->getUser(), $image->getId());
+				$dbImage = $this->imageMapper->findFromImageId($image->getId());
 				if ($dbImage->getIsProcessed()) {
 					$this->logInfo('Faces found: 0. Image will be skipped since it was already processed.');
 					// Release lock of file.
@@ -146,8 +146,8 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 
 				if (is_null($tempImage)) {
 					// If we cannot find a file probably it was deleted out of our control and we must clean our tables.
-					$this->settingsService->setNeedRemoveStaleImages(true, $image->user);
-					$this->logInfo('File with ID ' . $image->file . ' doesn\'t exist anymore, skipping it');
+					$this->imageMapper->delete($image);
+					$this->logInfo('File with ID ' . $image->file . ' doesn\'t exist anymore, delete from database it');
 					// Release lock of file.
 					$this->lockingProvider->releaseLock($lockKey, $lockType);
 					continue;
@@ -214,8 +214,14 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 	 * return TempImage|null
 	 */
 	private function getTempImage(Image $image): ?TempImage {
-		// todo: check if this hits I/O (database, disk...), consider having lazy caching to return user folder from user
-		$file = $this->fileService->getFileById($image->getFile(), $image->getUser());
+		$users = $this->imageMapper->findUsersForImageId($image->getId());
+		foreach($users as $user) {
+			// todo: check if this hits I/O (database, disk...), consider having lazy caching to return user folder from user
+			$file = $this->fileService->getFileById($image->getFile(),$user);
+			if (!empty($file)) {
+				break;
+			}
+		}
 		if (empty($file)) {
 			return null;
 		}

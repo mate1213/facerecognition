@@ -87,6 +87,7 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 		$this->setContext($context);
 		$eligable_users = $this->context->getEligibleUsers();
 		foreach($eligable_users as $user) {
+			$this->logInfo('-- Processing user -->' . $user);
 			$this->createClusterIfNeeded($user);
 			yield;
 		}

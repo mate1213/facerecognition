@@ -57,8 +57,8 @@ class ImageMapperTest extends UnitBaseTestCase
      */
 	public static function setUpBeforeClass(): void {
 		parent::setUpBeforeClass();
-		self::$faceMapper = new FaceMapper(self::$dbConnection);
-		self::$imageMapper = new ImageMapper(self::$dbConnection, self::$faceMapper);
+		self::$faceMapper = new FaceMapper(self::$dbConnection, self::$logger);
+		self::$imageMapper = new ImageMapper(self::$dbConnection, self::$faceMapper, self::$logger);
 
 		self::$imageCountQuery = self::$dbConnection->getQueryBuilder();
 		self::$imageCountQuery->select(self::$imageCountQuery->createFunction('COUNT(id) as count'))->from('facerecog_images');
@@ -258,11 +258,7 @@ class ImageMapperTest extends UnitBaseTestCase
 		$this->assertContainsOnlyInstancesOf(Image::class, $images);
 		$this->assertCount($expectedCount, $images);
 		foreach ($images as $image) {
-			if ($user !== null) {
-				$this->assertEquals($user, $image->getUser());
-			} else {
-				$this->assertNotNull($image->getUser());
-			}
+			$this->assertEquals($user, $image->getUser());
 			$this->assertEquals($model, $image->getModel());
 		}
 	}
