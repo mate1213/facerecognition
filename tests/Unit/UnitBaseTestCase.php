@@ -26,18 +26,26 @@ namespace OCA\FaceRecognition\Tests\Unit;
 
 use \OC;
 use \OCP\IDBConnection;
-use PHPUnit\Framework\TestCase;
+use \OCP\AppFramework\App;
+use \PHPUnit\Framework\TestCase;
+use \Psr\Log\LoggerInterface;
 
 abstract class UnitBaseTestCase extends TestCase
 {
 	/** @var IDBConnection test instance*/
 	protected static $dbConnection;
+	/** @var LoggerInterface test instance*/
+	protected static $logger;
 	/** @var bool*/
 	private $isSetupComplete = false;
 	/** @var bool */
 	protected $runLargeTests = true;
 
 	public static function setUpBeforeClass(): void {
+		$app = new App('facerecognition');
+		$container = $app->getContainer();
+		
+		self::$logger= $container->get('Psr\Log\LoggerInterface');
 		parent::setUpBeforeClass();
 		self::$dbConnection = OC::$server->getDatabaseConnection();
 	}
