@@ -171,7 +171,8 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 
 				$endMillis = round(microtime(true) * 1000);
 				$detectDuration = (int) max($endMillis - $detectionStartMillis, 0);
-				$this->logInfo('Faces found: ' . count($rawFaces). '. Detection took ' . $detectDuration . ' ms.');
+				$this->logInfo('Faces found: ' . count($rawFaces). '.');
+				$this->logDebug('Detection took ' . $detectDuration . ' ms.');
 
 				$faces = array();
 				foreach ($rawFaces as $rawFace) {
@@ -193,7 +194,8 @@ class ImageProcessingTask extends FaceRecognitionBackgroundTask {
 				
 				$endMillis = round(microtime(true) * 1000);
 				$duration = (int) max($endMillis - $startMillis, 0);
-				$this->logDebug('Whole proccess took ' . $duration . ' ms. Extra work (saving to DB, normalization, etc) took ' . ($duration - $detectDuration) . ' ms.');
+				$this->logDebug('Whole proccess took ' . $duration . ' ms.');
+				$this->logDebug('Extra work (saving to DB, normalization, etc) took ' . ($duration - $detectDuration) . ' ms.');
 			} catch (\OCP\Lock\LockedException $e) {
 				$this->logInfo('Faces found: 0. Image will be skipped because it is locked');
 			} catch (\Exception $e) {

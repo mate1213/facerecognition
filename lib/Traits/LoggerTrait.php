@@ -72,8 +72,8 @@ trait LoggerTrait {
 					$depth++;
 				}
 			}
-			// Subtract 4 to account for writeLog and logXXX methods
-			$depth = max(0, $depth - 4);
+			// Subtract 3 to account for writeLog and logXXX methods
+			$depth = max(0, $depth - 3);
 			if ($depth > 1) {
 				$indent="\t";
 			}
