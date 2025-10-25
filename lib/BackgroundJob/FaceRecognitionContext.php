@@ -26,9 +26,6 @@ namespace OCA\FaceRecognition\BackgroundJob;
 use OCP\IConfig;
 use OCP\IUser;
 use OCP\IUserManager;
-
-use OCA\FaceRecognition\BackgroundJob\FaceRecognitionLogger;
-
 /**
  * Simple class holding all information that tasks might need, so they can do their job.
  * It can also serve as a temporary storage of information flowing from one task to another.
@@ -39,9 +36,6 @@ class FaceRecognitionContext {
 
 	/** @var IConfig */
 	public $config;
-
-	/** @var FaceRecognitionLogger */
-	public $logger;
 
 	/** @var IUser|null */
 	public $user;

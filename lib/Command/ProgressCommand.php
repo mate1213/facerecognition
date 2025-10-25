@@ -35,9 +35,12 @@ use OCA\FaceRecognition\Db\FaceMapper;
 use OCA\FaceRecognition\Db\ClusterMapper;
 
 use OCA\FaceRecognition\Service\SettingsService;
+use OCA\FaceRecognition\Traits\LoggerTrait;
+use Psr\Log\LoggerInterface;
 
 class ProgressCommand extends Command {
 
+	use LoggerTrait;
 	/** @var IDateTimeFormatter */
 	protected $dateTimeFormatter;
 
@@ -64,10 +67,12 @@ class ProgressCommand extends Command {
 	                            ImageMapper        $imageMapper,
 	                            FaceMapper         $faceMapper,
 	                            ClusterMapper       $clusterMapper,
-	                            SettingsService    $settingsService)
+	                            SettingsService    $settingsService,
+								LoggerInterface    $logger)
 	{
 		parent::__construct();
 
+		$this->setLogger($logger);
 		$this->dateTimeFormatter = $dateTimeFormatter;
 		$this->imageMapper       = $imageMapper;
 		$this->faceMapper        = $faceMapper;
@@ -97,6 +102,7 @@ class ProgressCommand extends Command {
 	 * @return int
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output) {
+		$this->setOutput($output);
 		$modelId = $this->settingsService->getCurrentFaceModel();
 
 		$totalImages = $this->imageMapper->countImages($modelId);

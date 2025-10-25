@@ -35,9 +35,12 @@ use Symfony\Component\Console\Question\ConfirmationQuestion;
 use OCA\FaceRecognition\Helper\CommandLock;
 
 use OCA\FaceRecognition\Service\FaceManagementService;
+use OCA\FaceRecognition\Traits\LoggerTrait;
+use Psr\Log\LoggerInterface;
 
 class ResetCommand extends Command {
 
+	use LoggerTrait;
 	/** @var FaceManagementService */
 	protected $faceManagementService;
 
@@ -46,9 +49,6 @@ class ResetCommand extends Command {
 
 	/** @var InputInterface */
 	protected $input;
-
-	/** @var OutputInterface */
-	protected $output;
 
 	/** @var  QuestionHelper */
 	protected $questionHelper;
@@ -60,9 +60,11 @@ class ResetCommand extends Command {
 	 */
 	public function __construct(FaceManagementService $faceManagementService,
 	                            IUserManager          $userManager,
-	                            QuestionHelper        $questionHelper) {
+	                            QuestionHelper        $questionHelper,
+								LoggerInterface       $logger) {
 		parent::__construct();
 
+		$this->setLogger($logger);
 		$this->faceManagementService = $faceManagementService;
 		$this->userManager           = $userManager;
 		$this->questionHelper        = $questionHelper;
@@ -121,77 +123,72 @@ class ResetCommand extends Command {
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output) {
 		// Used to questions.
-		//
 		$this->input = $input;
-		$this->output = $output;
+		$this->setOutput($output);
 
 		// Extract user, if any
-		//
 		$userId = $input->getOption('user_id');
 		$user = null;
 
 		if (!is_null($userId)) {
 			$user = $this->userManager->get($userId);
 			if ($user === null) {
-				$output->writeln("User with id <$userId> in unknown.");
+				$this->logError("User with id <$userId> in unknown.");
 				return 1;
 			}
 		}
 
 		// Get lock to avoid potential errors.
-		//
 		$lock = CommandLock::Lock('face:reset');
 		if (!$lock) {
-			$output->writeln("Another command ('". CommandLock::IsLockedBy().  "') is already running that prevents it from continuing.");
+			$this->logError("Another command ('". CommandLock::IsLockedBy().  "') is already running that prevents it from continuing.");
 			return 1;
 		}
 
 		// Main thing
-		//
 		$ret = 0;
 		if ($input->getOption('all')) {
 			if ($this->confirmate()) {
 				$this->resetAll($user);
-				$output->writeln('Reset successfully done');
+				$this->logInfo('Reset successfully done');
 			} else {
-				$output->writeln('Aborted');
+				$this->logInfo('Aborted');
 				$ret = 1;
 			}
 		}
 		else if ($input->getOption('model')) {
 			if ($this->confirmate()) {
 				$this->resetModel($user);
-				$output->writeln('Reset model successfully done');
+				$this->logInfo('Reset model successfully done');
 			} else {
-				$output->writeln('Aborted');
+				$this->logInfo('Aborted');
 				$ret = 1;
 			}
 		}
 		else if ($input->getOption('image-errors')) {
 			if ($this->confirmate()) {
 				$this->resetImageErrors($user);
-				$output->writeln('Reset image errors done');
+				$this->logInfo('Reset image errors done');
 			} else {
-				$output->writeln('Aborted');
+				$this->logInfo('Aborted');
 				$ret = 1;
 			}
 		}
 		else if ($input->getOption('clustering')) {
 			if ($this->confirmate()) {
 				$this->resetClusters($user);
-				$output->writeln('Reset clustering done');
+				$this->logInfo('Reset clustering done');
 			} else {
-				$output->writeln('Aborted');
+				$this->logInfo('Aborted');
 				$ret = 1;
 			}
 		}
 		else {
-			$output->writeln('You must specify what you want to reset');
+			$this->logError('You must specify what you want to reset');
 			$ret = 1;
 		}
 
 		// Release obtained lock
-		//
 		CommandLock::Unlock($lock);
 
 		return $ret;

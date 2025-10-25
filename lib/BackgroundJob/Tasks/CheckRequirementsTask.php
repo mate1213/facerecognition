@@ -39,6 +39,8 @@ use OCA\FaceRecognition\Model\ModelManager;
 use OCA\FaceRecognition\Model\Exceptions\UnavailableException;
 
 use OCA\FaceRecognition\Service\SettingsService;
+use Symfony\Component\Console\Output\OutputInterface;
+use Psr\Log\LoggerInterface;
 
 /**
  * Check all requirements before we start engaging in lengthy background task.
@@ -58,12 +60,14 @@ class CheckRequirementsTask extends FaceRecognitionBackgroundTask {
 	 * @param ModelManager $modelManager Model Manager
 	 * @param SettingsService $settingsService Settings service
 	 * @param Imaginary $imaginaryHelper imaginary helper
+	 * @param LoggerInterface $logger
 	 */
 	public function __construct(ModelManager    $modelManager,
 	                            SettingsService $settingsService,
-	                            Imaginary       $imaginaryHelper)
+	                            Imaginary       $imaginaryHelper,
+								LoggerInterface $logger)
 	{
-		parent::__construct();
+		parent::__construct($logger);
 
 		$this->modelManager    = $modelManager;
 		$this->settingsService = $settingsService;
@@ -80,8 +84,8 @@ class CheckRequirementsTask extends FaceRecognitionBackgroundTask {
 	/**
 	 * @inheritdoc
 	 */
-	public function execute(FaceRecognitionContext $context) {
-		$this->setContext($context);
+	public function execute(FaceRecognitionContext $context, OutputInterface $output) {
+		$this->setContext($context, $output);
 
 		$system = php_uname("s");
 		$this->logDebug("System: " . $system);

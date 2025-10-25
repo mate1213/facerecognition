@@ -48,9 +48,12 @@ use OCA\FaceRecognition\Service\FileService;
 use OCA\FaceRecognition\Helper\CommandLock;
 
 use OCP\Image as OCP_Image;
+use OCA\FaceRecognition\Traits\LoggerTrait;
+use Psr\Log\LoggerInterface;
 
 class MigrateCommand extends Command {
 
+	use LoggerTrait;
 	/** @var FaceManagementService */
 	protected $faceManagementService;
 
@@ -69,9 +72,6 @@ class MigrateCommand extends Command {
 	/** @var ImageMapper Image mapper*/
 	protected $imageMapper;
 
-	/** @var OutputInterface $output */
-	protected $output;
-
 	/**
 	 * @param FaceManagementService $faceManagementService
 	 * @param IUserManager $userManager
@@ -81,9 +81,11 @@ class MigrateCommand extends Command {
 	                            IUserManager          $userManager,
 	                            ModelManager          $modelManager,
 	                            FaceMapper            $faceMapper,
-	                            ImageMapper           $imageMapper)
+	                            ImageMapper           $imageMapper,
+								LoggerInterface       $logger)
 	{
 		parent::__construct();
+		$this->setLogger($logger);
 
 		$this->faceManagementService = $faceManagementService;
 		$this->fileService           = $fileService;
@@ -126,24 +128,25 @@ class MigrateCommand extends Command {
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output): int {
 		$this->output = $output;
+		$this->setOutput($output);
 
 		/**
 		 * Check the considerations of the models to migrate.
 		 */
 		$modelId = $input->getOption('model_id');
 		if (is_null($modelId)) {
-			$output->writeln("You must indicate the ID of the model to migrate");
+			$this->logError("You must indicate the ID of the model to migrate");
 			return 1;
 		}
 
 		$model = $this->modelManager->getModel($modelId);
 		if (is_null($model)) {
-			$output->writeln("Invalid model Id");
+			$this->logError("Invalid model Id");
 			return 1;
 		}
 
 		if (!$model->isInstalled()) {
-			$output->writeln("The model <$modelId> is not installed");
+			$this->logError("The model <$modelId> is not installed");
 			return 1;
 		}
 
@@ -151,7 +154,7 @@ class MigrateCommand extends Command {
 		$currentModelId = (!is_null($currentModel)) ? $currentModel->getId() : -1;
 
 		if ($currentModelId === $modelId) {
-			$output->writeln("The proposed model <$modelId> to migrate must be other than the current one <$currentModelId>");
+			$this->logError("The proposed model <$modelId> to migrate must be other than the current one <$currentModelId>");
 			return 1;
 		}
 
@@ -162,7 +165,7 @@ class MigrateCommand extends Command {
 		if ($userId !== null) {
 			$user = $this->userManager->get($userId);
 			if ($user === null) {
-				$output->writeln("User with id <$userId> is unknown.");
+				$this->logError("User with id <$userId> is unknown.");
 				return 1;
 			}
 		}
@@ -177,16 +180,15 @@ class MigrateCommand extends Command {
 		 */
 		foreach ($userIds as $mUserId) {
 			if ($this->faceManagementService->hasDataForUser($mUserId, $currentModelId)) {
-				$output->writeln("The user <$mUserId> in current model <$currentModelId> already has data. You cannot migrate to a used model.");
+				$this->logError("The user <$mUserId> in current model <$currentModelId> already has data. You cannot migrate to a used model.");
 				return 1;
 			}
 		}
 
 		// Get lock to avoid potential errors.
-		//
 		$lock = CommandLock::Lock("face:migrate");
 		if (!$lock) {
-			$output->writeln("Another command ('". CommandLock::IsLockedBy().  "') is already running that prevents it from continuing.");
+			$this->logError("Another command ('". CommandLock::IsLockedBy().  "') is already running that prevents it from continuing.");
 			return 1;
 		}
 
@@ -199,25 +201,21 @@ class MigrateCommand extends Command {
 			$this->migrateUser($currentModel, $modelId, $mUserId);
 		}
 
-		$output->writeln("The faces migration is done. Remember that you must recreate the clusters with the background_job command");
+		$this->logInfo("The faces migration is done. Remember that you must recreate the clusters with the background_job command");
 
 		// Release obtained lock
-		//
 		CommandLock::Unlock($lock);
 
 		return 0;
 	}
 
-	/**
-	 * @return void
-	 */
 	private function migrateUser(IModel $currentModel, int $oldModelId, $userId) {
 		if (!$this->faceManagementService->hasDataForUser($userId, $oldModelId)) {
-			$this->output->writeln("User <$userId> has no data in model <$oldModelId> to migrate.");
+			$this->logInfo("User <$userId> has no data in model <$oldModelId> to migrate.");
 			return;
 		}
 
-		$this->output->writeln("Will be migrated <$userId> from model <$oldModelId>");
+		$this->logInfo("Will be migrated <$userId> from model <$oldModelId>");
 
 		$currentModelId = $currentModel->getId();
 		$oldImages = $this->imageMapper->findAll($userId, $oldModelId);
@@ -243,7 +241,7 @@ class MigrateCommand extends Command {
 
 		$progressBar->finish();
 
-		$this->output->writeln("Done");
+		$this->logInfo("Done");
 	}
 
 	private function migrateImage($oldImage, string $userId, int $modelId): Image {

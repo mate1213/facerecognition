@@ -37,28 +37,31 @@ use OCA\FaceRecognition\Service\SettingsService;
 use OCA\FaceRecognition\Helper\CommandLock;
 use OCA\FaceRecognition\Helper\MemoryLimits;
 
+use OCA\FaceRecognition\Traits\LoggerTrait;
+use Psr\Log\LoggerInterface;
+
 use OCP\Util as OCP_Util;
 
 class SetupCommand extends Command {
 
+	use LoggerTrait;
 	/** @var ModelManager */
 	protected $modelManager;
 
 	/** @var SettingsService */
 	private $settingsService;
 
-	/** @var OutputInterface */
-	protected $logger;
-
 	/**
 	 * @param ModelManager $modelManager
 	 * @param SettingsService $settingsService
 	 */
 	public function __construct(ModelManager    $modelManager,
-	                            SettingsService $settingsService)
+	                            SettingsService $settingsService,
+								LoggerInterface   $logger)
 	{
 		parent::__construct();
 
+		$this->setLogger($logger);
 		$this->modelManager    = $modelManager;
 		$this->settingsService = $settingsService;
 	}
@@ -92,7 +95,7 @@ class SetupCommand extends Command {
 	 * @return int
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output) {
-		$this->logger = $output;
+		$this->setOutput($output);
 
 		$assignMemory = $input->getOption('memory');
 		$modelId = $input->getOption('model');
@@ -135,38 +138,38 @@ class SetupCommand extends Command {
 
 	private function setupAssignedMemory ($assignMemory): int {
 		$systemMemory = MemoryLimits::getSystemMemory();
-		$this->logger->writeln("System memory: " . ($systemMemory > 0 ? $this->getHumanMemory($systemMemory) : "Unknown"));
+		$this->output->writeln("System memory: " . ($systemMemory > 0 ? $this->getHumanMemory($systemMemory) : "Unknown"));
 		$phpMemory = MemoryLimits::getPhpMemory();
-		$this->logger->writeln("Memory assigned to PHP: " . ($phpMemory > 0 ? $this->getHumanMemory($phpMemory) : "Unlimited"));
+		$this->output->writeln("Memory assigned to PHP: " . ($phpMemory > 0 ? $this->getHumanMemory($phpMemory) : "Unlimited"));
 
-		$this->logger->writeln("");
+		$this->output->writeln("");
 		$availableMemory = MemoryLimits::getAvailableMemory();
-		$this->logger->writeln("Minimum value to assign to image processing.: " . $this->getHumanMemory(SettingsService::MINIMUM_ASSIGNED_MEMORY));
-		$this->logger->writeln("Maximum value to assign to image processing.: " . ($availableMemory > 0 ? $this->getHumanMemory($availableMemory) : "Unknown"));
+		$this->output->writeln("Minimum value to assign to image processing.: " . $this->getHumanMemory(SettingsService::MINIMUM_ASSIGNED_MEMORY));
+		$this->output->writeln("Maximum value to assign to image processing.: " . ($availableMemory > 0 ? $this->getHumanMemory($availableMemory) : "Unknown"));
 
-		$this->logger->writeln("");
+		$this->output->writeln("");
 		if ($assignMemory > $availableMemory) {
-			$this->logger->writeln("Cannot assign more memory than the maximum...");
+			$this->logError("Cannot assign more memory than the maximum...");
 			return 1;
 		}
 
 		if ($assignMemory < SettingsService::MINIMUM_ASSIGNED_MEMORY) {
-			$this->logger->writeln("Cannot assign less memory than the minimum...");
+			$this->logError("Cannot assign less memory than the minimum...");
 			return 1;
 		}
 
 		$this->settingsService->setAssignedMemory ($assignMemory);
-		$this->logger->writeln("Maximum memory assigned for image processing: " . $this->getHumanMemory($assignMemory));
+		$this->output->writeln("Maximum memory assigned for image processing: " . $this->getHumanMemory($assignMemory));
 
 		return 0;
 	}
 
 	private function setupModel (int $modelId): int {
-		$this->logger->writeln("");
+		$this->output->writeln("");
 
 		$model = $this->modelManager->getModel($modelId);
 		if (is_null($model)) {
-			$this->logger->writeln('Invalid model Id');
+			$this->logError('Invalid model Id');
 			return 1;
 		}
 
@@ -174,42 +177,42 @@ class SetupCommand extends Command {
 
 		$error_message = "";
 		if (!$model->meetDependencies($error_message)) {
-			$this->logger->writeln('You do not meet the dependencies to install the model ' . $modelDescription);
-			$this->logger->writeln('Summary: ' . $error_message);
-			$this->logger->writeln('Please read the documentation for this model to continue: ' .$model->getDocumentation());
+			$this->logError('You do not meet the dependencies to install the model ' . $modelDescription);
+			$this->logError('Summary: ' . $error_message);
+			$this->logError('Please read the documentation for this model to continue: ' .$model->getDocumentation());
 			return 1;
 		}
 
 		if ($model->isInstalled()) {
-			$this->logger->writeln('The files of model ' . $modelDescription . ' are already installed');
+			$this->logInfo('The files of model ' . $modelDescription . ' are already installed');
 			$this->modelManager->setDefault($modelId);
-			$this->logger->writeln('The model ' . $modelDescription . ' was configured as default');
+			$this->logInfo('The model ' . $modelDescription . ' was configured as default');
 
 			return 0;
 		}
 
-		$this->logger->writeln('The model ' . $modelDescription . ' will be installed');
+		$this->logInfo('The model ' . $modelDescription . ' will be installed');
 		$model->install();
-		$this->logger->writeln('Install model ' . $modelDescription . ' successfully done');
+		$this->logInfo('Install model ' . $modelDescription . ' successfully done');
 
 		$this->modelManager->setDefault($modelId);
-		$this->logger->writeln('The model ' . $modelDescription . ' was configured as default');
+		$this->logInfo('The model ' . $modelDescription . ' was configured as default');
 
 		return 0;
 	}
 
 	private function dumpCurrentSetup (): void {
-		$this->logger->writeln("Current setup:");
-		$this->logger->writeln('');
-		$this->logger->writeln("Minimum value to assign to image processing.: " . $this->getHumanMemory(SettingsService::MINIMUM_ASSIGNED_MEMORY));
+		$this->output->writeln("Current setup:");
+		$this->output->writeln('');
+		$this->output->writeln("Minimum value to assign to image processing.: " . $this->getHumanMemory(SettingsService::MINIMUM_ASSIGNED_MEMORY));
 		$availableMemory = MemoryLimits::getAvailableMemory();
-		$this->logger->writeln("Maximum value to assign to image processing.: " . ($availableMemory > 0 ? $this->getHumanMemory($availableMemory) : "Unknown"));
+		$this->output->writeln("Maximum value to assign to image processing.: " . ($availableMemory > 0 ? $this->getHumanMemory($availableMemory) : "Unknown"));
 		$assignedMemory = $this->settingsService->getAssignedMemory();
-		$this->logger->writeln("Maximum memory assigned for image processing: " . ($assignedMemory > 0 ? $this->getHumanMemory($assignedMemory) : "Pending configuration"));
+		$this->output->writeln("Maximum memory assigned for image processing: " . ($assignedMemory > 0 ? $this->getHumanMemory($assignedMemory) : "Pending configuration"));
 
-		$this->logger->writeln('');
-		$this->logger->writeln("Available models:");
-		$table = new Table($this->logger);
+		$this->output->writeln('');
+		$this->output->writeln("Available models:");
+		$table = new Table($this->output);
 		$table->setHeaders(['Id', 'Enabled', 'Name', 'Description']);
 
 		$currentModel = $this->modelManager->getCurrentModel();

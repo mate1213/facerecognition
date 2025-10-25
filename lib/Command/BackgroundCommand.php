@@ -37,9 +37,12 @@ use Symfony\Component\Console\Output\OutputInterface;
 use OCA\FaceRecognition\Helper\CommandLock;
 
 use OCA\FaceRecognition\BackgroundJob\BackgroundService;
+use OCA\FaceRecognition\Traits\LoggerTrait;
+use Psr\Log\LoggerInterface;
 
 class BackgroundCommand extends Command {
 
+	use LoggerTrait;
 	/** @var BackgroundService */
 	protected $backgroundService;
 
@@ -49,13 +52,16 @@ class BackgroundCommand extends Command {
 	/**
 	 * @param BackgroundService $backgroundService
 	 * @param IUserManager $userManager
+	 * @param LoggerInterface $logger
 	 */
 	public function __construct(BackgroundService $backgroundService,
-	                            IUserManager      $userManager) {
+	                            IUserManager      $userManager,
+								LoggerInterface   $logger) {
 		parent::__construct();
 
 		$this->backgroundService = $backgroundService;
 		$this->userManager = $userManager;
+		$this->setLogger($logger);
 	}
 
 	/**
@@ -118,7 +124,7 @@ class BackgroundCommand extends Command {
 	 * @return int
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output) {
-		$this->backgroundService->setLogger($output);
+		$this->backgroundService->setOutput($output);
 
 		// Extract user, if any
 		//
@@ -182,7 +188,7 @@ class BackgroundCommand extends Command {
 		if ($globalLock) {
 			$lock = CommandLock::Lock('face:background_job');
 			if (!$lock) {
-				$output->writeln("Another task ('". CommandLock::IsLockedBy().  "') is already running that prevents it from continuing.");
+				$this->logError("Another task ('". CommandLock::IsLockedBy().  "') is already running that prevents it from continuing.");
 				return 1;
 			}
 		}

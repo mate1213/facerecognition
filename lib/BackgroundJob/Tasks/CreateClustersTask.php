@@ -38,6 +38,8 @@ use OCA\FaceRecognition\Helper\Requirements;
 use OCA\FaceRecognition\Clusterer\ChineseWhispers;
 
 use OCA\FaceRecognition\Service\SettingsService;
+use Symfony\Component\Console\Output\OutputInterface;
+use Psr\Log\LoggerInterface;
 /**
  * Taks that, for each user, creates person clusters for each.
  */
@@ -63,9 +65,10 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 	public function __construct(ClusterMapper    $clusterMapper,
 	                            ImageMapper     $imageMapper,
 	                            FaceMapper      $faceMapper,
-	                            SettingsService $settingsService)
+	                            SettingsService $settingsService,
+								LoggerInterface $logger)
 	{
-		parent::__construct();
+		parent::__construct($logger);
 
 		$this->clusterMapper    = $clusterMapper;
 		$this->imageMapper     = $imageMapper;
@@ -83,8 +86,8 @@ class CreateClustersTask extends FaceRecognitionBackgroundTask {
 	/**
 	 * @inheritdoc
 	 */
-	public function execute(FaceRecognitionContext $context) {
-		$this->setContext($context);
+	public function execute(FaceRecognitionContext $context, OutputInterface $output) {
+		$this->setContext($context, $output);
 		$eligable_users = $this->context->getEligibleUsers();
 		foreach($eligable_users as $user) {
 			$this->logInfo('-- Processing user -->' . $user);

@@ -35,6 +35,8 @@ use OCA\FaceRecognition\Db\ImageMapper;
 
 use OCA\FaceRecognition\Service\FileService;
 use OCA\FaceRecognition\Service\SettingsService;
+use Symfony\Component\Console\Output\OutputInterface;
+use Psr\Log\LoggerInterface;
 
 /**
  * Task that, for each user, crawls for all images in filesystem and insert them in database.
@@ -60,9 +62,10 @@ class AddMissingImagesTask extends FaceRecognitionBackgroundTask {
 	 */
 	public function __construct(ImageMapper     $imageMapper,
 	                            FileService     $fileService,
-	                            SettingsService $settingsService)
+	                            SettingsService $settingsService,
+								LoggerInterface $logger)
 	{
-		parent::__construct();
+		parent::__construct($logger);
 
 		$this->imageMapper     = $imageMapper;
 		$this->fileService     = $fileService;
@@ -79,8 +82,8 @@ class AddMissingImagesTask extends FaceRecognitionBackgroundTask {
 	/**
 	 * @inheritdoc
 	 */
-	public function execute(FaceRecognitionContext $context) {
-		$this->setContext($context);
+	public function execute(FaceRecognitionContext $context, OutputInterface $output) {
+		$this->setContext($context, $output);
 
 		// Check if we are called for one user only, or for all user in instance.
 		$insertedImages = 0;

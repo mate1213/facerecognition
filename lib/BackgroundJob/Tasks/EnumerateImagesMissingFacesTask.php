@@ -29,6 +29,8 @@ use OCA\FaceRecognition\Service\SettingsService;
 
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionBackgroundTask;
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
+use Symfony\Component\Console\Output\OutputInterface;
+use Psr\Log\LoggerInterface;
 
 /**
  * Task that gets all images (from database) that don't yet have faces found (e.g. they are not processed).
@@ -47,9 +49,10 @@ class EnumerateImagesMissingFacesTask extends FaceRecognitionBackgroundTask {
 	 * @param ImageMapper $imageMapper Image mapper
 	 */
 	public function __construct(SettingsService $settingsService,
-	                            ImageMapper     $imageMapper)
+	                            ImageMapper     $imageMapper,
+								LoggerInterface $logger)
 	{
-		parent::__construct();
+		parent::__construct($logger);
 		$this->settingsService = $settingsService;
 		$this->imageMapper     = $imageMapper;
 	}
@@ -64,8 +67,8 @@ class EnumerateImagesMissingFacesTask extends FaceRecognitionBackgroundTask {
 	/**
 	 * @inheritdoc
 	 */
-	public function execute(FaceRecognitionContext $context) {
-		$this->setContext($context);
+	public function execute(FaceRecognitionContext $context, OutputInterface $output) {
+		$this->setContext($context, $output);
 
 		$modelId = $this->settingsService->getCurrentFaceModel();
 		$images = $this->imageMapper->findImagesWithoutFaces(null, $modelId);

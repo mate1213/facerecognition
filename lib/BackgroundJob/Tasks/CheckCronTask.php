@@ -25,6 +25,7 @@ namespace OCA\FaceRecognition\BackgroundJob\Tasks;
 
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionBackgroundTask;
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
+use Symfony\Component\Console\Output\OutputInterface;
 
 /**
  * Check that we are started either through command, or from cron/webcron (but do not allow ajax mode)
@@ -40,8 +41,8 @@ class CheckCronTask extends FaceRecognitionBackgroundTask {
 	/**
 	 * @inheritdoc
 	 */
-	public function execute(FaceRecognitionContext $context) {
-		$this->setContext($context);
+	public function execute(FaceRecognitionContext $context, OutputInterface $output) {
+		$this->setContext($context, $output);
 
 		$isCommand = $context->isRunningThroughCommand();
 		$isBackgroundJobModeAjax = $context->config->getAppValue('core', 'backgroundjobs_mode', 'ajax') === 'ajax';

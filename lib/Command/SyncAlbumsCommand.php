@@ -37,9 +37,12 @@ use OCA\FaceRecognition\Helper\PhotoAlbums;
 use OCA\FaceRecognition\Db\ClusterMapper;
 
 use OCA\FaceRecognition\Service\SettingsService;
+use OCA\FaceRecognition\Traits\LoggerTrait;
+use Psr\Log\LoggerInterface;
 
 class SyncAlbumsCommand extends Command {
 
+	use LoggerTrait;
 	/** @var IUserManager */
 	protected $userManager;
 
@@ -66,10 +69,12 @@ class SyncAlbumsCommand extends Command {
 	                            ClusterMapper    $clusterMapper,
 	                            IAppManager     $appManager,
 	                            PhotoAlbums     $photoAlbums,
-	                            SettingsService $settingsService)
+	                            SettingsService $settingsService,
+								LoggerInterface $logger)
 	{
 		parent::__construct();
 
+		$this->setLogger($logger);
 		$this->appManager      = $appManager;
 		$this->clusterMapper    = $clusterMapper;
 		$this->userManager     = $userManager;
@@ -117,8 +122,9 @@ class SyncAlbumsCommand extends Command {
 	 * @return int
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output) {
+		$this->setOutput($output);
 		if (!$this->appManager->isEnabledForUser('photos')) {
-			$output->writeln('The photos app is disabled.');
+			$this->logError('The photos app is disabled.');
 			return 1;
 		}
 
@@ -129,7 +135,7 @@ class SyncAlbumsCommand extends Command {
 
 		if (!is_null($userId)) {
 			if ($this->userManager->get($userId) === null) {
-				$output->writeln("User with id <$userId> in unknown.");
+				$this->logError("User with id <$userId> in unknown.");
 				return 1;
 			}
 			else {
@@ -144,20 +150,20 @@ class SyncAlbumsCommand extends Command {
 
 		if ($input->getOption('list_person')) {
 			if (is_null($userId)) {
-				$output->writeln("List option requires option user_id!");
+				$this->logError("List option requires option user_id!");
 				return 1;
-			} else{
-				$output->writeln("List of defined persons for the user <$userId> :");
+			} else {
+				$this->logInfo("List of defined persons for the user <$userId> :");
 				$modelId = $this->settingsService->getCurrentFaceModel();
 				$distintNames = $this->clusterMapper->findDistinctNames($userId, $modelId);
-				foreach ($distintNames as $key=>$distintName) {
-					if ($key > 0 ){
-						$output->write(", ");
-					}
-					$output->write($distintName->getName());
+				
+				// Build the names list
+				$namesList = [];
+				foreach ($distintNames as $distintName) {
+					$namesList[] = $distintName->getName();
 				}
-				$output->writeln("");
-				$output->writeln("Done.");
+				$this->logInfo(implode(", ", $namesList));
+				$this->logInfo("Done.");
 			}
 			return 0;
 		}
@@ -165,10 +171,10 @@ class SyncAlbumsCommand extends Command {
 		foreach ($users as $userId) {
 			if (!is_null($person_name)) {
 				if (is_null($userId)) {
-					$output->writeln("Person_name option requires option user_id!");
+					$this->logError("Person_name option requires option user_id!");
 					return 1;
 				}
-				$output->writeln("Synchronizing albums for the user <$userId> and person_name <$person_name> using mode <$mode>... ");
+				$this->logInfo("Synchronizing albums for the user <$userId> and person_name <$person_name> using mode <$mode>... ");
 				if ($mode === "album-per-person") {
 					$personList = explode(",", $person_name);
 					foreach ($personList as $person) {
@@ -178,20 +184,20 @@ class SyncAlbumsCommand extends Command {
 				else if ($mode === "album-combined") {
 					$personList = explode(",", $person_name); 
 					if (count($personList) < 2) {
-						$output->writeln("Note parameter mode <$mode> requires at least two persons separated using coma.");
+						$this->logError("Note parameter mode <$mode> requires at least two persons separated using coma.");
 						return 1;
 					}
 					$this->photoAlbums->syncUserPersonNamesCombinedAlbum($userId, $personList, $output);
 				}
 				else {
-					$output->writeln("Error: invalid value for parameter mode <$mode>. ");
+					$this->logError("Error: invalid value for parameter mode <$mode>. ");
 					return 1;
 				}
-				$output->writeln("Done.");
+				$this->logInfo("Done.");
 			} else {
-				$output->write("Synchronizing albums for the user <$userId>... ");
+				$this->logInfo("Synchronizing albums for the user <$userId>... ");
 				$this->photoAlbums->syncUser($userId);
-				$output->writeln("Done.");
+				$this->logInfo("Done.");
 			}
 		}
 

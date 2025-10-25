@@ -31,6 +31,8 @@ use OCA\FaceRecognition\Db\ImageMapper;
 
 use OCA\FaceRecognition\Service\FaceManagementService;
 use OCA\FaceRecognition\Service\SettingsService;
+use Symfony\Component\Console\Output\OutputInterface;
+use Psr\Log\LoggerInterface;
 
 /**
  * Task that, for each user, check if disabled the analysis,
@@ -54,9 +56,10 @@ class DisabledUserRemovalTask extends FaceRecognitionBackgroundTask {
 	 */
 	public function __construct (ImageMapper           $imageMapper,
 	                             FaceManagementService $faceManagementService,
-	                             SettingsService       $settingsService)
+	                             SettingsService       $settingsService,
+								 LoggerInterface	   $logger)
 	{
-		parent::__construct();
+		parent::__construct($logger);
 
 		$this->imageMapper           = $imageMapper;
 		$this->faceManagementService = $faceManagementService;
@@ -73,8 +76,8 @@ class DisabledUserRemovalTask extends FaceRecognitionBackgroundTask {
 	/**
 	 * @inheritdoc
 	 */
-	public function execute(FaceRecognitionContext $context) {
-		$this->setContext($context);
+	public function execute(FaceRecognitionContext $context, OutputInterface $output) {
+		$this->setContext($context, $output);
 
 		// Check if we are called for one user only, or for all user in instance.
 		$eligable_users = $this->context->getEligibleUsers();

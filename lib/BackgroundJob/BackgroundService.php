@@ -40,6 +40,8 @@ use OCA\FaceRecognition\BackgroundJob\Tasks\ImageProcessingTask;
 use OCA\FaceRecognition\BackgroundJob\Tasks\StaleImagesRemovalTask;
 
 use Symfony\Component\Console\Output\OutputInterface;
+use OCA\FaceRecognition\Traits\LoggerTrait;
+use Psr\Log\LoggerInterface;
 
 /**
  * Background service. Both command and cron job are calling this service for long-running background operations.
@@ -52,24 +54,17 @@ use Symfony\Component\Console\Output\OutputInterface;
  */
 class BackgroundService {
 
+	use LoggerTrait;
 	/** @var Application $application */
 	private $application;
 
 	/** @var FaceRecognitionContext $context */
 	private $context;
 
-	public function __construct(Application $application, FaceRecognitionContext $context) {
+	public function __construct(Application $application, FaceRecognitionContext $context, LoggerInterface $logger) {
 		$this->application = $application;
 		$this->context = $context;
-	}
-
-	public function setLogger(OutputInterface $logger): void {
-		if (!is_null($this->context->logger)) {
-			// If you get this exception, it means you already initialized context->logger. Double-check your flow.
-			throw new \LogicException('You cannot call setLogger after you set it once');
-		}
-
-		$this->context->logger = new FaceRecognitionLogger($logger);
+		$this->setLogger($logger);
 	}
 
 	/**
@@ -138,11 +133,11 @@ class BackgroundService {
 		for ($i=0, $task_classes_count = count($task_classes); $i < $task_classes_count; $i++) {
 			$task_class = $task_classes[$i];
 			$task = $this->application->getContainer()->query($task_class);
-			$this->context->logger->logInfo(sprintf("%d/%d - Executing task %s (%s)",
+			$this->logInfo(sprintf("%d/%d - Executing task %s (%s)",
 				$i+1, count($task_classes), (new \ReflectionClass($task_class))->getShortName(), $task->description()));
 
 			try {
-				$generator = $task->execute($this->context);
+				$generator = $task->execute($this->context, $this->output);
 				// $generator can be either actual Generator or return value of boolean.
 				// If it is Generator object, that means execute() had some yields.
 				// Iterate through those yields and we will get end result through getReturn().
@@ -150,19 +145,19 @@ class BackgroundService {
 					foreach ($generator as $_) {
 						$currentTime = time();
 						if (($timeout > 0) && ($currentTime - $startTime > $timeout)) {
-							$this->context->logger->logInfo("Time out. Quitting...");
+							$this->logInfo("Time out. Quitting...");
 							return;
 						}
 
 						if ($this->context->verbose) {
-							$this->context->logger->logDebug('yielding');
+							$this->logDebug('yielding');
 						}
 					}
 				}
 
 				$shouldContinue = ($generator instanceof \Generator) ? $generator->getReturn() : $generator;
 				if (!$shouldContinue) {
-					$this->context->logger->logInfo(
+					$this->logInfo(
 						sprintf("Task %s signalled we should not continue, bailing out",
 						(new \ReflectionClass($task_class))->getShortName()));
 					return;
@@ -170,10 +165,10 @@ class BackgroundService {
 			} catch (\Exception $e) {
 				// Any exception is fatal, and we should quit background job
 				//
-				$this->context->logger->logInfo("Error during background task execution");
-				$this->context->logger->logInfo("If error is not transient, this means that core component of face recognition is not working properly");
-				$this->context->logger->logInfo("and that quantity and quality of detected faces and person will be low or suboptimal.");
-				$this->context->logger->logInfo("You probably want to file an issue (please include exception below) to: https://github.com/matiasdelellis/facerecognition/issues");
+				$this->logInfo("Error during background task execution");
+				$this->logInfo("If error is not transient, this means that core component of face recognition is not working properly");
+				$this->logInfo("and that quantity and quality of detected faces and person will be low or suboptimal.");
+				$this->logInfo("You probably want to file an issue (please include exception below) to: https://github.com/matiasdelellis/facerecognition/issues");
 				throw $e;
 			}
 		}

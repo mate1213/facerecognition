@@ -24,7 +24,9 @@
 namespace OCA\FaceRecognition\BackgroundJob;
 
 use OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext;
-
+use \Symfony\Component\Console\Output\OutputInterface;
+use OCA\FaceRecognition\Traits\LoggerTrait;
+use Psr\Log\LoggerInterface;
 /**
  * Interface that each face recognition background task should implement
  */
@@ -40,10 +42,11 @@ interface IFaceRecognitionBackgroundTask {
 	 * Executes task.
 	 *
 	 * @param FaceRecognitionContext $context Face recognition context
+	 * @param \Symfony\Component\Console\Output\OutputInterface $output Console output interface
 	 * @return \Generator|bool Since we are yielding, return type is either Generator, or boolean (actual return).
 	 * Return value specifies should we continue execution. True if we should continue, false if we should bail out.
 	 */
-	public function execute(FaceRecognitionContext $context);
+	public function execute(FaceRecognitionContext $context, OutputInterface $output);
 }
 
 /**
@@ -51,10 +54,12 @@ interface IFaceRecognitionBackgroundTask {
  */
 abstract class FaceRecognitionBackgroundTask implements IFaceRecognitionBackgroundTask {
 
+	use LoggerTrait;
 	/** @var FaceRecognitionContext $context */
 	protected $context;
 
-	public function __construct() {
+	public function __construct(LoggerInterface $logger) {
+		$this->setLogger($logger);
 	}
 
 	/**
@@ -62,32 +67,12 @@ abstract class FaceRecognitionBackgroundTask implements IFaceRecognitionBackgrou
 	 * Currently public, because of tests (ideally it should be protected).
 	 *
 	 * @param FaceRecognitionContext $context Context
+	 * @param OutputInterface $output Console output interface
 	 *
 	 * @return void
 	 */
-	public function setContext(FaceRecognitionContext $context): void {
+	public function setContext(FaceRecognitionContext $context, OutputInterface $output): void {
 		$this->context = $context;
-	}
-
-	/**
-	 * Wrapper for info logging. It using this log call, it will indent log messages,
-	 * so there is nice visual that those messages belongs to particular task.
-	 *
-	 * @return void
-	 */
-	protected function logInfo(string $message): void {
-		$this->context->logger->logInfo("\t" . $message);
-	}
-
-	/**
-	 * Wrapper for debug logging. It using this log call, it will indent log messages,
-	 * so there is nice visual that those messages belongs to particular task.
-	 *
-	 * @return void
-	 */
-	protected function logDebug(string $message): void {
-		if ($this->context->verbose) {
-			$this->context->logger->logDebug("\t" . $message);
-		}
+		$this->setOutput($output);
 	}
 }

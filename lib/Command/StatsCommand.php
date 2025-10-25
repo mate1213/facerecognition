@@ -36,9 +36,12 @@ use OCA\FaceRecognition\Db\FaceMapper;
 use OCA\FaceRecognition\Db\ClusterMapper;
 
 use OCA\FaceRecognition\Service\SettingsService;
+use OCA\FaceRecognition\Traits\LoggerTrait;
+use Psr\Log\LoggerInterface;
 
 class StatsCommand extends Command {
 
+	use LoggerTrait;
 	/** @var IUserManager */
 	protected $userManager;
 
@@ -65,10 +68,12 @@ class StatsCommand extends Command {
 	                            ImageMapper     $imageMapper,
 	                            FaceMapper      $faceMapper,
 	                            ClusterMapper    $clusterMapper,
-	                            SettingsService $settingsService)
+	                            SettingsService $settingsService, 
+								LoggerInterface $logger)
 	{
 		parent::__construct();
 
+		$this->setLogger($logger);
 		$this->userManager     = $userManager;
 		$this->imageMapper     = $imageMapper;
 		$this->faceMapper      = $faceMapper;
@@ -105,11 +110,12 @@ class StatsCommand extends Command {
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output) {
 		$users = array();
+		$this->setOutput($output);
 
 		$userId = $input->getOption('user_id');
 		if (!is_null($userId)) {
 			if ($this->userManager->get($userId) === null) {
-				$output->writeln("User with id <$userId> in unknown.");
+				$this->logError("User with id <$userId> in unknown.");
 				return 1;
 			}
 			else {

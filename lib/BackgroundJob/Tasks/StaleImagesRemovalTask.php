@@ -39,6 +39,8 @@ use OCA\FaceRecognition\Db\ClusterMapper;
 
 use OCA\FaceRecognition\Service\FileService;
 use OCA\FaceRecognition\Service\SettingsService;
+use Symfony\Component\Console\Output\OutputInterface;
+use Psr\Log\LoggerInterface;
 
 /**
  * Task that, for each user, crawls for all images in database,
@@ -73,9 +75,10 @@ class StaleImagesRemovalTask extends FaceRecognitionBackgroundTask {
 	                            FaceMapper      $faceMapper,
 	                            ClusterMapper    $clusterMapper,
 	                            FileService     $fileService,
-	                            SettingsService $settingsService)
+	                            SettingsService $settingsService,
+								LoggerInterface $logger)
 	{
-		parent::__construct();
+		parent::__construct($logger);
 
 		$this->imageMapper     = $imageMapper;
 		$this->faceMapper      = $faceMapper;
@@ -94,8 +97,8 @@ class StaleImagesRemovalTask extends FaceRecognitionBackgroundTask {
 	/**
 	 * @inheritdoc
 	 */
-	public function execute(FaceRecognitionContext $context) {
-		$this->setContext($context);
+	public function execute(FaceRecognitionContext $context, OutputInterface $output) {
+		$this->setContext($context, $output);
 
 		$staleRemovedImages = 0;
 
