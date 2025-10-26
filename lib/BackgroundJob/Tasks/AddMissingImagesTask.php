@@ -83,6 +83,7 @@ class AddMissingImagesTask extends FaceRecognitionBackgroundTask {
 	 * @inheritdoc
 	 */
 	public function execute(FaceRecognitionContext $context, OutputInterface $output) {
+		$this->imageMapper->setOutput($output);
 		$this->setContext($context, $output);
 
 		// Check if we are called for one user only, or for all user in instance.
