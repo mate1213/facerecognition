@@ -21,11 +21,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-namespace OCA\FaceRecognition\Tests\Integration;
-
-use OC\Files\View;
+namespace OCA\FaceRecognition\Tests\Integration\BackgroundJob\Tasks;
 
 use OCP\IUser;
+use OCA\FaceRecognition\Tests\Integration\IntegrationTestCase;
 use OCA\FaceRecognition\BackgroundJob\Tasks\AddMissingImagesTask;
 use OCA\FaceRecognition\BackgroundJob\Tasks\DisabledUserRemovalTask;
 
@@ -35,6 +34,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 
 #[CoversClass(DisabledUserRemovalTask::class)]
+#[UsesClass(\OCA\FaceRecognition\BackgroundJob\FaceRecognitionBackgroundTask::class)]
 #[UsesClass(\OCA\FaceRecognition\BackgroundJob\FaceRecognitionContext::class)]
 #[UsesClass(\OCA\FaceRecognition\BackgroundJob\FaceRecognitionLogger::class)]
 #[UsesClass(\OCA\FaceRecognition\BackgroundJob\Tasks\AddMissingImagesTask::class)]
@@ -43,7 +43,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(\OCA\FaceRecognition\Db\ImageMapper::class)]
 #[UsesClass(\OCA\FaceRecognition\Service\FileService::class)]
 #[UsesClass(\OCA\FaceRecognition\Service\SettingsService::class)]
-#[UsesClass(\OCA\FaceRecognition\Db\PersonMapper::class)]
+#[UsesClass(\OCA\FaceRecognition\Db\ClusterMapper::class)]
 #[UsesClass(\OCA\FaceRecognition\Service\FaceManagementService::class)]
 class DisabledUserRemovalTaskTest extends IntegrationTestCase {
 

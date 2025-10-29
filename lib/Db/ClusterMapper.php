@@ -1,10 +1,10 @@
 <?php
 
 /**
- * @copyright Copyright (c) 2017-2020, Matias De lellis <mati86dl@gmail.com>
+ * @copyright Copyright (c) 2018-2021, Matias De lellis <mati86dl@gmail.com>
  * @copyright Copyright (c) 2018-2019, Branko Kokanovic <branko@kokanovic.org>
  *
- * @author Matias De lellis <mati86dl@gmail.com>
+ * @author Branko Kokanovic <branko@kokanovic.org>
  *
  * @license GNU AGPL version 3 or any later version
  *
@@ -25,36 +25,33 @@
 
 namespace OCA\FaceRecognition\Db;
 
+
 use OCP\IDBConnection;
 use OCP\AppFramework\Db\QBMapper;
-use OCP\AppFramework\Db\DoesNotExistException;
-use OCP\DB\QueryBuilder\IQueryBuilder;
 
+use OCA\FaceRecognition\Db\ClusterMapperTraits\ClusterCountTrait;
+use OCA\FaceRecognition\Db\ClusterMapperTraits\ClusterCRUDTrait;
+use OCA\FaceRecognition\Db\ClusterMapperTraits\ClusterFaceTrait;
+use OCA\FaceRecognition\Db\ClusterMapperTraits\ClusterFinderTrait;
+use OCA\FaceRecognition\Db\ClusterMapperTraits\ClusterPersonTrait;
 use OCA\FaceRecognition\Traits\LoggerTrait;
 use Psr\Log\LoggerInterface;
 
-use OCA\FaceRecognition\Db\FaceMapperTraits\AllFacesTrait;
-use OCA\FaceRecognition\Db\FaceMapperTraits\CountFacesTrait;
-use OCA\FaceRecognition\Db\FaceMapperTraits\DescriptorsTrait;
-use OCA\FaceRecognition\Db\FaceMapperTraits\FindFacesTrait;
-use OCA\FaceRecognition\Db\FaceMapperTraits\GroupingTrait;
-use OCA\FaceRecognition\Db\FaceMapperTraits\ModificationTrait;
-
-class FaceMapper extends QBMapper
+class ClusterMapper extends QBMapper
 {
 	use LoggerTrait;
-    use AllFacesTrait;
-    use CountFacesTrait;
-    use DescriptorsTrait;
-    use FindFacesTrait;
-    use GroupingTrait;
-    use ModificationTrait;
+    use ClusterCountTrait;
+    use ClusterCRUDTrait;
+    use ClusterFaceTrait;
+    use ClusterFinderTrait; 
+    use ClusterPersonTrait;
 
     public function __construct(IDBConnection $db, LoggerInterface $logger)
     {
-        parent::__construct($db, 'facerecog_faces', '\OCA\FaceRecognition\Db\Face');
-
+        parent::__construct($db, 'facerecog_clusters', '\OCA\FaceRecognition\Db\Person');
 		$this->setLogger($logger);
     }
-    
+
+
+
 }
