@@ -39,7 +39,7 @@ use OCA\FaceRecognition\Db\Image;
 use OCA\FaceRecognition\Db\ImageMapper;
 
 use OCA\FaceRecognition\Db\Person;
-use OCA\FaceRecognition\Db\PersonMapper;
+use OCA\FaceRecognition\Db\ClusterMapper;
 
 use OCA\FaceRecognition\Service\SettingsService;
 use OCA\FaceRecognition\Service\UrlService;
@@ -53,8 +53,8 @@ class ClusterController extends Controller {
 	/** @var ImageMapper */
 	private $imageMapper;
 
-	/** @var PersonMapper */
-	private $personMapper;
+	/** @var ClusterMapper */
+	private $clusterMapper;
 
 	/** @var SettingsService */
 	private $settingsService;
@@ -69,7 +69,7 @@ class ClusterController extends Controller {
 	                            IRequest        $request,
 	                            FaceMapper      $faceMapper,
 	                            ImageMapper     $imageMapper,
-	                            PersonMapper    $personmapper,
+	                            ClusterMapper    $personmapper,
 	                            SettingsService $settingsService,
 	                            UrlService      $urlService,
 	                            $UserId)
@@ -78,7 +78,7 @@ class ClusterController extends Controller {
 
 		$this->faceMapper      = $faceMapper;
 		$this->imageMapper     = $imageMapper;
-		$this->personMapper    = $personmapper;
+		$this->clusterMapper    = $personmapper;
 		$this->settingsService = $settingsService;
 		$this->urlService      = $urlService;
 		$this->userId          = $UserId;
@@ -89,7 +89,7 @@ class ClusterController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function find(int $id): DataResponse {
-		$person = $this->personMapper->find($this->userId, $id);
+		$person = $this->clusterMapper->find($this->userId, $id);
 
 		$resp = [];
 		$faces = [];
@@ -127,7 +127,7 @@ class ClusterController extends Controller {
 
 		$modelId = $this->settingsService->getCurrentFaceModel();
 
-		$persons = $this->personMapper->findByName($this->userId, $modelId, $personName);
+		$persons = $this->clusterMapper->findByName($this->userId, $modelId, $personName);
 		foreach ($persons as $person) {
 			$personFaces = $this->faceMapper->findFromCluster($this->userId, $person->getId(), $modelId);
 
@@ -172,9 +172,9 @@ class ClusterController extends Controller {
 		$modelId = $this->settingsService->getCurrentFaceModel();
 		$minClusterSize = $this->settingsService->getMinimumFacesInCluster();
 
-		$clusters = $this->personMapper->findUnassigned($this->userId, $modelId);
+		$clusters = $this->clusterMapper->findUnassigned($this->userId, $modelId);
 		foreach ($clusters as $cluster) {
-			$clusterSize = $this->personMapper->countClusterFaces($cluster->getId());
+			$clusterSize = $this->clusterMapper->countClusterFaces($cluster->getId());
 			if ($clusterSize < $minClusterSize)
 				continue;
 
@@ -220,9 +220,9 @@ class ClusterController extends Controller {
 		$modelId = $this->settingsService->getCurrentFaceModel();
 		$minClusterSize = $this->settingsService->getMinimumFacesInCluster();
 
-		$clusters = $this->personMapper->findIgnored($this->userId, $modelId);
+		$clusters = $this->clusterMapper->findIgnored($this->userId, $modelId);
 		foreach ($clusters as $cluster) {
-			$clusterSize = $this->personMapper->countClusterFaces($cluster->getId());
+			$clusterSize = $this->clusterMapper->countClusterFaces($cluster->getId());
 			if ($clusterSize < $minClusterSize)
 				continue;
 
@@ -260,7 +260,7 @@ class ClusterController extends Controller {
 	#[NoAdminRequired]
 	public function setVisibility (int $id, bool $visible): DataResponse {
 		$resp = array();
-		$this->personMapper->setVisibility($id, $visible);
+		$this->clusterMapper->setVisibility($id, $visible);
 		return new DataResponse($resp);
 	}
 
@@ -273,7 +273,7 @@ class ClusterController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function detachFace (int $id, int $face, $name = null): DataResponse {
-		$person = $this->personMapper->detachFace($id, $face, $name);
+		$person = $this->clusterMapper->detachFace($id, $face, $name);
 		return new DataResponse($person);
 	}
 
@@ -287,11 +287,11 @@ class ClusterController extends Controller {
 	#[NoAdminRequired]
 	public function updateName($id, $name, $face_id = null): DataResponse {
 		if (is_null($face_id)) {
-			$person = $this->personMapper->find($this->userId, $id);
+			$person = $this->clusterMapper->find($this->userId, $id);
 			$person->setName($name);
-			$this->personMapper->update($person);
+			$this->clusterMapper->update($person);
 		} else {
-			$person = $this->personMapper->detachFace($id, $face_id, $name);
+			$person = $this->clusterMapper->detachFace($id, $face_id, $name);
 		}
 		return new DataResponse($person);
 	}

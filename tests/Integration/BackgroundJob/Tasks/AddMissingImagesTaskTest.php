@@ -21,7 +21,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-namespace OCA\FaceRecognition\Tests\Integration;
+namespace OCA\FaceRecognition\Tests\Integration\BackgroundJob\Tasks;
 
 use OCP\IUser;
 
@@ -42,7 +42,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(FaceRecognitionLogger::class)]
 #[UsesClass(\OCA\FaceRecognition\Db\FaceMapper::class)]
 #[UsesClass(\OCA\FaceRecognition\Db\ImageMapper::class)]
-#[UsesClass(\OCA\FaceRecognition\Db\PersonMapper::class)]
+#[UsesClass(\OCA\FaceRecognition\Db\ClusterMapper::class)]
 #[UsesClass(\OCA\FaceRecognition\Db\Image::class)]
 #[UsesClass(\OCA\FaceRecognition\Listener\UserDeletedListener::class)]
 #[UsesClass(\OCA\FaceRecognition\Service\FaceManagementService::class)]

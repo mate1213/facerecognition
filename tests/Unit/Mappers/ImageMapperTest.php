@@ -192,14 +192,14 @@ class ImageMapperTest extends UnitBaseTestCase
 	}
 
 	#[DataProviderExternal(ImageDataProvider::class, 'findFromFile_Provider')]
-	public function test_imageExists(string $user, int $model, int $nc_file_id, ?int $expectedId): void{
+	public function test_imageExistsForUser(string $user, int $model, int $nc_file_id, ?int $expectedId): void{
 		$image = new Image();
 		$image->user = $user;
 		$image->file = $nc_file_id;
 		$image->setModel($model);
 
 		//Act
-		$resultId = self::$imageMapper->imageExists($image);
+		$resultId = self::$imageMapper->imageExistsForUser($image);
 
 		//Assert
 		if ($expectedId === null) {
@@ -258,7 +258,12 @@ class ImageMapperTest extends UnitBaseTestCase
 		$this->assertContainsOnlyInstancesOf(Image::class, $images);
 		$this->assertCount($expectedCount, $images);
 		foreach ($images as $image) {
-			$this->assertEquals($user, $image->getUser());
+			if ($user !== null) {
+				$this->assertEquals($user, $image->getUser());
+			}
+			else {
+				$this->assertNotNull($image->getUser());
+			}
 			$this->assertEquals($model, $image->getModel());
 		}
 	}
@@ -692,6 +697,7 @@ class ImageDataProvider
 	}
 
 	public static function findImagesWithoutFaces_Provider(): array{
+		//?string $user, int $model, int $expectedCount
 		return [
 			["user1", 1, 2],
 			["user2", 1, 0],
