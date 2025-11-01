@@ -7,4 +7,13 @@ webpackConfig.entry = {
     'personal': path.join(__dirname, 'src', 'personal.js'),
 }
 
+// Add Handlebars loader
+webpackConfig.module.rules.push({
+    test: /\.handlebars$/,
+    loader: 'handlebars-loader',
+    options: {
+        partialDirs: [path.join(__dirname, 'src/templates/partials')]
+    },
+})
+
 module.exports = webpackConfig

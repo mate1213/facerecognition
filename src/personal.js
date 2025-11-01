@@ -9,6 +9,13 @@ const state = {
     SUCCESS: 2,
     ERROR:  3
 }
+const partials = {
+    'clustersByNamePart': require('./templates/partials/clustersByNamePart.handlebars'),
+    'loadedPart': require('./templates/partials/loadedPart.handlebars'),
+    'loadingPart': require('./templates/partials/loadingPart.handlebars'),
+    'peoplePart': require('./templates/partials/peoplePart.handlebars'),
+    'singlePersonPart': require('./templates/partials/singlePersonPart.handlebars')
+}
 
 /*
  * Faces in memory handlers.
@@ -293,32 +300,32 @@ View.prototype = {
         }
         else{
             FrDialogs.assignName(cluster.faces, unassignedClusters.length+1,
-                function(result, name) {
-                    if (result === true) {
-                        if (name !== null) {
-                            if (name.length > 0) {
-                                self._persons.renameCluster(cluster.id, name).done(function () {
-                                    self.renameUnassignedClusterDialog();
-                                }).fail(function () {
-                                    OC.Notification.showTemporary(t('facerecognition', 'There was an error renaming this person'));
-                                });
-                            } else {
-                                self.renameUnassignedClusterDialog();
-                            }
-                        } else {
-                            self._persons.setClusterVisibility(cluster.id, false).done(function () {
+            function(result, name) {
+                if (result === true) {
+                    if (name !== null) {
+                        if (name.length > 0) {
+                            self._persons.renameCluster(cluster.id, name).done(function () {
                                 self.renameUnassignedClusterDialog();
                             }).fail(function () {
-                                OC.Notification.showTemporary(t('facerecognition', 'There was an error ignoring this person'));
+                                OC.Notification.showTemporary(t('facerecognition', 'There was an error renaming this person'));
                             });
+                        } else {
+                            self.renameUnassignedClusterDialog();
                         }
                     } else {
-                        // Cancelled
-                        if (self._persons.mustReload())
-                            self.reload();
+                        self._persons.setClusterVisibility(cluster.id, false).done(function () {
+                            self.renameUnassignedClusterDialog();
+                        }).fail(function () {
+                            OC.Notification.showTemporary(t('facerecognition', 'There was an error ignoring this person'));
+                        });
                     }
+                } else {
+                    // Cancelled
+                    if (self._persons.mustReload())
+                        self.reload();
                 }
-            );
+            }
+        );
         }
     },
     renameIgnoredClusterDialog: function (personName) {
@@ -360,33 +367,38 @@ View.prototype = {
         }
         else {
             FrDialogs.assignIgnored(cluster.faces, ignoredClusters.length+1,
-                function(result, name) {
-                    if (result === true) {
-                        if (name !== null) {
-                            if (name.length > 0) {
-                                self._persons.renameCluster(cluster.id, name).done(function () {
-                                    self.renameIgnoredClusterDialog();
-                                }).fail(function () {
-                                    OC.Notification.showTemporary(t('facerecognition', 'There was an error renaming this person'));
-                                });
-                            } else {
+            function(result, name) {
+                if (result === true) {
+                    if (name !== null) {
+                        if (name.length > 0) {
+                            self._persons.renameCluster(cluster.id, name).done(function () {
                                 self.renameIgnoredClusterDialog();
-                            }
+                            }).fail(function () {
+                                OC.Notification.showTemporary(t('facerecognition', 'There was an error renaming this person'));
+                            });
                         } else {
                             self.renameIgnoredClusterDialog();
                         }
                     } else {
-                        // Cancelled
-                        if (self._persons.mustReload())
-                            self.reload();
+                        self.renameIgnoredClusterDialog();
                     }
+                } else {
+                    // Cancelled
+                    if (self._persons.mustReload())
+                        self.reload();
                 }
-            );
+            }
+        );
         }
     },
-    renderContent: function () {
+    renderContent: async function () {
         var context = {
             loaded: this._persons.isLoaded(),
+            clustersByNamePart: partials['clustersByNamePart'],
+            loadedPart: partials['loadedPart'],
+            loadingPart: partials['loadingPart'],
+            peoplePart: partials['peoplePart'],
+            singlePersonPart: partials['singlePersonPart'],
             appName: t('facerecognition', 'Face Recognition'),
             welcomeHint: t('facerecognition', 'Here you can see photos of your friends that are recognized'),
             enableDescription: t('facerecognition', 'Analyze my images and group my loved ones with similar faces'),
@@ -443,7 +455,7 @@ View.prototype = {
         /*
          * Actions
          */
-        $('#enableFacerecognition').click(function() {
+        $('#enableFacerecognition').off('click').on('click', function() {
             var enabled = $(this).is(':checked');
             if (enabled === false) {
                 OC.dialogs.confirm(
@@ -463,7 +475,7 @@ View.prototype = {
             }
         });
 
-        $('#show-more-clusters').click(function () {
+        $('#show-more-clusters').off('click').on('click', function () {
             let button = $(this);
             button.css("cursor", "wait");
             self._persons.loadUnassignedClusters().done(function () {
@@ -476,7 +488,7 @@ View.prototype = {
             });
         });
 
-        $('#show-ignored-clusters').click(function () {
+        $('#show-ignored-clusters').off('click').on('click', function () {
             let button = $(this);
             button.css("cursor", "wait");
             self._persons.loadIgnoredClusters().done(function () {
@@ -489,7 +501,7 @@ View.prototype = {
             });
         });
 
-        $('#facerecognition .file-preview-big').click(function () {
+        $('#facerecognition .file-preview-big').off('click').on('click', function () {
             var filename = $(this).data('id');
             if (window.event.ctrlKey) {
                 var file = self._persons.getActivePerson().images.find(function(element) {
@@ -511,7 +523,7 @@ View.prototype = {
             }
         });
 
-        $('#facerecognition .face-preview-big').click(function () {
+        $('#facerecognition .face-preview-big').off('click').on('click', function () {
             $(this).css("cursor", "wait");
             var name = $(this).parent().data('id');
             self._persons.loadPerson(name).done(function () {
@@ -521,7 +533,7 @@ View.prototype = {
             });
         });
 
-        $('#facerecognition #rename-person').click(function () {
+        $('#facerecognition #rename-person').off('click').on('click', function () {
             var person = self._persons.getActivePerson();
             FrDialogs.rename(
                 person.name,
@@ -538,7 +550,7 @@ View.prototype = {
             );
         });
 
-        $('#facerecognition #hide-person').click(function () {
+        $('#facerecognition #hide-person').off('click').on('click', function () {
             var person = self._persons.getActivePerson();
             FrDialogs.hide(
                 [person],
@@ -555,7 +567,7 @@ View.prototype = {
             );
         });
 
-        $('#facerecognition #rename-cluster').click(function () {
+        $('#facerecognition #rename-cluster').off('click').on('click', function () {
             var id = $(this).data('id');
             var person = self._persons.getNamedClusterById(id);
             FrDialogs.rename(
@@ -573,8 +585,9 @@ View.prototype = {
             );
         });
 
-        $('#facerecognition #hide-cluster').click(function () {
+        $('#facerecognition #hide-cluster').off('click').on('click', function () {
             var id = $(this).data('id');
+            self._bulkAction = false;
             var person = self._persons.getNamedClusterById(id);
             FrDialogs.hide(
                 [person.faces[0]],
@@ -590,7 +603,7 @@ View.prototype = {
             );
         });
 
-        $('#facerecognition #review-person-clusters').click(function () {
+        $('#facerecognition #review-person-clusters').off('click').on('click', function () {
             $(this).css("cursor", "wait");
             var person = self._persons.getActivePerson();
             self._persons.loadClustersByName(person.name).done(function () {
@@ -600,7 +613,7 @@ View.prototype = {
             });
         });
 
-        $('#facerecognition .icon-back').click(function () {
+        $('#facerecognition .icon-back').off('click').on('click', function () {
             self._persons.unsetActive();
             self.renderContent();
             if (self._persons.mustReload() || !self._persons.isLoaded()) {
@@ -648,6 +661,9 @@ var setPersonNameUrl = function (personName) {
  */
 Handlebars.registerHelper('noPhotos', function(count) {
     return n('facerecognition', '%n image', '%n images', count);
+});
+Object.entries(partials).forEach(([name, tpl]) => {
+    Handlebars.registerPartial(name, tpl);
 });
 
 /*

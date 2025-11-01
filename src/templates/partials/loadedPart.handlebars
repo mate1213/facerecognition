@@ -1,0 +1,22 @@
+<h2>
+    {{appName}}
+</h2>
+<input id="enableFacerecognition" name="enableFacerecognition" type="checkbox" class="checkbox" value="1" {{#if enabled}}checked{{/if}}>
+<label for="enableFacerecognition">{{enableDescription}}</label><br>
+<div id="optional-buttons-div">
+    {{#if hasUnamed}}
+        <button id="show-more-clusters" type="button" class="primary">{{reviewPeopleMsg}}</button>
+    {{/if}}
+    {{#if hasHidden}}
+        <button id="show-ignored-clusters" type="button" class="primary">{{reviewIgnoredMsg}}</button>
+    {{/if}}
+</div>
+<div class="emptycontent">
+    <div class="icon-contacts-dark svg"></div>
+    <h2>
+        {{emptyMsg}}
+    </h2>
+    <p>
+    {{emptyHint}}
+    </p>
+</div>

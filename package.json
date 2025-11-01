@@ -15,7 +15,6 @@
 		"@nextcloud/dialogs": "^6.3.2",
 		"@nextcloud/router": "^3.0.1",
 		"@nextcloud/vue": "^8.0.1",
-		"handlebars": "^4.7.8",
 		"lozad": "^1.16.0",
 		"vue": "^2.7.14"
 	},
@@ -31,7 +30,10 @@
 		"@nextcloud/browserslist-config": "^3.0.1",
 		"@nextcloud/eslint-config": "^8.2.1",
 		"@nextcloud/stylelint-config": "^2.3.0",
-		"@nextcloud/webpack-vue-config": "^5.5.1"
+		"@nextcloud/webpack-vue-config": "^5.5.1",
+		"handlebars": "^4.7.8",
+		"handlebars-loader": "^1.7.3",
+		"webpack-cli": "^5.1.4"
 	},
 	"scripts": {
 		"build": "webpack --node-env production --progress",
